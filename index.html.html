@@ -1,0 +1,2258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>School Report Card Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1d2433;--muted:#6b7385;--line:#d9dde6;--bg:#f4f6fa;--accent:#1f4e8c;--accent2:#e8f0fb;--bad:#b3261e;--ok:#1b7a3d;--warn:#fff4d6}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:15px}
+header.top{background:#fff;border-bottom:1px solid var(--line);padding:12px 20px;position:sticky;top:0;z-index:5}
+h1{font-size:18px;margin:0 0 8px}
+.ctl{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
+.ctl label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:3px}
+select,input,textarea,button{font:inherit}
+select,input[type=text],input[type=number],input:not([type]),input[type=search],input[type=date],textarea{border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:#fff;color:var(--ink)}
+button{border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:6px;padding:7px 12px;cursor:pointer}
+button.ghost{background:#fff;color:var(--accent)}
+button.danger{background:#fff;color:var(--bad);border-color:var(--bad)}
+button.small{padding:3px 8px;font-size:13px}
+#saveStatus{font-size:12px;color:var(--ok);align-self:center}
+nav#tabs{display:flex;gap:4px;margin-top:10px;flex-wrap:wrap}
+nav#tabs button{background:#fff;color:var(--ink);border-color:var(--line)}
+nav#tabs button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+#banner .b{margin-top:10px;padding:8px 12px;border-radius:6px;background:var(--warn);border:1px solid #e6cf85;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#banner .b.err{background:#fde7e5;border-color:#e9a8a3;color:var(--bad)}
+main{padding:20px;max-width:1300px;margin:0 auto}
+.panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+.panel h2{font-size:16px;margin:0 0 10px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.muted{color:var(--muted);font-size:13px}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid var(--line);padding:5px 7px;text-align:center;font-size:14px}
+th{background:var(--accent2)}
+td.l,th.l{text-align:left}
+input.mk{width:64px;text-align:center;padding:4px}
+input.mk.bad{border-color:var(--bad);background:#fde7e5}
+.tablewrap{overflow-x:auto}
+.pass{color:var(--ok);font-weight:600}.fail{color:var(--bad);font-weight:600}
+.stats{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0}
+.stat{background:var(--accent2);border-radius:8px;padding:8px 14px}
+.stat b{display:block;font-size:20px}
+.printhead{display:none;text-align:center;margin-bottom:10px}
+.proc{background:#fff;border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:16px;font-family:Arial,Helvetica,sans-serif;color:#000;overflow-x:auto}
+.proc .hdr{display:flex;justify-content:space-between;gap:20px;font-size:12px;font-weight:700;margin-bottom:10px;line-height:1.4}
+.proc .hdr .r{min-width:220px}
+.proc table{font-size:11px;border:1.5px solid #000}
+.proc th,.proc td{border:1px solid #000;padding:1px 4px;text-align:right;background:#fff;font-size:11px;white-space:nowrap}
+.proc td.nm,.proc th.nm{text-align:left}
+.proc th.rot{height:125px;width:30px;padding:0;vertical-align:bottom;text-align:center}
+.proc th.rot span{display:inline-block;writing-mode:vertical-rl;transform:rotate(180deg);padding:4px 0;font-size:11px}
+.proc tr.mx td{font-weight:700}
+.proc tfoot td{font-family:"Times New Roman",serif}
+.proc .done{margin:30px 0 0 55%;font-size:12px;line-height:1.8}
+@media print{.proc{border:none;padding:0;border-radius:0;margin:0;overflow:visible}.proc thead{display:table-header-group}.proc tr{break-inside:avoid}.proc th{background:#fff!important}}
+.cards{max-width:780px;margin:0 auto}
+.card{background:#fff;border:1px solid #000;padding:14px 18px;margin:0 auto 18px;font-family:"Times New Roman",Times,serif;color:#000;font-size:13px}
+.card .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;font-weight:700;line-height:1.35}
+.card .logo{text-align:center;margin-top:8px}
+.card .logo img{height:64px;display:inline-block}
+.card .logo.ph{border:1px dashed #999;color:#888;font-size:11px;padding:10px;margin:8px auto 0;max-width:260px}
+.dlg-ov{position:fixed;inset:0;background:rgba(20,28,45,.5);display:flex;align-items:center;justify-content:center;z-index:4000;padding:16px}
+.dlg{background:#fff;border-radius:10px;max-width:480px;width:100%;padding:18px 20px;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.dlg-msg{white-space:pre-line;line-height:1.45;max-height:55vh;overflow:auto;margin-bottom:12px}
+.dlg-in{width:100%;margin-bottom:12px;display:block}
+.dlg.wide{max-width:780px}
+.dlg textarea.dlg-in{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;white-space:pre;overflow:auto}
+.dlg-btns{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+button.dgr{background:var(--bad);border-color:var(--bad)}
+.hid{display:none!important}
+@media print{.proc .hid{display:table-row!important}}
+.logoprompt{background:var(--warn);border:1px solid #e6cf85;border-radius:8px;padding:8px 12px;margin:0 0 10px}
+.card .top img{height:58px;display:block}
+.card .top .r{text-align:right;min-width:140px}
+.card h3{margin:8px 0 6px;text-align:center;font-size:17px;text-decoration:underline;letter-spacing:.5px}
+.card table{width:100%;border-collapse:collapse}
+.card .info td{border:1px solid #000;padding:2px 6px;text-align:left;font-size:13px;background:#fff}
+.card .tb{margin-top:8px}
+.card .tb th,.card .tb td{border:1px solid #000;padding:2px 5px;font-size:12.5px;text-align:center;background:#fff;color:#000}
+.card .tb th{font-size:10.5px}
+.card .tb td.l,.card .tb th.l{text-align:left}
+.card .tb .sum td{font-weight:700}
+.card .inc{margin:4px 0 0;font-size:11px;font-style:italic}
+.card input.cond{border:none;border-bottom:1px dotted #000;width:110px;padding:0;font:inherit;background:transparent;border-radius:0}
+.card .foot{display:grid;grid-template-columns:1fr 1fr;border:1px solid #000;margin-top:12px}
+.card .foot>div{padding:3px 8px;font-weight:700;min-height:42px}
+.card .foot .obs{grid-row:span 2;border-right:1px solid #000}
+.card .foot .tsig{border-bottom:1px solid #000;text-align:center}
+.card .foot .psig{text-align:center}
+.card .foot textarea{display:block;width:100%;border:none;resize:none;font:inherit;font-weight:400;padding:2px 0;background:transparent;border-radius:0}
+.two .card{font-size:11.5px;padding:8px 12px;margin-bottom:10px}
+.two .card .tb th,.two .card .tb td{padding:1px 4px;font-size:11px}
+.two .card .foot>div{min-height:30px}
+.two-land{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-width:1240px}
+.two-land .card{width:100%;min-width:0;font-size:10.5px;padding:6px 8px;margin:0}
+.two-land .card .top{font-size:10px;gap:5px}
+.two-land .card .top .r{min-width:0}
+.two-land .card .top img{height:38px}
+.two-land .card .logo img{height:42px}
+.two-land .card h3{font-size:14px;margin:5px 0 4px}
+.two-land .card .info td{font-size:9.5px;padding:1px 3px}
+.two-land .card .tb th,.two-land .card .tb td{font-size:9px;padding:1px 2px}
+.two-land .card .foot{margin-top:6px}
+.two-land .card .foot>div{min-height:25px;padding:2px 4px}
+.two-land .card .inc{font-size:8px}
+@media print{.cards{max-width:none}.card{page-break-after:always;break-inside:avoid;margin:0 auto}.card:last-child{page-break-after:auto}.two .card{page-break-after:auto;margin-bottom:8mm}.two-land{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6mm;width:100%;max-width:none;break-inside:auto}.two-land .card{width:100%;margin:0;page-break-after:auto;break-inside:avoid}.two-land .card:nth-child(2n){break-after:page;page-break-after:always}.two-land .card:last-child{break-after:auto;page-break-after:auto}.card th{background:#fff!important}}
+@page{size:A4;margin:12mm}
+/* ===== theme: bright, flag-inspired colours for the screen; printed pages stay clean ===== */
+.logobox{padding:10px 14px;background:#eef6ff;border-radius:14px}
+.bars h3{margin:14px 0 6px;font-size:16px;color:var(--navy)}
+.bars h3 small{font-weight:600;color:var(--muted);font-size:12px;margin-left:8px}
+.bars .bar{display:grid;grid-template-columns:minmax(110px,170px) 1fr 62px;gap:10px;align-items:center;margin:7px 0}
+.bars .bl{font-size:13px;font-weight:700;color:var(--ink);text-align:right}
+.bars .bt{position:relative;height:14px;background:#e3ecf8;border-radius:99px}
+.bars .bt i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#16a06a,#58d6a0)}
+.bars .bt i.low{background:linear-gradient(90deg,#ef5350,#ff9a8f)}
+.bars .bt u{position:absolute;top:-4px;bottom:-4px;width:2px;background:#16233b;opacity:.55;text-decoration:none}
+.bars .bar b{font-size:13px}
+.actions{align-items:center}
+
+@media screen{
+:root{--ink:#16233b;--muted:#5f6b85;--line:#d6e0f1;--bg:#eef4fc;--accent:#1d8fe1;--accent2:#e4f1ff;--bad:#d6383a;--ok:#118a58;--warn:#fff1c2;--navy:#0f2747}
+body{font-family:"Nunito","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:radial-gradient(900px 420px at 95% -5%,#cfe7ff 0,transparent 60%),radial-gradient(800px 380px at -5% 8%,#fff0bd 0,transparent 55%),#eef4fc;background-attachment:fixed;font-size:15px}
+h1,h2,h3,.stat b{font-family:"Fredoka","Nunito","Segoe UI",sans-serif}
+
+header.top{background:linear-gradient(120deg,#0f2747 0%,#16427d 62%,#1b6fc2 115%);color:#fff;border:0;padding:0;box-shadow:0 6px 24px rgba(15,39,71,.28)}
+.ribbon{height:7px;background:linear-gradient(90deg,#00a1de 0 34%,#fad201 34% 67%,#1f7a4d 67% 100%)}
+.hwrap{max-width:1300px;margin:0 auto;padding:14px 20px 0}
+.brandrow{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between}
+.brand{display:flex;gap:12px;align-items:center;min-width:0}
+.sunlogo{width:48px;height:48px;flex:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35))}
+.brand h1{margin:0;font-size:23px;line-height:1.1;color:#fff;font-weight:600;letter-spacing:.2px}
+.brand .sub{margin:3px 0 0;color:#b9d4f6;font-size:13px}
+.ctl{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin:0}
+.ctl label{color:#b9d4f6;font-size:12px;font-weight:700}
+.ctl select{background:rgba(255,255,255,.14);color:#fff;border:2px solid rgba(255,255,255,.28);min-width:96px}
+.ctl select option{color:#16233b;background:#fff}
+.ctl button.ghost{background:#fad201;color:#3a2f00;box-shadow:0 3px 0 #b89a00,0 8px 14px rgba(0,0,0,.2)}
+#saveStatus{color:#9be8c4;font-weight:700}
+nav#tabs{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+nav#tabs button{--c:#1d8fe1;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);color:#e8f1ff;border:0;border-radius:14px 14px 0 0;padding:10px 16px 9px;font-weight:800;box-shadow:none;border-bottom:4px solid var(--c)}
+nav#tabs button .ic{font-size:18px}
+nav#tabs button:hover{background:rgba(255,255,255,.22)}
+nav#tabs button:active{transform:none;box-shadow:none}
+nav#tabs button.on{background:#fff;color:var(--ink)}
+nav#tabs button[data-tab="results"]{--c:#f7b500}
+nav#tabs button[data-tab="cards"]{--c:#16a06a}
+nav#tabs button[data-tab="classes"]{--c:#7c5cf0}
+nav#tabs button[data-tab="settings"]{--c:#ef5350}
+#banner .b{border-radius:14px;border:0;background:linear-gradient(90deg,#fff3c4,#ffe38e);color:#3a2f00;box-shadow:0 6px 18px rgba(0,0,0,.15)}
+#banner .b.err{background:linear-gradient(90deg,#ffe0de,#ffc4c0);color:#8a1c18}
+main{padding:22px 20px 48px}
+
+.panel{border:0;border-radius:18px;box-shadow:0 10px 30px rgba(22,35,59,.09);padding:20px 22px}
+.panel h2{font-size:20px;font-weight:600;color:var(--navy);display:flex;align-items:center;gap:10px;margin:0 0 14px}
+.panel h2::before{content:"";width:10px;height:24px;border-radius:6px;background:linear-gradient(#1d8fe1,#7c5cf0)}
+#view[data-screen="results"] .panel h2::before{background:linear-gradient(#f7b500,#ff8a3d)}
+#view[data-screen="cards"] .panel h2::before{background:linear-gradient(#16a06a,#6fdca8)}
+#view[data-screen="classes"] .panel h2::before{background:linear-gradient(#7c5cf0,#c09cff)}
+#view[data-screen="settings"] .panel h2::before{background:linear-gradient(#ef5350,#ff9a8f)}
+.muted{color:var(--muted)}
+
+select,input[type=text],input[type=number],input:not([type]),input[type=search],input[type=date],textarea{border:2px solid var(--line);border-radius:10px;padding:7px 10px;background:#fff}
+select:focus,input:focus,textarea:focus{border-color:#1d8fe1;outline:none;box-shadow:0 0 0 4px rgba(29,143,225,.2)}
+button{border:0;background:linear-gradient(180deg,#2a9bf0,#1478cf);color:#fff;border-radius:12px;padding:9px 16px;font-weight:800;box-shadow:0 3px 0 #0f5fa6,0 8px 14px rgba(20,120,207,.22);transition:transform .08s,box-shadow .08s}
+button:hover{filter:brightness(1.06)}
+button:active{transform:translateY(2px);box-shadow:0 1px 0 #0f5fa6}
+button:disabled{opacity:.45;filter:grayscale(.5);box-shadow:none}
+button.ghost{background:#fff;color:#1478cf;box-shadow:inset 0 0 0 2px #bcdcf8}
+button.danger{background:#fff;color:#d6383a;box-shadow:inset 0 0 0 2px #f3b7b7}
+button.small{padding:5px 11px;font-size:13px;border-radius:10px}
+button.b-pdf{background:linear-gradient(180deg,#f2655f,#d93b3b);box-shadow:0 3px 0 #a92727,0 8px 14px rgba(217,59,59,.22)}
+button.b-xls{background:linear-gradient(180deg,#27b87d,#128a5a);box-shadow:0 3px 0 #0b6a43,0 8px 14px rgba(18,138,90,.22)}
+button.dgr{background:linear-gradient(180deg,#f2655f,#d93b3b);box-shadow:0 3px 0 #a92727}
+button:focus-visible,a:focus-visible{outline:3px solid #ffd35c;outline-offset:2px}
+
+th{background:linear-gradient(180deg,#eaf4ff,#d6e9fd);color:#0f2747;font-weight:800}
+.tablewrap tbody tr:nth-child(even) td{background:#f6faff}
+.tablewrap tbody tr:hover td{background:#e9f3ff}
+input.mk{border-radius:8px}
+input.mk:focus{background:#fffbe6}
+.pass{color:#118a58}.fail{color:#d6383a}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin:12px 0 6px}
+.stat{border-radius:16px;padding:14px 16px;color:#fff;font-weight:700;font-size:13px;box-shadow:0 10px 20px rgba(22,35,59,.14)}
+.stat b{font-size:31px;font-weight:600;margin-top:4px;line-height:1.1}
+.t-sky{background:linear-gradient(135deg,#1d8fe1,#58b8ff)}
+.t-leaf{background:linear-gradient(135deg,#12935f,#4fd3a0)}
+.t-coral{background:linear-gradient(135deg,#e8474a,#ff8f80)}
+.t-violet{background:linear-gradient(135deg,#6a49e6,#a58bff)}
+.t-sun{background:linear-gradient(135deg,#f7b500,#ffd75a);color:#3a2800}
+.logoprompt{background:linear-gradient(90deg,#fff1c2,#ffe28a);border:0;border-radius:14px;padding:12px 16px}
+.proc{border:0;border-radius:14px;box-shadow:0 10px 30px rgba(22,35,59,.09)}
+.card{border-radius:4px;box-shadow:0 12px 32px rgba(22,35,59,.14);border:1px solid #1d2b45}
+.card .tb th{background:#e4f0ff}
+.dlg{border-radius:20px;padding:22px 24px;border-top:7px solid #1d8fe1;box-shadow:0 20px 60px rgba(8,20,45,.45)}
+.dlg-ov{background:rgba(10,24,52,.55);backdrop-filter:blur(2px)}
+@media (max-width:700px){.brand h1{font-size:19px}.hwrap{padding:12px 12px 0}main{padding:14px 10px 40px}.panel{padding:16px 14px}nav#tabs button{padding:8px 11px}}
+}
+
+/* printing: bigger cards that fill the page; A5 and 2-up variants */
+.two .card:nth-child(2n){page-break-after:always}
+@media print{
+.cards:not(.two):not(.two-land):not(.a5):not(.yr) .card{font-size:15.5px;padding:22px 28px}
+.cards:not(.two):not(.two-land):not(.a5):not(.yr) .card .top{font-size:15px;line-height:1.45}
+.cards:not(.two):not(.two-land):not(.a5):not(.yr) .card .logo img{height:84px}
+.cards:not(.two):not(.two-land):not(.a5):not(.yr) .card h3{font-size:24px;margin:12px 0 10px}
+.cards:not(.two):not(.two-land):not(.a5):not(.yr) .card .info td{padding:7px 10px;font-size:15px}
+.cards:not(.two):not(.two-land):not(.a5):not(.yr) .card .tb{margin-top:14px}
+.cards:not(.two):not(.two-land):not(.a5):not(.yr) .card .tb th{font-size:12.5px;padding:8px 5px}
+.cards:not(.two):not(.two-land):not(.a5):not(.yr) .card .tb td{padding:8px 6px;font-size:15px}
+.cards:not(.two):not(.two-land):not(.a5):not(.yr) .card .foot{margin-top:24px}
+.cards:not(.two):not(.two-land):not(.a5):not(.yr) .card .foot>div{min-height:62px;padding:6px 10px}
+.a5 .card{font-size:12px;padding:12px 16px}
+.a5 .card .top{font-size:12px}
+.a5 .card .logo img{height:50px}
+.a5 .card h3{font-size:18px}
+.a5 .card .info td{padding:4px 7px;font-size:12px}
+.a5 .card .tb th{font-size:9.5px;padding:5px 3px}
+.a5 .card .tb td{padding:5px 4px;font-size:12px}
+.a5 .card .foot>div{min-height:44px}
+.card{box-shadow:none}
+.card .tb th{background:#fff}
+}
+
+@media print{
+ .noprint{display:none!important}
+ body{background:#fff}
+ main{padding:0;max-width:none}
+ .panel{border:none;padding:0}
+ .printhead{display:block}
+ th{background:#eee!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+
+/* Landscape two-up cards: keep each complete card compact and on one page. */
+@media print{
+  .cards.two-land{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:6mm;row-gap:0;width:100%;max-width:none;align-items:start}
+  .cards.two-land .card{font-size:11.5px!important;padding:7mm 7mm!important;margin:0!important;width:100%;min-width:0;height:188mm;min-height:188mm;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;break-inside:avoid!important;page-break-inside:avoid!important}
+  .cards.two-land .card .top{font-size:11px!important;line-height:1.35;gap:6px}
+  .cards.two-land .card .top .r{min-width:0}
+  .cards.two-land .card .top img{height:38px}
+  .cards.two-land .card .logo img{height:42px}
+  .cards.two-land .card h3{font-size:17px!important;margin:8px 0 7px}
+  .cards.two-land .card .info td{font-size:10.5px!important;padding:3px 4px}
+  .cards.two-land .card .tb{margin-top:5px}
+  .cards.two-land .card .tb th,.cards.two-land .card .tb td{font-size:10px!important;padding:3px 3px}
+  .cards.two-land .card .foot{margin-top:6px}
+  .cards.two-land .card .foot>div{min-height:34px;padding:4px 5px}
+  .cards.two-land .card .inc{font-size:9px}
+  .cards.two-land .card:nth-child(2n){break-after:page;page-break-after:always}
+  .cards.two-land .card:last-child{break-after:auto;page-break-after:auto}
+}
+
+/* whole-year landscape card */
+.cards.yr{max-width:1240px;overflow-x:auto}
+.yc{min-width:1040px;padding:14px 16px}
+.yc .ytop{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px}
+.yc .ybox{border:1.5px solid #000;padding:8px 14px;font-size:14px;line-height:1.55;justify-self:start;min-width:250px}
+.yc .ylogo{text-align:center}.yc .ylogo img{height:56px}
+.yc .ylogo.ph{border:1px dashed #999;color:#888;font-size:11px;padding:8px;max-width:200px}
+.yc h3{text-decoration:none;font-size:19px;margin:10px 0 8px;letter-spacing:.8px}
+.yc .yinfo{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:2px 16px;font-size:12.5px;margin-bottom:6px}
+.yc .ytb{table-layout:fixed;margin:0}
+.yc .ytb th,.yc .ytb td{border:1px solid #000;padding:2px 1px;text-align:center;font-size:11.5px;background:#fff;overflow:hidden}
+.yc .ytb th{background:#e4f0ff;font-size:9px;line-height:1.1}
+.yc .ytb td.l,.yc .ytb th.l{text-align:left;padding-left:4px}
+.yc .ytb .gs{border-left:2px solid #000}
+.yc .ytb td.gn{background:#e6e6e6}
+.yc .ytb td.b,.yc .ytb tr.tot td,.yc .ytb tr.pct td,.yc .ytb tr.pos td{font-weight:700}
+.yc .ytb tr.tot td{background:#f2f6fc}.yc .ytb tr.tot td.gn{background:#e6e6e6}
+.yc .ytb tr.sig td,.yc .ytb tr.sigT td,.yc .ytb tr.sigP td{height:34px;vertical-align:top;font-weight:400;font-size:10px}
+.yc .ytb tr.obs td{height:34px;vertical-align:top;font-size:11px}
+.yc .ytb tr.obs textarea{display:block;width:100%;border:none;resize:none;font:inherit;padding:1px 2px;background:transparent;border-radius:0}
+.yc .verdict{display:grid;grid-template-columns:1fr 1fr;border:1px solid #000;border-top:0;padding:8px 16px;min-height:80px;font-size:12px}
+.yc .vopts{margin:8px 0 0 70px;line-height:1.7}
+.yc .bx{display:inline-block;width:10px;height:10px;border:1px solid #000;margin-right:8px;vertical-align:-1px}
+.yc .vr{padding-top:18px}.yc .vr .hs{margin-top:26px}
+@media print{
+.cards.yr{max-width:none;overflow:visible}
+.cards.yr .yc{min-width:0;width:100%;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;page-break-after:always;break-inside:avoid;font-size:10px}
+.cards.yr .yc:last-child{page-break-after:auto}
+.cards.yr .yc .ybox{font-size:12px;padding:5px 12px}
+.cards.yr .yc h3{font-size:18px;margin:12px 0 10px}
+.cards.yr .yc .yinfo{font-size:12px;margin-bottom:8px;gap:4px 16px}
+.cards.yr .yc .ytb th{background:#e4f0ff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.cards.yr .yc .ytb td{font-size:11.5px;padding:3.5px 1px}
+.cards.yr .yc .ytb td.gn{background:#e6e6e6!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.cards.yr .yc .ytb tr.sigT td,.cards.yr .yc .ytb tr.sigP td,.cards.yr .yc .ytb tr.obs td{height:44px}
+.cards.yr .yc .verdict{min-height:96px;padding:8px 14px}
+.cards.a5y .yc{zoom:.68}
+}
+/* proclamation list: fit the page width and fill the page height when printing */
+@media print{
+.proc{width:100%}
+.proc .hdr{font-size:13px;margin-bottom:8px}
+.proc table{width:calc(100% - 4px);margin:0 2px;table-layout:fixed;border-collapse:collapse;border:1.5px solid #000}
+.proc tr>:last-child{border-right:1.5px solid #000}
+.proc tr>:first-child{border-left:1.5px solid #000}
+.proc thead tr:first-child>*{border-top:1.5px solid #000}
+.proc tfoot tr:last-child>*{border-bottom:1.5px solid #000}
+.proc th,.proc td{font-size:var(--pfs,12px);padding:var(--ppad,3px) 4px;line-height:1.15;white-space:normal;overflow-wrap:anywhere}
+.proc td.nm{font-size:min(var(--pfs,12px),12px)}
+.proc th.rot{width:auto;height:112px;font-size:12px}
+.proc th.rot span{font-size:12px}
+.proc col.c-rank{width:6.5%}.proc col.c-name{width:29%}.proc col.c-tot{width:7%}.proc col.c-avg{width:9.5%}
+.proc td:not(.nm),.proc th:not(.nm),.proc tr.mx td{white-space:nowrap}
+.proc .done{break-inside:avoid}
+.proc tfoot{display:table-row-group}
+.proc .done{margin-top:var(--pdone,28px);font-size:13px}
+}
+/* online login + users */
+body.locked{overflow:hidden}
+.auth-ov{position:fixed;inset:0;z-index:3000;display:grid;place-items:center;padding:16px;overflow:auto;background:radial-gradient(900px 420px at 90% -5%,#1b6fc2 0,transparent 60%),radial-gradient(700px 380px at -5% 100%,#16a06a55 0,transparent 55%),#0f2747;font-family:"Nunito","Segoe UI",system-ui,sans-serif}
+.auth-card{background:#fff;border-radius:22px;width:min(440px,100%);padding:0 26px 24px;box-shadow:0 24px 70px rgba(0,0,0,.45);color:#16233b;overflow:hidden}
+.auth-ribbon{height:8px;margin:0 -26px 18px;background:linear-gradient(90deg,#00a1de 0 34%,#fad201 34% 67%,#1f7a4d 67% 100%)}
+.auth-card h1{margin:0;font-size:20px;font-family:"Fredoka","Nunito",sans-serif;color:#0f2747}
+.auth-card h2{margin:6px 0 8px;font-size:17px;font-family:"Fredoka","Nunito",sans-serif;color:#1478cf}
+.auth-card label{display:block;font-weight:700;font-size:13px;margin:10px 0 0}
+.auth-card input{display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:10px 12px;font-size:15px;border:2px solid #d6e0f1;border-radius:10px}
+.auth-card input:focus{border-color:#1d8fe1;outline:none;box-shadow:0 0 0 4px rgba(29,143,225,.2)}
+.auth-card form button,.auth-row button{margin-top:16px;width:100%;padding:11px 16px;font-size:15px}
+.auth-row{display:flex;gap:10px}.auth-row button{width:auto;flex:1}
+.auth-links{text-align:center;font-size:13px;margin:12px 0 0}.auth-links a{color:#1478cf;font-weight:700}
+.auth-msg{background:#e4f1ff;border-radius:10px;padding:9px 12px;font-size:13px;margin:10px 0 0}.auth-msg.bad{background:#ffe0de;color:#8a1c18}
+#saveStatus.st-error{color:#ffb4a8}
+#acct{display:inline-flex;gap:6px;align-items:center;color:#e8f1ff;font-size:12px;font-weight:700}
+#acct button{padding:4px 10px;font-size:12px}
+.ucard{border:2px solid var(--line);border-radius:14px;padding:12px 14px;margin:10px 0}
+.asg{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;padding:6px 0;border-top:1px dashed var(--line)}
+label.chk{display:inline-flex;gap:6px;align-items:center;font-weight:600;font-size:13px}
+nav#tabs button[data-tab="users"]{--c:#00a1de}
+@media print{#auth,#acct{display:none!important}}
+</style>
+<script id="cloud-config" type="application/json">{"url":"https://jlktazcoqmoboservzxb.supabase.co/rest/v1/","key":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impsa3RhemNvcW1vYm9zZXJ2enhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQxODg4NDksImV4cCI6MjEwOTc2NDg0OX0.umWwGm50vMre8Y1mvsvINOUTlQoc4yvOcSHLglepSFA"}</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" async onerror="window.__sbFail=1"></script>
+</head>
+<body>
+<header class="top noprint">
+ <div class="ribbon"></div>
+ <div class="hwrap">
+  <div class="brandrow">
+   <div class="brand">
+    <svg class="sunlogo" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="17" fill="none" stroke="#fad201" stroke-width="5" stroke-dasharray="3 5.9"/><circle cx="24" cy="24" r="9.5" fill="#fad201"/></svg>
+    <div><h1 id="schoolTitle">School Report Card Manager</h1><p class="sub" id="subTitle">Marks, class results and report cards</p></div>
+   </div>
+   <div class="ctl">
+    <label>Academic year <select id="selYear"></select></label>
+    <button class="ghost" data-act="newYear">+ New academic year</button>
+    <label>Term <select id="selTerm"><option value="1">Term 1</option><option value="2">Term 2</option><option value="3">Term 3</option></select></label>
+    <label>Class <select id="selClass"></select></label>
+    <span id="saveStatus"></span><span id="acct"></span>
+   </div>
+  </div>
+  <div id="banner"></div>
+  <nav id="tabs">
+   <button data-tab="marks"><span class="ic">✏️</span>Enter marks</button>
+   <button data-tab="results"><span class="ic">🏆</span>Class results</button>
+   <button data-tab="cards"><span class="ic">📄</span>Report cards</button>
+   <button data-tab="classes"><span class="ic">🏫</span>Classes &amp; learners</button>
+   <button data-tab="settings"><span class="ic">⚙️</span>Settings &amp; backup</button>
+   <button data-tab="users" style="display:none"><span class="ic">👥</span>Users &amp; access</button>
+  </nav>
+ </div>
+</header>
+<main id="view"></main>
+
+<script>
+const KEY = 'report_card_manager_v1';
+
+//#CALC-START
+const PARTS = ['cat', 'mid', 'exam'];
+const PART_LABEL = { cat: 'CAT', mid: 'Midterm', exam: 'End-of-term exam', term: 'Full term', year: 'Whole year' };
+
+function num(v) {
+  if (v === '' || v === null || v === undefined) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+function r1(x) { return Math.round((x + 1e-9) * 10) / 10; }
+// A grading scale is valid when every band has a % from 0 to 100, no two bands start at the same %, a band starts at 0 (so every mark gets a grade) and every band has a grade letter.
+function bandsError(bands) {
+  if (!Array.isArray(bands) || !bands.length) return 'The grading scale needs at least one row.';
+  const seen = new Set();
+  for (const b of bands) {
+    const m = Number(b.min);
+    if (b.min === '' || b.min === null || b.min === undefined || !Number.isFinite(m) || m < 0 || m > 100) return 'Every “From %” must be a number from 0 to 100.';
+    if (seen.has(m)) return 'Two grade rows start at the same percentage (' + m + '%). Each row needs its own starting percentage.';
+    seen.add(m);
+    if (!String(b.grade || '').trim()) return 'Every grade row needs a grade (for example A, B, C).';
+  }
+  if (!seen.has(0)) return 'One grade row must start at 0%, so that every mark gets a grade.';
+  return '';
+}
+function gradeFor(pct, bands) {
+  const b = [...bands].sort((a, c) => c.min - a.min);
+  for (const x of b) if (pct + 1e-9 >= x.min) return x;
+  return b[b.length - 1];
+}
+// Maximum marks of a subject in a given term (a term can have its own override).
+function smax(subj, term) {
+  const base = { cat: subj.cat, mid: subj.mid, exam: subj.exam };
+  const o = subj.tm && subj.tm[term];
+  return o ? Object.assign(base, o) : base;
+}
+// One subject, one term. scope: 'cat' | 'mid' | 'exam' | 'term'
+function termSubject(m, subj, term, scope) {
+  const t = (m && m[term]) || {};
+  const sm = smax(subj, term);
+  const parts = (scope === 'term' ? PARTS : [scope]).filter(p => Number(sm[p]) > 0);
+  let score = 0, max = 0, n = 0;
+  for (const p of parts) {
+    const v = num(t[p]);
+    if (v !== null) { score += v; max += Number(sm[p]) || 0; n++; }
+  }
+  if (!n || max <= 0) return { score: null, max: 0, pct: null, has: false, complete: false };
+  return { score, max, pct: score / max * 100, has: true, complete: n === parts.length };
+}
+// One subject for any scope. Year scope: marks gained and maximum marks are ADDED over the terms that have marks,
+// and the percentage is gained / maximum, so the annual % always agrees with the annual marks shown.
+function subjectResult(m, subj, scope, term) {
+  if (scope !== 'year') return termSubject(m, subj, term, scope);
+  const terms = [1, 2, 3].map(t => termSubject(m, subj, t, 'term'));
+  const have = terms.filter(x => x.has);
+  if (!have.length) return { score: null, max: 0, pct: null, has: false, complete: false, terms };
+  const score = have.reduce((a, x) => a + x.score, 0), max = have.reduce((a, x) => a + x.max, 0);
+  return { score, max, pct: score / max * 100, has: true, complete: have.length === 3 && have.every(x => x.complete), terms };
+}
+function studentSummary(ms, subjects, scope, term, settings) {
+  const rows = subjects.map(s => Object.assign({ subj: s }, subjectResult(ms && ms[s.id], s, scope, term)));
+  const have = rows.filter(r => r.has);
+  const total = have.reduce((a, r) => a + r.score, 0);
+  const totalMax = have.reduce((a, r) => a + r.max, 0);
+  const avg = totalMax > 0 ? total / totalMax * 100 : null;
+  const passed = have.filter(r => r.pct + 1e-9 >= settings.passPct).length;
+  return {
+    rows, total, totalMax, avg, counted: have.length, passed,
+    success: have.length ? passed / have.length * 100 : null,
+    complete: have.length === subjects.length && subjects.length > 0 && have.every(r => r.complete),
+    grade: avg === null ? null : gradeFor(avg, settings.bands)
+  };
+}
+function classResults(students, marks, subjects, scope, term, settings) {
+  const list = students.map(st => ({ st, sum: studentSummary(marks[st.id], subjects, scope, term, settings), pos: null }));
+  const ranked = list.filter(x => x.sum.avg !== null)
+    .sort((a, b) => (Math.abs(b.sum.avg - a.sum.avg) > 1e-9 ? b.sum.avg - a.sum.avg : 0) || a.st.name.localeCompare(b.st.name));
+  // A learner with no marks is also incomplete. Do not publish positions until every enrolled learner is complete.
+  const incompleteN = list.filter(x => !x.sum.complete).length, rankingOpen = incompleteN === 0;
+  ranked.forEach((x, i) => {
+    x.pos = !rankingOpen ? null : (i > 0 && Math.abs(x.sum.avg - ranked[i - 1].sum.avg) <= 1e-9) ? ranked[i - 1].pos : i + 1;
+  });
+  const passedN = ranked.filter(x => x.sum.avg + 1e-9 >= settings.passPct).length;
+  const stats = {
+    enrolled: students.length, ranked: ranked.length, incomplete: incompleteN, rankingOpen, passed: passedN, failed: ranked.length - passedN,
+    success: ranked.length ? passedN / ranked.length * 100 : null,
+    mean: ranked.length ? ranked.reduce((a, x) => a + x.sum.avg, 0) / ranked.length : null
+  };
+  const subjStats = subjects.map((s, i) => {
+    const vals = list.map(x => x.sum.rows[i]).filter(r => r.has);
+    const p = vals.filter(r => r.pct + 1e-9 >= settings.passPct).length;
+    return { subj: s, n: vals.length, mean: vals.length ? vals.reduce((a, r) => a + r.pct, 0) / vals.length : null,
+             passRate: vals.length ? p / vals.length * 100 : null };
+  });
+  return { list: ranked.concat(list.filter(x => x.sum.avg === null).sort((a, b) => a.st.name.localeCompare(b.st.name))), ranked, stats, subjStats };
+}
+//#CALC-END
+
+/* ---------- state & storage ---------- */
+const ui = { tab: 'marks', part: 'mid', perPage: '1', maxAll: true, rcSort: 'name', rcFilter: 'all', mkSort: 'name', resSort: 'rank', q: { marks: '', results: '', cards: '' }, resScope: 'term', rcScope: 'term', rcStudent: 'all', storageOk: true, bannerHidden: false };
+const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const $ = id => document.getElementById(id);
+// [subject, MID max, CAT max, Exam max] – the school's standard maximum marks
+const TEMPLATES = {
+  lower: { label: 'Lower primary (P1–P3): total 1000', subs: [['MATHEMATICS', 50, 50, 100], ['IKINYARWANDA', 50, 50, 100], ['ENGLISH', 50, 50, 100], ['FRENCH', 30, 30, 60], ['SRS', 30, 30, 60], ['SET', 30, 30, 60], ['CAA', 5, 5, 10], ['SPORT', 5, 5, 10]] },
+  upper: { label: 'Upper primary (P4–P6): total 1200', subs: [['MATHEMATICS', 50, 50, 100], ['IKINYARWANDA', 50, 50, 100], ['ENGLISH', 50, 50, 100], ['SET', 50, 50, 100], ['SRS', 50, 50, 100], ['FRENCH', 30, 30, 60], ['CAA', 10, 10, 20], ['SPORT', 10, 10, 20]] }
+};
+const mkSubj = (name, mid, cat, exam) => ({ id: uid(), name, mid, cat, exam });
+const guessLevel = name => { const m = String(name).match(/\d/); return m && +m[0] >= 4 ? 'upper' : 'lower'; };
+
+function defaults() {
+  return {
+    version: 1, lastBackup: null,
+    school: { country: 'REPUBLIC OF RWANDA', ministry: 'MINISTRY OF EDUCATION', name: 'CENTRE SCOLAIRE UTUNYENYERI', address: 'KIGARAMA KICUKIRO', phone: '250 787 318 134', place: 'Kigarama', logo: '', headTitle: 'Head Teacher' },
+    settings: { passPct: 50, bands: [
+      { min: 80, grade: 'A', remark: 'Excellent' }, { min: 70, grade: 'B', remark: 'Very good' },
+      { min: 60, grade: 'C', remark: 'Good' }, { min: 50, grade: 'D', remark: 'Satisfactory' },
+      { min: 0, grade: 'E', remark: 'Needs improvement' }] },
+    years: {}, current: { year: null, term: 1, classId: null }
+  };
+}
+function normalize(o) {
+  const d = defaults();
+  const oldName = (o.school || {}).name;
+  o.school = Object.assign(d.school, o.school || {});
+  if (oldName === 'Your School Name') { const dd = defaults().school; o.school.name = dd.name; if (!o.school.address) o.school.address = dd.address; }
+  o.settings = Object.assign(d.settings, o.settings || {});
+  const passPct = Number(o.settings.passPct);
+  o.settings.passPct = Number.isFinite(passPct) && passPct >= 0 && passPct <= 100 ? passPct : d.settings.passPct;
+  if (bandsError(o.settings.bands)) o.settings.bands = d.settings.bands;
+  o.years = o.years || {};
+  Object.values(o.years).forEach(y => { y.classes = y.classes || []; y.students = y.students || []; y.marks = y.marks || {}; y.comments = y.comments || {}; });
+  o.current = Object.assign(d.current, o.current || {});
+  o.current.term = [1, 2, 3].includes(Number(o.current.term)) ? Number(o.current.term) : 1;
+  if (o.lastBackup === undefined) o.lastBackup = null;
+  return o;
+}
+function loadDB() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) { const o = JSON.parse(raw); if (o && o.years) return normalize(o); }
+  } catch (e) { ui.storageOk = false; }
+  return defaults();
+}
+let DB = loadDB();
+function save() {
+  if (CLOUD.on) { cloudSave(); return; }
+  try {
+    localStorage.setItem(KEY, JSON.stringify(DB));
+    $('saveStatus').textContent = 'Saved ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    ui.storageOk = true;
+  } catch (e) {
+    ui.storageOk = false; $('saveStatus').textContent = '';
+    renderBanner();
+  }
+}
+if (!Object.keys(DB.years).length) {
+  const y = String(new Date().getFullYear());
+  DB.years[y] = { classes: [], students: [], marks: {}, comments: {} };
+  DB.current.year = y;
+}
+if (!DB.years[DB.current.year]) DB.current.year = Object.keys(DB.years).sort().pop();
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+
+const Y = () => DB.years[DB.current.year];
+const curClass = () => Y().classes.find(c => c.id === DB.current.classId) || null;
+const studentsOf = cid => Y().students.filter(s => s.classId === cid).sort((a, b) => a.name.localeCompare(b.name));
+function fixClass() { if (!curClass()) DB.current.classId = Y().classes.length ? Y().classes[0].id : null; }
+fixClass();
+
+/* ---------- header ---------- */
+function renderHeader() {
+  $('schoolTitle').textContent = DB.school.name || 'School Report Card Manager';
+  $('subTitle').textContent = 'Report cards · Academic year ' + DB.current.year + ' · Term ' + DB.current.term;
+  document.title = DB.school.name + ' – Report Cards';
+  $('selYear').innerHTML = Object.keys(DB.years).sort().reverse().map(y => `<option ${y === DB.current.year ? 'selected' : ''}>${esc(y)}</option>`).join('');
+  $('selTerm').value = String(DB.current.term);
+  const cl = Y().classes;
+  $('selClass').innerHTML = cl.length ? cl.map(c => `<option value="${c.id}" ${c.id === DB.current.classId ? 'selected' : ''}>${esc(c.name)}</option>`).join('') : '<option value="">(no classes yet)</option>';
+  document.querySelectorAll('#tabs button').forEach(b => { b.classList.toggle('on', b.dataset.tab === ui.tab); const t = b.dataset.tab; b.style.display = (t === 'users' ? (CLOUD.on && isAdmin()) : (isAdmin() || (t !== 'classes' && t !== 'settings'))) ? '' : 'none'; });
+  const ny = document.querySelector('[data-act="newYear"]'); if (ny) ny.style.display = isAdmin() ? '' : 'none';
+  $('acct').innerHTML = CLOUD.on && CLOUD.profile ? '👤 ' + esc(CLOUD.profile.full_name || CLOUD.profile.email) + ' · ' + (isAdmin() ? 'Administrator' : 'Teacher') + ' <button class="small" data-act="changePw">Password</button> <button class="small" data-act="signOut">Sign out</button>' : '';
+  renderBanner();
+}
+function hasData() { return Object.values(DB.years).some(y => y.students.length); }
+function renderBanner() {
+  let h = '';
+  const latest = Object.keys(DB.years).sort().pop(), nowY = new Date().getFullYear();
+  if (ui.storageOk && isAdmin() && !ui.yearBannerHidden && /^\d{4}$/.test(latest) && nowY > +latest)
+    h += `<div class="b"><b>It is now ${nowY}.</b> The newest academic year saved here is ${esc(latest)}. Start academic year ${nowY}? Your ${esc(latest)} data stays saved. <button class="small" data-act="startYear">Start ${nowY}</button> <button class="small ghost" data-act="hideYear">Not now</button></div>`;
+  if (CLOUD.on && CLOUD.err) h += `<div class="b err"><b>Not saved yet:</b> ${esc(CLOUD.err)} The app keeps trying again. Please do not close this page until the status at the top says Saved.</div>`;
+  if (!CLOUD.on && !ui.storageOk) h += `<div class="b err"><b>Warning:</b> this browser is not allowing the app to save. Your work will be lost when you close the page. Download a backup now, and open the file in a normal (not private) browser window. <button class="small" data-act="backup">Download backup</button></div>`;
+  else if (!CLOUD.on && hasData() && !ui.bannerHidden) {
+    const days = DB.lastBackup ? (Date.now() - new Date(DB.lastBackup).getTime()) / 864e5 : Infinity;
+    if (days > 7) h += `<div class="b">${DB.lastBackup ? 'Your last backup was ' + Math.floor(days) + ' days ago.' : 'You have not downloaded a backup yet.'} Keep a copy in case this computer or browser data is lost. <button class="small" data-act="backup">Download backup</button> <button class="small ghost" data-act="hideBanner">Later</button></div>`;
+  }
+  $('banner').innerHTML = h;
+}
+
+/* ---------- views ---------- */
+function applyPaper() { try { let el = document.getElementById('pageStyle'); if (!el) { el = document.createElement('style'); el.id = 'pageStyle'; document.head.appendChild(el); } const yr = ui.tab === 'cards' && ui.rcScope === 'year', a5 = ui.perPage === 'a5', wide2 = ui.tab === 'cards' && ui.rcScope !== 'year' && ui.perPage === '2land'; el.textContent = '@page{size:' + (a5 ? 'A5' : 'A4') + ((yr || wide2) ? ' landscape' : '') + ';margin:' + (a5 ? '8mm' : '10mm') + '}'; } catch (_) {} }
+function render() { if (CLOUD.on && !CLOUD.ready) return; if (!isAdmin() && ['classes', 'settings', 'users'].includes(ui.tab)) ui.tab = 'marks'; fixClass(); renderHeader(); applyPaper(); $('view').dataset.screen = ui.tab; const v = { marks: viewMarks, results: viewResults, cards: viewCards, classes: viewClasses, settings: viewSettings, users: viewUsers }[ui.tab]; $('view').innerHTML = v(); applyLiveFilter(); }
+const needClass = () => `<div class="panel">Please add a class first (for example <b>P1 A</b>) in <a href="#" data-tab="classes">Classes &amp; learners</a>.</div>`;
+const fmt = (x, d = 1) => x === null || x === undefined ? '—' : r1(x).toFixed(1);
+const subjHeaderCells = (subjects, part, term) => subjects.map(s => `<th>${esc(s.name)}${part ? `<br><small class="muted">/${smax(s, term)[part]}</small>` : ''}</th>`).join('');
+
+function viewMarks() {
+  const cls = curClass(); if (!cls) return needClass();
+  const studs = ui.mkSort === 'namez' ? studentsOf(cls.id).reverse() : studentsOf(cls.id);
+  const sets = DB.settings, part = ui.part, term = DB.current.term;
+  if (!cls.subjects.length) return `<div class="panel">This class has no subjects yet. Add them in <a href="#" data-tab="classes">Classes &amp; learners</a>.</div>`;
+  if (!studs.length) return `<div class="panel">This class has no learners yet. Add them in <a href="#" data-tab="classes">Classes &amp; learners</a>.</div>`;
+  const opt = k => `<option value="${k}" ${part === k ? 'selected' : ''}>${PART_LABEL[k]}</option>`;
+  let body = '';
+  studs.forEach((st, r) => {
+    body += `<tr data-row="${st.id}" data-name="${esc((st.name + ' ' + (st.idno || '')).toLowerCase())}"><td>${r + 1}</td><td class="l">${esc(st.name)}</td>` + cls.subjects.map((s, c) => {
+      const v = (((Y().marks[st.id] || {})[s.id] || {})[term] || {})[part];
+      return `<td><input class="mk" inputmode="decimal" data-r="${r}" data-c="${c}" data-st="${st.id}" data-sj="${s.id}" ${+smax(s, term)[part] <= 0 ? 'disabled title="Not used for this subject (maximum is 0)"' : !canWrite(cls.id, s.id) ? 'disabled title="You are not assigned to this subject"' : ''} value="${v === undefined || v === null ? '' : esc(v)}"></td>`;
+    }).join('') + `<td id="tot-${st.id}"></td><td id="pct-${st.id}"></td></tr>`;
+  });
+  setTimeout(() => studs.forEach(st => updateRow(st.id)), 0);
+  return `<div class="panel"><h2>Enter marks – ${esc(cls.name)}, Term ${term}, ${esc(DB.current.year)}</h2>
+  <div class="row"><label>Assessment you are entering&nbsp;<select id="selPart" data-f="part">${opt('mid')}${opt('cat')}${opt('exam')}</select></label>
+  <label>Sort by<select data-f="mkSort">${optList(ui.mkSort, [['name', 'Name A–Z'], ['namez', 'Name Z–A']])}</select></label>${findBox()}
+  <button class="ghost" data-act="pasteMarks">Paste marks from spreadsheet</button>
+  <span class="muted">Type a mark and press Enter (moves down) or Tab (moves right). Leave blank if the child has no mark yet; type 0 for a real zero. Marks above the maximum are refused. Everything saves automatically. <b>To enter many at once:</b> copy a block of marks in Excel, click the first cell here and press Ctrl+V, or use “Paste marks from spreadsheet”.</span></div>
+  <div class="tablewrap"><table><thead><tr><th>#</th><th class="l">Learner</th>${subjHeaderCells(cls.subjects, part, term)}<th>Total</th><th>%</th></tr></thead><tbody>${body}</tbody></table></div></div>`;
+}
+function updateRow(stId) {
+  const cls = curClass(); if (!cls) return;
+  const s = studentSummary(Y().marks[stId], cls.subjects, ui.part, DB.current.term, DB.settings);
+  const t = $('tot-' + stId), p = $('pct-' + stId);
+  if (t) t.textContent = s.avg === null ? '' : `${r1(s.total)}/${r1(s.totalMax)}`;
+  if (p) p.textContent = s.avg === null ? '' : fmt(s.avg);
+}
+
+const SCOPE_OPTS = k => ['mid', 'cat', 'exam', 'term', 'year'].map(x => `<option value="${x}" ${k === x ? 'selected' : ''}>${x === 'term' ? 'Full term (CAT + Midterm + Exam)' : x === 'year' ? 'Whole year (Terms 1–3)' : 'Only ' + PART_LABEL[x]}</option>`).join('');
+const scopeLine = scope => scope === 'year' ? `Academic year ${DB.current.year}` : `Term ${DB.current.term} · Academic year ${DB.current.year}`;
+
+const ordinal = n => ['', '1st', '2nd', '3rd'][n] || n + 'th';
+const f1 = x => (x === null || x === undefined) ? '' : r1(x).toFixed(1);
+/* ===== shared models: the screen, the printout, the PDF, the Excel file and the CSV all read these ===== */
+const ff = v => (v === null || v === undefined) ? '' : r1(v).toFixed(1);
+const cT = (t, span) => ({ t: String(t == null ? '' : t), span: span || 1 });
+const cNum = (v, span) => (v === null || v === undefined || v === '' || Number.isNaN(+v)) ? cT('', span) : { t: String(r1(+v)), n: r1(+v), span: span || 1 };
+const cPct = (v, span) => (v === null || v === undefined) ? cT('', span) : { t: ff(v) + '%', n: r1(v), pct: true, span: span || 1 };
+const cMark = (v, mx) => +mx > 0 ? cNum(v) : cT('—');
+
+function resultsModel() {
+  const cls = curClass(), scope = ui.resScope, term = DB.current.term, sc = DB.school, subs = cls.subjects;
+  const cr = classResults(studentsOf(cls.id), Y().marks, subs, scope, term, DB.settings), st = cr.stats;
+  const maxOf = s => { if (scope === 'year') return [1, 2, 3].reduce((a, t) => { const m = smax(s, t); return a + (+m.cat || 0) + (+m.mid || 0) + (+m.exam || 0); }, 0); const m = smax(s, term); return scope === 'term' ? (+m.cat || 0) + (+m.mid || 0) + (+m.exam || 0) : (+m[scope] || 0); };
+  const period = scope === 'year' ? 'Whole year' : ordinal(term) + ' Term' + (scope === 'term' ? '' : ' – ' + PART_LABEL[scope]);
+  const avgLabel = scope === 'year' ? 'Year' : scope === 'term' ? ordinal(term) : PART_LABEL[scope];
+  const rows = sortLearners(cr.list, ui.resSort).map(x => ({
+    st: x.st, pos: x.pos, name: x.st.name.toUpperCase(),
+    cells: x.sum.rows.map(r => r.has ? { n: r1(r.score), partial: !r.complete } : null),
+    total: x.sum.avg === null ? null : r1(x.sum.total), avg: x.sum.avg === null ? null : r1(x.sum.avg), inc: x.sum.avg !== null && !x.sum.complete
+  }));
+  const colTot = subs.map((s, i) => r1(cr.list.reduce((a, x) => a + (x.sum.rows[i].has ? x.sum.rows[i].score : 0), 0)));
+  const grand = r1(cr.list.reduce((a, x) => a + (x.sum.avg === null ? 0 : x.sum.total), 0));
+  return {
+    cls, scope, term, cr, st, period, avgLabel,
+    note: st.incomplete ? '* Incomplete: marks are missing for ' + st.incomplete + ' learner' + (st.incomplete === 1 ? '' : 's') + ', so their averages only count the marks entered. Positions are shown once every learner’s marks are complete.' : '',
+    left: [sc.name.toUpperCase(), (sc.address || '').toUpperCase(), sc.phone || ''],
+    right: ['School Year: ' + DB.current.year, period, 'Class: ' + cls.name, 'Avg ' + avgLabel + ': ' + ff(st.mean) + (st.mean === null ? '' : '%')],
+    subjects: subs.map(s => s.name.toUpperCase()), maxima: subs.map(s => r1(maxOf(s))), maxTotal: r1(subs.reduce((a, s) => a + maxOf(s), 0)),
+    rows, foot: { total: colTot, grand, success: cr.subjStats.map(s => s.passRate), successAll: st.success, avg: cr.subjStats.map(s => s.mean), avgAll: st.mean },
+    done: ['Done at ' + (sc.place || '') + ' on ................................', 'by ........................................................']
+  };
+}
+
+function viewResults() {
+  const cls = curClass(); if (!cls) return needClass();
+  const m = resultsModel(), st = m.st, n = m.subjects.length, pass = DB.settings.passPct;
+  // Printing: the list is fitted to the A4 page width, and the row height is chosen from the number of learners so the sheet fills the page (long classes continue on a second page with the header repeated).
+  const avail = 1047 - 76 - 112 - 72 - (m.note ? 46 : 0) - 90, prow = Math.max(17, Math.min(24, avail / (m.rows.length + 4)));
+  const pfs = Math.max(10.5, Math.min(12.5, prow * 0.62)), ppad = Math.max(1, (prow - pfs * 1.15) / 2 - 0.5);
+  const procVars = `--pfs:${pfs.toFixed(1)}px;--ppad:${ppad.toFixed(1)}px;--pdone:${Math.round(Math.max(20, Math.min(60, avail - prow * (m.rows.length + 4) + 28)))}px`;
+  const rows = m.rows.map(x => `<tr data-name="${esc((x.st.name + ' ' + (x.st.idno || '')).toLowerCase())}"><td>${x.pos === null ? '' : x.pos}</td><td class="nm">${esc(x.name)}</td>` +
+    x.cells.map(c => `<td>${c ? c.n + (c.partial ? '<span class="noprint">*</span>' : '') : ''}</td>`).join('') +
+    `<td>${x.total === null ? '' : x.total}</td><td>${x.avg === null ? '' : x.avg.toFixed(1) + '%' + (x.inc ? ' *' : '')}</td></tr>`).join('');
+  const foot = `<tr><td colspan="2" class="nm">Total</td>${m.foot.total.map(v => `<td>${v}</td>`).join('')}<td>${m.foot.grand}</td><td></td></tr>
+   <tr><td colspan="2" class="nm">Success rate</td>${m.foot.success.map(v => `<td>${ff(v)}</td>`).join('')}<td>${ff(m.foot.successAll)}</td><td></td></tr>
+   <tr><td colspan="2" class="nm">Average</td>${m.foot.avg.map(v => `<td>${ff(v)}</td>`).join('')}<td>${ff(m.foot.avgAll)}</td><td></td></tr>`;
+  const incomplete = m.cr.list.some(x => x.sum.avg !== null && !x.sum.complete);
+  const bars = m.cr.subjStats.map(s => { const v = s.mean === null ? 0 : Math.max(0, Math.min(100, s.mean)); return `<div class="bar"><span class="bl">${esc(s.subj.name)}</span><div class="bt"><i class="${s.mean !== null && s.mean + 1e-9 < pass ? 'low' : ''}" style="width:${v}%"></i><u style="left:${pass}%" title="Pass mark ${pass}%"></u></div><b>${s.mean === null ? '–' : ff(s.mean) + '%'}</b></div>`; }).join('');
+  return `<div class="panel noprint"><h2>Class results – ${esc(cls.name)}</h2>
+   <div class="row"><label>Show results for&nbsp;<select data-f="resScope">${SCOPE_OPTS(m.scope)}</select></label>
+    <label>Sort by<select data-f="resSort">${optList(ui.resSort, [['rank', 'Position (best first)'], ['rankrev', 'Position (last first)'], ['name', 'Name A–Z'], ['namez', 'Name Z–A']])}</select></label>${findBox()}</div>
+   <div class="row actions"><button data-act="print">🖨️ Print</button><button class="b-pdf" data-act="pdfResults">⬇ Download PDF</button><button class="b-xls" data-act="xlsxResults">⬇ Download Excel (.xlsx)</button><button class="ghost" data-act="csv">⬇ Download CSV</button>
+    <span class="muted">PDF, Excel and CSV all have the same layout as the printed list below. They work even where printing is blocked.</span></div>
+   <div class="stats"><div class="stat t-sky">Learners with marks<b>${st.ranked} / ${st.enrolled}</b></div><div class="stat t-leaf">Passed (average ≥ ${pass}%)<b>${st.passed}</b></div><div class="stat t-coral">Failed<b>${st.failed}</b></div><div class="stat t-violet">Class success rate<b>${fmt(st.success)}%</b></div><div class="stat t-sun">Class average<b>${fmt(st.mean)}%</b></div></div>
+   ${m.note ? `<div class="logoprompt">⚠ ${esc(m.note)}</div>` : ''}
+   <div class="bars"><h3>Average by subject <small>the line marks the ${pass}% pass mark</small></h3>${bars}</div>
+   ${incomplete ? '<p class="muted">* A star on screen means some marks for that subject are not entered yet, so the figure only counts the marks that exist (stars do not print).</p>' : ''}
+   <p class="muted">Ranking: learners whose averages are exactly equal share a position (the comparison uses the real average, not the rounded figure). Positions are shown only when every learner’s marks are complete. Subject success rates include only learners with marks entered for that subject; the Total success rate includes only learners with an overall average. Both use the ${pass}% pass mark. The sheet below is what prints. “Find” only narrows what you see on screen; the printed list always shows the whole class (Sort does change the printed order).</p></div>
+  <div class="proc" style="${procVars}"><div class="hdr"><div>${m.left.map(esc).join('<br>')}</div>
+   <div class="r">${m.right.map(esc).join('<br>')}</div></div>
+   <table><colgroup><col class="c-rank"><col class="c-name">${m.subjects.map(() => '<col>').join('')}<col class="c-tot"><col class="c-avg"></colgroup><thead><tr><th colspan="2" class="nm" style="vertical-align:bottom">Subjects</th>${m.subjects.map(s => `<th class="rot"><span>${esc(s)}</span></th>`).join('')}<th class="rot"><span>Total</span></th><th class="rot"><span>Avg</span></th></tr>
+   <tr class="mx"><td class="nm">Rank</td><td class="nm">Maxima</td>${m.maxima.map(v => `<td>${v}</td>`).join('')}<td>${m.maxTotal}</td><td>%</td></tr></thead>
+   <tbody>${rows || `<tr><td colspan="${n + 4}">No learners or marks yet.</td></tr>`}</tbody><tfoot>${foot}</tfoot></table>
+   <div class="done">${esc(m.done[0])}<br>${esc(m.done[1])}</div>${m.note ? `<div class="done" style="margin-top:8px;font-style:italic">${esc(m.note)}</div>` : ''}</div>`;
+}
+
+function commentKey(scope) { return scope === 'year' ? 'y' : String(DB.current.term); }
+const fmtDate = d => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d || ''); return m ? `${m[3]}/${m[2]}/${m[1]}` : (d || ''); };
+const cv = (v, mx) => (+mx > 0) ? (v === null || v === undefined ? '' : String(r1(v))) : '—';
+function rankCtx(studs, cls, scope, term) {
+  const cr = classResults(studs, Y().marks, cls.subjects, scope, term, DB.settings), m = {};
+  cr.list.forEach(x => { if (x.pos !== null) m[x.st.id] = x.pos; });
+  return { m, n: cr.stats.ranked, cr, open: cr.stats.rankingOpen };
+}
+const rk = (c, id) => c.m[id] === undefined ? (c.open === false ? '–' : '') : c.m[id];
+const cRank = (c, id, span) => c.m[id] !== undefined ? cNum(c.m[id], span) : cT(c.open === false ? '–' : '', span);
+const cStar = (c, inc) => (inc && c.pct) ? { t: c.t + ' *', span: c.span } : c;
+function cardNote(m) {
+  const p = [];
+  if (m.incomplete) p.push('* Incomplete: some marks have not been entered yet, so this average only counts the marks that exist.');
+  if (m.rankClosed) p.push('Positions are shown once every learner’s marks are complete.');
+  return p.join(' ');
+}
+
+function cardModel(x, cls, scope, term, ctx) {
+  const s = x.sum, sch = DB.school, st = x.st, marks = Y().marks[st.id] || {};
+  const cm = ((Y().comments[st.id] || {})[commentKey(scope)]) || {};
+  const nm = r => r.subj.name.toUpperCase();
+  let cols, rows, sums, bold, ysums = null;
+  if (scope === 'term') {
+    let mid = 0, cat = 0, ex = 0, midE = 0, catE = 0, exE = false, mxMid = 0, mxCat = 0, mxEx = 0;
+    rows = s.rows.map(r => {
+      const m = (marks[r.subj.id] || {})[term] || {}, mx = smax(r.subj, term);
+      const vm = num(m.mid), vc = num(m.cat), ve = num(m.exam);
+      if (vm !== null && +mx.mid > 0) { mid += vm; midE += +mx.mid; }
+      if (vc !== null && +mx.cat > 0) { cat += vc; catE += +mx.cat; }
+      if (ve !== null && +mx.exam > 0) { ex += ve; exE = true; }
+      mxMid += +mx.mid || 0; mxCat += +mx.cat || 0; mxEx += +mx.exam || 0;
+      return [cT(nm(r)), +mx.mid === +mx.cat ? cNum(mx.mid) : cT(r1(mx.mid) + ' / ' + r1(mx.cat)), cMark(vm, mx.mid), cMark(vc, mx.cat), cNum(mx.exam), cMark(ve, mx.exam), r.has ? cNum(r.max) : cT(''), r.has ? cNum(r.score) : cT('')];
+    });
+    cols = [['SUBJECTS', 30, 'l'], ['MAX', 10], ['MID', 10], ['CAT', 10], ['MAX EXAM', 13], ['EXAM', 10], ['FULL MARKS', 15], ['MARKS GAINED', 17]];
+    bold = 7;
+    sums = [
+      [cT('Total'), mxMid === mxCat ? cNum(mxMid) : cT(r1(mxMid) + ' / ' + r1(mxCat)), midE ? cNum(mid) : cT(''), catE ? cNum(cat) : cT(''), cNum(mxEx), exE ? cNum(ex) : cT(''), s.counted ? cNum(s.totalMax) : cT(''), s.counted ? cNum(s.total) : cT('')],
+      [cT('Average', 2), midE ? cStar(cPct(mid / midE * 100), midE < mxMid - 1e-9) : cT(''), catE ? cStar(cPct(cat / catE * 100), catE < mxCat - 1e-9) : cT(''), s.avg === null ? cT('', 4) : cStar(cPct(s.avg, 4), !s.complete)],
+      [cT('Rank of: ' + ctx.main.n, 2), cRank(ctx.mid, st.id), cRank(ctx.cat, st.id), cRank(ctx.main, st.id, 4)]
+    ];
+  } else if (scope === 'year') {
+    const ts = [1, 2, 3].map(t => studentSummary(marks, cls.subjects, 'term', t, DB.settings));
+    const P = [0, 1, 2].map(() => ({ mid: 0, cat: 0, ex: 0, midE: false, catE: false, exE: false, mxEx: 0 }));
+    let mx1m = 0, mx1c = 0, aM = 0, aG = 0;
+    rows = s.rows.map(r => {
+      const sm = smax(r.subj, 1); mx1m += +sm.mid || 0; mx1c += +sm.cat || 0;
+      const cells = [cT(nm(r)), +sm.mid === +sm.cat ? cNum(sm.mid) : cT(r1(sm.mid) + ' / ' + r1(sm.cat))];
+      let am = 0, ag = 0;
+      [1, 2, 3].forEach((t, i) => {
+        const m = (marks[r.subj.id] || {})[t] || {}, mx = smax(r.subj, t), T = r.terms[i], p = P[i];
+        const vm = num(m.mid), vc = num(m.cat), ve = num(m.exam);
+        if (vm !== null && +mx.mid > 0) { p.mid += vm; p.midE = true; }
+        if (vc !== null && +mx.cat > 0) { p.cat += vc; p.catE = true; }
+        if (ve !== null && +mx.exam > 0) { p.ex += ve; p.exE = true; }
+        p.mxEx += +mx.exam || 0;
+        if (T.has) { am += T.max; ag += T.score; }
+        cells.push(cMark(vm, mx.mid), cMark(vc, mx.cat), cNum(mx.exam), cMark(ve, mx.exam), T.has ? cNum(T.max) : cT(''), T.has ? cNum(T.score) : cT(''));
+      });
+      aM += am; aG += ag;
+      cells.push(r.has ? cNum(am) : cT(''), r.has ? cNum(ag) : cT(''), r.has ? cStar(cPct(r.pct), !r.complete) : cT(''));
+      return cells;
+    });
+    const tot = [cT('TOTAL'), mx1m === mx1c ? cNum(mx1m) : cT(r1(mx1m) + ' / ' + r1(mx1c))];
+    P.forEach((p, i) => tot.push(p.midE ? cNum(p.mid) : cT(''), p.catE ? cNum(p.cat) : cT(''), cNum(p.mxEx), p.exE ? cNum(p.ex) : cT(''), ts[i].counted ? cNum(ts[i].totalMax) : cT(''), ts[i].counted ? cNum(ts[i].total) : cT('')));
+    // Annual maximum must match the maximum marks represented by the annual marks gained, not Term 1's CAT + midterm maximum.
+    tot.push(s.counted ? cNum(aM) : cT(''), s.counted ? cNum(aG) : cT(''), cStar(cPct(s.avg), !s.complete));
+    const pos = (c, span) => cT(String(rk(c, st.id)) + ' / ' + (c.n || ctx.N), span);
+    ysums = [
+      { k: 'tot', cells: tot },
+      { k: 'pct', cells: [cT('%'), cStar(cPct(ts[0].avg, 7), !ts[0].complete), cStar(cPct(ts[1].avg, 6), !ts[1].complete), cStar(cPct(ts[2].avg, 6), !ts[2].complete), cStar(cPct(s.avg, 3), !s.complete)] },
+      { k: 'pos', cells: [cT('Position'), pos(ctx.t[0], 7), pos(ctx.t[1], 6), pos(ctx.t[2], 6), pos(ctx.main, 3)] },
+      { k: 'obs', cells: [] },
+      { k: 'sigT', cells: [cT("Teacher's signature"), cT('', 7), cT('', 6), cT('', 6), cT('', 3)] },
+      { k: 'sigP', cells: [cT("Parent's signature"), cT('', 7), cT('', 6), cT('', 6), cT('', 3)] }
+    ];
+    cols = null; sums = []; bold = -1;
+  } else {
+    const mxAll = cls.subjects.reduce((a, sj) => a + (+smax(sj, term)[scope] || 0), 0);
+    cols = [['SUBJECTS', 46, 'l'], ['MAX', 16], ['MARKS GAINED', 20], ['PERCENT', 18]]; bold = 2;
+    rows = s.rows.map(r => [cT(nm(r)), cNum(+smax(r.subj, term)[scope] || 0), r.has ? cNum(r.score) : cT(''), r.has ? cPct(r.pct) : cT('')]);
+    sums = [
+      [cT('Total'), cNum(mxAll), s.counted ? cNum(s.total) : cT(''), cT('')],
+      [cT('Average', 2), cStar(cPct(s.avg, 2), !s.complete)],
+      [cT('Rank of: ' + ctx.main.n, 2), cRank(ctx.main, st.id, 2)]
+    ];
+  }
+  return {
+    st, school: { country: sch.country || '', name: (sch.name || '').toUpperCase(), address: (sch.address || '').toUpperCase(), phone: sch.phone || '', ministry: sch.ministry || '', place: sch.place || '' },
+    kind: scope === 'year' ? 'year' : 'std', ysums,
+    year: DB.current.year, period: scope === 'year' ? 'Whole year' : ordinal(term) + ' Term', logo: sch.logo || '',
+    title: scope === 'year' ? 'PROGRESSIVE SCHOOL REPORT' : 'REPORT CARD' + ({ mid: ' – MIDTERM', cat: ' – CAT', exam: ' – END-OF-TERM EXAM', term: '' }[scope]),
+    clsName: cls.name, N: ctx.N, born: fmtDate(st.dob), pob: st.pob || '', idno: st.idno || '', conduct: cm.conduct || '', obs: cm.teacher || '',
+    cols, rows, sums, bold, incomplete: !s.complete, rankClosed: ctx.main.open === false
+  };
+}
+
+function cardHTML(x, cls, scope, term, ctx) { return cardFromModel(cardModel(x, cls, scope, term, ctx)); }
+/* ---------- whole-year report card: landscape "Progressive school report" (three terms + annual points) ---------- */
+const Y_W = [20, 4.6, 4.2, 4.2, 5, 4.2, 5, 5.6, 4.2, 4.2, 5, 4.2, 5, 5.6, 4.2, 4.2, 5, 4.2, 5, 5.6, 5.2, 5.6, 6.4];
+const Y_SUM = Y_W.reduce((a, b) => a + b, 0);
+const Y_HEAD = ['', 'MAX', 'MID', 'CAT', 'MAX EX', 'EX', 'FULL MARKS', 'MARKS GAINED', 'MID', 'CAT', 'MAX EX', 'EX', 'FULL MARKS', 'MARKS GAINED', 'MID', 'CAT', 'MAX EX', 'EX', 'FULL MARKS', 'MARKS GAINED', 'MAX', 'GAINED', '%'];
+const Y_GROUPS = [['1st TERM', 1, 7], ['2nd TERM', 8, 6], ['3rd TERM', 14, 6], ['ANNUAL POINTS', 20, 3]];
+const Y_START = new Set([1, 8, 14, 20]), Y_GAIN = new Set([7, 13, 19, 21]);
+const yDone = m => 'Done at ' + (m.school.place || '') + ' the ' + '.'.repeat(m.school.place ? 30 : 34);
+function yearHTML(m) {
+  const sch = m.school, cc = (c0, extra) => ((c0 === 0 ? 'l ' : '') + (Y_START.has(c0) ? 'gs ' : '') + (Y_GAIN.has(c0) ? 'gn ' : '') + (extra || '')).trim();
+  const colgroup = '<colgroup>' + Y_W.map(w => `<col style="width:${(w / Y_SUM * 100).toFixed(3)}%">`).join('') + '</colgroup>';
+  const head = `<tr><th class="l" rowspan="2">Subjects</th>${Y_GROUPS.map(g => `<th colspan="${g[2]}" class="gs">${g[0]}</th>`).join('')}</tr><tr>${Y_HEAD.slice(1).map((h, i) => `<th class="${Y_START.has(i + 1) ? 'gs' : ''}">${h}</th>`).join('')}</tr>`;
+  const body = m.rows.map(r => `<tr>${r.map((c, i) => `<td class="${cc(i, i >= 20 ? 'b' : '')}">${esc(c.t)}</td>`).join('')}</tr>`).join('');
+  const sumRows = m.ysums.map(r => {
+    if (r.k === 'obs') return `<tr class="obs"><td class="l"><b>Observations</b></td><td colspan="14" class="l"><textarea rows="2" data-f="cmt" data-st="${m.st.id}" data-who="teacher">${esc(m.obs)}</textarea></td><td colspan="3" class="l"><b>Conduct</b></td><td colspan="5" class="l"><input class="cond" data-f="cmt" data-st="${m.st.id}" data-who="conduct" value="${esc(m.conduct)}"></td></tr>`;
+    let c0 = 0;
+    return `<tr class="${r.k}">${r.cells.map((c, j) => { const h = `<td colspan="${c.span}" class="${(j === 0 ? 'l ' : '') + (Y_START.has(c0) && j ? 'gs ' : '') + (r.k === 'tot' && Y_GAIN.has(c0) ? 'gn ' : '') + (r.k === 'tot' && c0 >= 20 ? 'b' : '')}">${esc(c.t)}</td>`; c0 += c.span; return h; }).join('')}</tr>`;
+  }).join('');
+  return `<div class="card yc" data-name="${esc((m.st.name + ' ' + m.idno).toLowerCase())}">
+  <div class="ytop"><div class="ybox">${esc(sch.country)}<br>${esc(sch.name)}<br>${esc(sch.phone)}</div>${m.logo ? `<div class="ylogo"><img alt="" src="${m.logo}"></div>` : '<div class="ylogo ph noprint">School logo appears here (add it above)</div>'}<div></div></div>
+  <h3>${esc(m.title)}</h3>
+  <div class="yinfo"><div><b>NAMES:</b> ${esc(m.st.name.toUpperCase())}</div><div><b>Number of Students:</b> ${m.N}</div><div><b>Class:</b> ${esc(m.clsName)}</div>
+   <div><b>Student's No.:</b> ${esc(m.idno)}</div><div><b>Option:</b></div><div><b>School Year:</b> ${esc(m.year)}</div></div>
+  <table class="ytb">${colgroup}<thead>${head}</thead><tbody>${body}${sumRows}</tbody></table>
+  ${cardNote(m) ? `<p class="inc">${esc(cardNote(m))}${m.incomplete ? ' Annual points count only assessment components with marks entered.' : ''}</p>` : ''}
+  <div class="verdict"><div><b>VERDICT OF THE JURY</b><div class="vopts"><div><i class="bx"></i>Promoted</div><div><i class="bx"></i>Advised to repeat</div><div><i class="bx"></i>Proposed to resit</div></div></div>
+   <div class="vr"><div>${esc(yDone(m))}</div><div class="hs">Head of the School</div></div></div></div>`;
+}
+function cardFromModel(m) {
+  if (m.kind === 'year') return yearHTML(m);
+  const td = (c, extra) => `<td${c.span > 1 ? ` colspan="${c.span}"` : ''}${extra || ''}>${esc(c.t)}</td>`;
+  const dots = n => '.'.repeat(n), sch = m.school;
+  const head = `<tr>${m.cols.map(c => `<th${c[2] === 'l' ? ' class="l"' : ''}>${esc(c[0])}</th>`).join('')}</tr>`;
+  const body = m.rows.map(r => `<tr>${r.map((c, i) => i === 0 ? td(c, ' class="l"') : i === m.bold ? `<td><b>${esc(c.t)}</b></td>` : td(c)).join('')}</tr>`).join('');
+  const sums = m.sums.map(r => `<tr class="sum">${r.map((c, i) => i === 0 ? td(c, ' class="l"') : td(c)).join('')}</tr>`).join('');
+  return `<div class="card" data-name="${esc((m.st.name + ' ' + m.idno).toLowerCase())}"><div class="top"><div>${esc(sch.country)}<br>${esc(sch.name)}<br>${esc(sch.address)}<br>${esc(sch.phone)}</div><div class="r">${esc(sch.ministry)}<br>${esc(m.year)}<br>${esc(m.period)}</div></div>
+  ${m.logo ? `<div class="logo"><img alt="" src="${m.logo}"></div>` : '<div class="logo ph noprint">School logo appears here (add it above)</div>'}
+  <h3>${esc(m.title)}</h3>
+  <table class="info"><tr><td colspan="3"><b>Student Name:</b> ${esc(m.st.name.toUpperCase())}</td></tr>
+   <tr><td colspan="2"><b>Born:</b> ${esc(m.born) || dots(14)} &nbsp;at&nbsp; ${esc(m.pob) || dots(14)}</td><td><b>Class:</b> ${esc(m.clsName)}</td></tr>
+   <tr><td><b>ID No.:</b> ${esc(m.idno)}</td><td><b>N. Students:</b> ${m.N}</td><td><b>Conduct:</b> <input class="cond" data-f="cmt" data-st="${m.st.id}" data-who="conduct" value="${esc(m.conduct)}"></td></tr></table>
+  <table class="tb"><thead>${head}</thead><tbody>${body}${sums}</tbody></table>
+  ${cardNote(m) ? `<p class="inc">${esc(cardNote(m))}</p>` : ''}
+  <div class="foot"><div class="obs">Observations<textarea rows="3" data-f="cmt" data-st="${m.st.id}" data-who="teacher">${esc(m.obs)}</textarea></div><div class="tsig">Teacher Signature</div><div class="psig">Parent Signature</div></div></div>`;
+}
+// Sort learners (items have .st and .pos): by name, or by position (learners without marks always last)
+function sortLearners(list, mode) {
+  const nm = (a, b) => a.st.name.localeCompare(b.st.name);
+  const l = list.slice();
+  if (mode === 'name') return l.sort(nm);
+  if (mode === 'namez') return l.sort((a, b) => nm(b, a));
+  const has = l.filter(x => x.pos !== null).sort((a, b) => (a.pos - b.pos) || nm(a, b));
+  const no = l.filter(x => x.pos === null).sort(nm);
+  if (mode === 'rankrev') has.reverse();
+  return has.concat(no);
+}
+const optList = (cur, arr) => arr.map(([v, l]) => `<option value="${v}" ${cur === v ? 'selected' : ''}>${l}</option>`).join('');
+const findBox = () => `<label>Find a learner<input type="search" data-f="q" placeholder="Type a name or ID no." value="${esc(ui.q[ui.tab] || '')}"><span id="qCount" class="muted"></span></label>`;
+
+function cardsSelection() {
+  const cls = curClass(); if (!cls) return null;
+  const scope = ui.rcScope, term = DB.current.term, studs = studentsOf(cls.id), pass = DB.settings.passPct;
+  if (!studs.length) return { cls, studs, chosen: [], selected: [], scope, term };
+  if (ui.rcStudent !== 'all' && !studs.find(s => s.id === ui.rcStudent)) ui.rcStudent = 'all';
+  const ctx = { N: studs.length, main: rankCtx(studs, cls, scope, term) };
+  if (scope === 'term') { ctx.mid = rankCtx(studs, cls, 'mid', term); ctx.cat = rankCtx(studs, cls, 'cat', term); }
+  if (scope === 'year') ctx.t = [1, 2, 3].map(t => rankCtx(studs, cls, 'term', t));
+  const fl = ui.rcFilter;
+  const keep = x => fl === 'pass' ? (x.sum.avg !== null && x.sum.avg + 1e-9 >= pass)
+    : fl === 'fail' ? (x.sum.avg !== null && x.sum.avg + 1e-9 < pass)
+    : fl === 'incomplete' ? !x.sum.complete
+    : fl === 'nomarks' ? x.sum.avg === null : true;
+  const all = ctx.main.cr.list;
+  const chosen = ui.rcStudent === 'all' ? sortLearners(all.filter(keep), ui.rcSort) : all.filter(x => x.st.id === ui.rcStudent);
+  const q = (ui.q.cards || '').trim().toLowerCase();
+  const selected = ui.rcStudent === 'all' && q ? chosen.filter(x => (x.st.name + ' ' + (x.st.idno || '')).toLowerCase().includes(q)) : chosen;
+  return { cls, scope, term, studs, ctx, all, chosen, selected };
+}
+
+function viewCards() {
+  const sel = cardsSelection(); if (!sel) return needClass();
+  const { cls, scope, term, studs, ctx, chosen, selected } = sel;
+  if (!studs.length) return `<div class="panel">This class has no learners yet.</div>`;
+  const pass = DB.settings.passPct, fl = ui.rcFilter, yr = scope === 'year';
+  const logoBox = DB.school.logo
+    ? `<div class="row logobox"><img src="${DB.school.logo}" alt="logo" style="height:44px"><span class="muted">School logo (shown above the report card title). Change it:</span><input type="file" accept="image/*" data-f="logo"><button class="small danger" data-act="delLogo">Remove logo</button></div>`
+    : `<div class="logoprompt"><b>Add your school logo</b> so it appears above the report card title: <input type="file" accept="image/*" data-f="logo"> <span class="muted">(PNG or JPG. You can also add it later in Settings.)</span></div>`;
+  const one = ui.rcStudent !== 'all';
+  const what = one ? 'this report card' : (selected.length === 1 ? '1 report card' : 'all ' + selected.length + ' report cards');
+  return `<div class="panel noprint"><h2>Report cards – ${esc(cls.name)}</h2>${logoBox}<div class="row">
+   <label>Print<select data-f="rcScope">${SCOPE_OPTS(scope)}</select></label>
+   <label>Which report cards?<select data-f="rcStudent"><option value="all">All learners shown below (${chosen.length})</option>${studs.map(s => `<option value="${s.id}" ${ui.rcStudent === s.id ? 'selected' : ''}>Only: ${esc(s.name)}</option>`).join('')}</select></label>
+   <label>Sort by<select data-f="rcSort">${optList(ui.rcSort, [['name', 'Name A–Z'], ['namez', 'Name Z–A'], ['rank', 'Position (best first)'], ['rankrev', 'Position (last first)']])}</select></label>
+   <label>Show<select data-f="rcFilter">${optList(fl, [['all', 'All learners'], ['pass', 'Passed (average ≥ ' + pass + '%)'], ['fail', 'Below pass mark'], ['incomplete', 'Marks not complete'], ['nomarks', 'No marks yet']])}</select></label>
+   ${findBox()}
+   <label>Cards per page<select data-f="perPage">${optList(yr ? (ui.perPage === 'a5' ? 'a5' : '1') : ui.perPage, yr ? [['1', 'A4 landscape (1 card per page)'], ['a5', 'A5 landscape']] : [['1', '1 per page (A4 portrait)'], ['2', '2 per page (A4 portrait, smaller)'], ['2land', '2 per page (A4 landscape, side by side)'], ['a5', '1 per page (A5)']])}</select></label></div>
+   <div class="row actions"><button data-act="print">🖨️ Print</button><button class="b-pdf" data-act="pdfCards">⬇ Download PDF – ${what}</button><button class="b-xls" data-act="xlsxCards">⬇ Download Excel – ${what}</button></div>
+   ${ctx.main.open === false ? `<div class="logoprompt">⚠ Positions are hidden until every learner’s marks are complete (${ctx.main.cr.stats.incomplete} learner${ctx.main.cr.stats.incomplete === 1 ? '' : 's'} still incomplete). A star (*) next to an average means marks are missing. To rank a learner who was absent, enter 0 for the missing marks.</div>` : ''}
+   ${yr ? '<div class="muted"><b>Whole year:</b> the card is the school’s landscape “Progressive school report” (three terms side by side with annual points), so it prints on landscape pages.</div>' : ''}
+   <div class="muted">Pick “Which report cards?” to download or print every card listed below, or just one learner. Sort, Show and Find choose exactly which cards are included. If Print does not open in your viewer, use Download PDF: the PDF always fits the paper you choose. Conduct and Observations can be typed directly on the cards and are saved automatically for this term.</div></div>
+  ${chosen.length ? `<div class="cards ${yr ? 'yr' + (ui.perPage === 'a5' ? ' a5y' : '') : ui.perPage === '2' ? 'two' : ui.perPage === '2land' ? 'two-land' : ui.perPage === 'a5' ? 'a5' : ''}">${chosen.map(x => cardHTML(x, cls, scope, term, ctx)).join('')}</div>` : '<div class="panel noprint">No learners match this selection.</div>'}`;
+}
+
+function viewClasses() {
+  const y = Y(), cls = curClass(), term = DB.current.term;
+  const chips = y.classes.map(c => `<div class="row" style="margin:0 0 6px"><b style="min-width:120px">${esc(c.name)}</b><span class="muted">${y.students.filter(s => s.classId === c.id).length} learners</span><button class="small ghost" data-act="renameClass" data-id="${c.id}">Rename</button><button class="small danger" data-act="delClass" data-id="${c.id}">Delete</button></div>`).join('') || '<p class="muted">No classes yet. Add your first one below, for example P1 A, P1 B, P2 A.</p>';
+  let out = `<div class="panel"><h2>Classes for ${esc(DB.current.year)}</h2>${chips}
+   <div class="row"><input id="newClass" placeholder="New class name, e.g. P1 A"><select id="newLevel"><option value="auto">Subjects: choose by class number (P1–P3 lower, P4–P6 upper)</option><option value="lower">${esc(TEMPLATES.lower.label)}</option><option value="upper">${esc(TEMPLATES.upper.label)}</option><option value="blank">Empty (I will add the subjects myself)</option></select><button data-act="addClass">Add class</button></div>
+   <div class="muted">Classes belong to the academic year, so you can change them every year without touching past years. A new class starts with the school's standard subjects and maximum marks, which you can change below.</div></div>`;
+  if (!cls) return out;
+  const sum = k => cls.subjects.reduce((a, s) => a + (+smax(s, term)[k] || 0), 0);
+  const subjRows = cls.subjects.map((s, i) => {
+    const m = smax(s, term);
+    return `<tr><td class="l"><input data-f="subj" data-k="name" data-id="${s.id}" value="${esc(s.name)}" style="width:100%"></td>${['mid', 'cat', 'exam'].map(k => `<td><input type="number" min="0" step="any" class="mk" data-f="subj" data-k="${k}" data-id="${s.id}" value="${esc(m[k])}"></td>`).join('')}<td>${r1((+m.mid || 0) + (+m.cat || 0) + (+m.exam || 0))}</td><td style="white-space:nowrap"><button class="small ghost" data-act="moveSubj" data-id="${s.id}" data-d="-1" ${i === 0 ? 'disabled' : ''}>▲</button> <button class="small ghost" data-act="moveSubj" data-id="${s.id}" data-d="1" ${i === cls.subjects.length - 1 ? 'disabled' : ''}>▼</button> <button class="small danger" data-act="delSubj" data-id="${s.id}">Remove</button></td></tr>`;
+  }).join('');
+  const others = y.classes.filter(c => c.id !== cls.id && c.subjects.length);
+  out += `<div class="panel"><h2>Subjects and maximum marks – ${esc(cls.name)}, Term ${term}</h2>
+   <div class="row"><label><input type="checkbox" data-f="maxAll" ${ui.maxAll ? 'checked' : ''}> Apply my changes to all three terms</label><span class="muted">Untick it to change only Term ${term}; the other terms keep their own maximums. If other terms already have marks, the app asks before changing them.</span></div>
+   <div class="tablewrap"><table><thead><tr><th class="l">Subject</th><th>MID max</th><th>CAT max</th><th>Exam max</th><th>Full marks</th><th>Order / remove</th></tr></thead><tbody>${subjRows}</tbody>
+   <tfoot><tr><th class="l">Total</th><th>${r1(sum('mid'))}</th><th>${r1(sum('cat'))}</th><th>${r1(sum('exam'))}</th><th>${r1(sum('mid') + sum('cat') + sum('exam'))}</th><th></th></tr></tfoot></table></div>
+   <div class="row" style="margin-top:10px"><input id="newSubj" placeholder="New subject name"><button data-act="addSubj">Add subject</button></div>
+   <div class="row"><select id="tplSel"><option value="lower">${esc(TEMPLATES.lower.label)}</option><option value="upper">${esc(TEMPLATES.upper.label)}</option></select><button class="ghost" data-act="applyTpl">Set the school's standard subjects and maximums</button>${others.length ? `<select id="copyFrom">${others.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select><button class="ghost" data-act="copySubj">Copy subjects from this class</button>` : ''}</div>
+   <div class="muted">A maximum of 0 means that assessment is not used for the subject. A maximum cannot be set below a mark that was already entered.</div></div>`;
+  const studs = studentsOf(cls.id);
+  out += `<div class="panel"><h2>Learners of ${esc(cls.name)} (${studs.length})</h2>
+   <div class="row"><textarea id="bulkNames" rows="4" style="min-width:300px" placeholder="Paste or type names, one per line"></textarea><button data-act="addLearners">Add these learners</button></div>
+   <div class="tablewrap"><table><thead><tr><th>#</th><th class="l">Name</th><th>ID no. (optional)</th><th>Date of birth</th><th>Place of birth</th><th>Class</th><th></th></tr></thead><tbody>${studs.map((s, i) => `<tr><td>${i + 1}</td><td class="l"><input data-f="stname" data-id="${s.id}" value="${esc(s.name)}" style="width:100%"></td><td><input data-f="stid" data-id="${s.id}" value="${esc(s.idno || '')}"></td><td><input type="date" data-f="stdob" data-id="${s.id}" value="${esc(s.dob || '')}"></td><td><input data-f="stpob" data-id="${s.id}" value="${esc(s.pob || '')}"></td><td><select data-f="stclass" data-id="${s.id}">${y.classes.map(c => `<option value="${c.id}" ${c.id === s.classId ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></td><td><button class="small danger" data-act="delStudent" data-id="${s.id}">Remove</button></td></tr>`).join('')}</tbody></table></div></div>`;
+  return out;
+}
+
+function viewSettings() {
+  const s = DB.school, set = DB.settings;
+  const last = DB.lastBackup ? new Date(DB.lastBackup).toLocaleString() : 'never';
+  return `<div class="panel"><h2>School details (shown on report cards and class lists)</h2>
+   <div class="row"><label>Country line<input data-f="school" data-k="country" value="${esc(s.country)}" style="width:260px"></label><label>Ministry line<input data-f="school" data-k="ministry" value="${esc(s.ministry)}" style="width:260px"></label></div>
+   <div class="row"><label>School name<input data-f="school" data-k="name" value="${esc(s.name)}" style="width:320px"></label><label>Address<input data-f="school" data-k="address" value="${esc(s.address)}" style="width:260px"></label></div>
+   <div class="row"><label>Phone<input data-f="school" data-k="phone" value="${esc(s.phone)}"></label><label>Place for “Done at …”<input data-f="school" data-k="place" value="${esc(s.place)}"></label><label>Title of the head<input data-f="school" data-k="headTitle" value="${esc(s.headTitle)}"></label></div>
+   <div class="row"><label>School logo (shown on report cards)<input type="file" id="logoFile" accept="image/*"></label>${s.logo ? `<img src="${s.logo}" alt="logo" style="height:56px"><button class="small danger" data-act="delLogo">Remove logo</button>` : '<span class="muted">No logo yet</span>'}</div></div>
+  <div class="panel"><h2>Pass mark</h2>
+   <div class="row"><label>Pass mark (%)<input type="number" min="0" max="100" data-f="pass" value="${set.passPct}" class="mk"></label><span class="muted">Used for the Success rate and the pass/fail counts. Marks are compared with the pass mark as a percentage of the maximum.</span></div>
+   <details><summary class="muted">Grade letters (only used in the spreadsheet download)</summary>
+   <table style="max-width:560px;margin-top:8px"><thead><tr><th>From % (at least)</th><th>Grade</th><th>Remark</th><th></th></tr></thead><tbody>${set.bands.map((b, i) => `<tr><td><input type="number" class="mk" data-f="band" data-k="min" data-i="${i}" value="${b.min}"></td><td><input class="mk" data-f="band" data-k="grade" data-i="${i}" value="${esc(b.grade)}"></td><td><input data-f="band" data-k="remark" data-i="${i}" value="${esc(b.remark)}" style="width:100%"></td><td><button class="small danger" data-act="delBand" data-i="${i}">Remove</button></td></tr>`).join('')}</tbody></table>
+   <div class="row" style="margin-top:8px"><button class="ghost" data-act="addBand">Add grade row</button><span class="muted">Keep one row starting at 0.</span></div></details></div>
+  ${cloudPanel()}
+  <div class="panel"><h2>Backup and restore</h2>
+   <p>${CLOUD.on ? 'Your data is saved automatically in the online database. A downloaded copy is only for your own records.' : 'All data is saved automatically in this browser on this computer, for every academic year.'} Last backup downloaded: <b>${esc(last)}</b>.</p>
+   <div class="row"><button data-act="backup">Download backup file</button><label class="muted">Restore from backup file&nbsp;<input type="file" id="restoreFile" accept=".json,application/json"></label></div>
+   <p class="muted">Download a backup regularly and keep it somewhere safe (flash disk, email to yourself). Use the same browser on the same computer each time, because browsers keep data separately. Clearing the browser's history/site data would erase the saved data, and the backup file is what brings it back.</p></div>`;
+}
+
+/* ---------- actions ---------- */
+function download(name, text, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+const stamp = () => new Date().toISOString().slice(0, 10);
+
+/* ---------- on-page dialogs (many browsers and viewers silently block alert/confirm/prompt) ---------- */
+function dialog(o) {
+  return new Promise(resolve => {
+    const prev = document.activeElement, input = !!o.input;
+    const ov = document.createElement('div'); ov.className = 'dlg-ov noprint';
+    ov.innerHTML = '<div class="dlg' + (o.wide ? ' wide' : '') + '" role="dialog" aria-modal="true"><div class="dlg-msg"></div>' + (input ? (o.area ? '<textarea class="dlg-in" rows="10" spellcheck="false"></textarea>' : '<input class="dlg-in" type="text">') : '') + '<div class="dlg-btns">' + (o.cancel ? '<button type="button" class="ghost" data-r="cancel"></button>' : '') + '<button type="button" data-r="ok"></button></div></div>';
+    ov.querySelector('.dlg-msg').textContent = o.message;
+    const okb = ov.querySelector('[data-r="ok"]'), cb = ov.querySelector('[data-r="cancel"]'), inp = ov.querySelector('.dlg-in');
+    okb.textContent = o.ok || 'OK'; if (cb) cb.textContent = o.cancel; if (o.danger) okb.classList.add('dgr'); if (inp) inp.value = o.def || '';
+    const done = v => { ov.remove(); try { if (prev && prev.focus) prev.focus(); } catch (_) {} resolve(v); };
+    const no = () => done(input ? null : false), yes = () => done(input ? inp.value : true);
+    ov.addEventListener('click', e => { e.stopPropagation(); const r = e.target.closest('[data-r]'); if (r) (r.dataset.r === 'ok' ? yes : no)(); });
+    ov.addEventListener('keydown', e => {
+      e.stopPropagation();
+      if (e.key === 'Escape') { e.preventDefault(); no(); }
+      else if (e.key === 'Enter' && e.target === inp && !o.area) { e.preventDefault(); yes(); }
+      else if (e.key === 'Tab') { const f = Array.from(ov.querySelectorAll('input,button,textarea')), i = f.indexOf(document.activeElement); e.preventDefault(); f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus(); }
+    });
+    document.body.appendChild(ov);
+    (inp || (o.danger && cb) || okb).focus(); if (inp) inp.select();
+  });
+}
+const isRisky = m => /^(Delete|Remove|This will REPLACE|Replace)/.test(m);
+const say = msg => dialog({ message: msg, ok: 'OK' });
+const ask = (msg, o) => dialog({ message: msg, ok: (o && o.ok) || (isRisky(msg) ? 'Yes, continue' : 'OK'), cancel: (o && o.cancel) || 'Cancel', danger: o && o.danger !== undefined ? o.danger : isRisky(msg) });
+const askText = (msg, def) => dialog({ message: msg, input: true, def, ok: 'OK', cancel: 'Cancel' });
+async function newYear(preset) {
+  const cur = DB.current.year, guess = /^\d+$/.test(cur) ? String(+cur + 1) : '';
+  const name = (preset || (await askText('Name of the new academic year (for example ' + (guess || '2027') + '):', guess)) || '').trim();
+  if (!name) return;
+  if (DB.years[name]) { if (await ask('The year ' + name + ' already exists. Switch to it?', { ok: 'Switch to ' + name, danger: false })) { DB.current.year = name; DB.current.classId = null; save(); render(); } return; }
+  const ny = { classes: [], students: [], marks: {}, comments: {} };
+  if (Y().classes.length && await ask('Copy the classes and subjects of ' + cur + ' into ' + name + '?\n(No marks are copied.)', { ok: 'Yes, copy them', cancel: 'No, start empty', danger: false })) {
+    const map = {};
+    Y().classes.forEach(c => { const id = uid(); map[c.id] = id; ny.classes.push({ id, name: c.name, subjects: c.subjects.map(s => JSON.parse(JSON.stringify(Object.assign({}, s, { id: uid() })))) }); });
+    if (Y().students.length && await ask('Also copy the learners (names, ID numbers and birth details, no marks) into the same classes of ' + name + '?\nYou can then move each learner to their new class.', { ok: 'Yes, copy learners', cancel: 'No, add them later', danger: false })) {
+      Y().students.forEach(s => ny.students.push({ id: uid(), classId: map[s.classId], name: s.name, idno: s.idno || '', dob: s.dob || '', pob: s.pob || '' }));
+    }
+  }
+  DB.years[name] = ny; DB.current.year = name; DB.current.term = 1; DB.current.classId = ny.classes.length ? ny.classes[0].id : null;
+  ui.yearBannerHidden = false; save(); render();
+}
+/* ================= downloads: PDF, Excel (.xlsx) and CSV =================
+   These are built inside this page, so they work even where printing is blocked. */
+const MM = 2.83465;
+const safeName = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().replace(/[^\w\-]+/g, '_').replace(/^_+|_+$/g, '') || 'file';
+const bin2u8 = s => { const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i) & 255; return u; };
+const tag = () => { const c = curClass(); return safeName(c ? c.name : 'class') + '_' + safeName(DB.current.year) + '_T' + DB.current.term; };
+const MIME_XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+/* ---------- PDF writer ---------- */
+const PDF_FONTS = { T: ['"Times New Roman", Times, serif', ''], TB: ['"Times New Roman", Times, serif', 'bold '], TI: ['"Times New Roman", Times, serif', 'italic '], H: ['Arial, Helvetica, sans-serif', ''], HB: ['Arial, Helvetica, sans-serif', 'bold '] };
+const PDF_IDX = { T: 0, TB: 1, TI: 2, H: 3, HB: 4 };
+let _mctx = null;
+function textW(str, font, size) {
+  if (!_mctx) _mctx = document.createElement('canvas').getContext('2d');
+  const f = PDF_FONTS[font]; _mctx.font = f[1] + '100px ' + f[0];
+  return _mctx.measureText(String(str)).width * size / 100;
+}
+const CP1252 = { '–': 0x96, '—': 0x97, '‘': 0x91, '’': 0x92, '“': 0x93, '”': 0x94, '…': 0x85, '•': 0x95, '€': 0x80 };
+function pdfStr(s) {
+  let o = '';
+  for (const ch of String(s)) {
+    let c = ch.codePointAt(0);
+    if (CP1252[ch] !== undefined) c = CP1252[ch];
+    else if (c > 255) { const d = ch.normalize('NFD').codePointAt(0); c = d < 128 ? d : 63; }
+    if (c === 40 || c === 41 || c === 92) o += '\\' + String.fromCharCode(c);
+    else if (c < 32 || c > 126) o += '\\' + c.toString(8).padStart(3, '0');
+    else o += String.fromCharCode(c);
+  }
+  return o;
+}
+function fitStr(str, font, size, maxW) {
+  str = String(str); if (textW(str, font, size) <= maxW) return str;
+  while (str.length > 1 && textW(str + '…', font, size) > maxW) str = str.slice(0, -1);
+  return str + '…';
+}
+function wrapText(str, font, size, maxW) {
+  const out = [];
+  String(str).split('\n').forEach(par => {
+    let line = '';
+    par.split(/\s+/).filter(Boolean).forEach(w => { const t = line ? line + ' ' + w : w; if (textW(t, font, size) <= maxW || !line) line = t; else { out.push(line); line = w; } });
+    out.push(line);
+  });
+  return out;
+}
+class PdfPage {
+  constructor(w, h) { this.w = w; this.h = h; this.ops = []; }
+  y(v) { return (this.h - v).toFixed(2); }
+  line(x1, y1, x2, y2, lw) { this.ops.push(`${lw || 0.6} w ${x1.toFixed(2)} ${this.y(y1)} m ${x2.toFixed(2)} ${this.y(y2)} l S`); }
+  rect(x, y, w, h, o) { o = o || {}; const p = `${x.toFixed(2)} ${this.y(y + h)} ${w.toFixed(2)} ${h.toFixed(2)} re`; if (o.fill) this.ops.push(`q ${o.fill} rg ${p} f Q`); if (o.lw !== 0) this.ops.push(`${o.lw || 0.6} w ${p} S`); }
+  text(str, x, y, o) {
+    o = o || {}; str = String(str == null ? '' : str); if (!str) return;
+    const size = o.size || 10, font = o.font || 'T', w = textW(str, font, size);
+    let tx = x; if (o.align === 'c') tx = x - w / 2; else if (o.align === 'r') tx = x - w;
+    const tm = o.rot ? `0 1 -1 0 ${x.toFixed(2)} ${this.y(y)}` : `1 0 0 1 ${tx.toFixed(2)} ${this.y(y)}`;
+    this.ops.push(`${o.color ? 'q ' + o.color + ' rg ' : ''}BT /F${PDF_IDX[font]} ${size.toFixed(2)} Tf ${tm} Tm (${pdfStr(str)}) Tj ET${o.color ? ' Q' : ''}`);
+  }
+  image(x, y, w, h) { this.ops.push(`q ${w.toFixed(2)} 0 0 ${h.toFixed(2)} ${x.toFixed(2)} ${this.y(y + h)} cm /Im1 Do Q`); }
+}
+class PdfDoc {
+  constructor() { this.pages = []; this.img = null; }
+  addPage(w, h) { const p = new PdfPage(w, h); this.pages.push(p); return p; }
+  setImage(bytes, w, h) { this.img = { bytes, w, h }; }
+  build(title) {
+    const objs = [], add = s => { objs.push(s); return objs.length; };
+    add(''); add('');
+    const fonts = ['Times-Roman', 'Times-Bold', 'Times-Italic', 'Helvetica', 'Helvetica-Bold'].map(n => add(`<< /Type /Font /Subtype /Type1 /BaseFont /${n} /Encoding /WinAnsiEncoding >>`));
+    let img = 0;
+    if (this.img) img = add(`<< /Type /XObject /Subtype /Image /Width ${this.img.w} /Height ${this.img.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${this.img.bytes.length} >>\nstream\n${this.img.bytes}\nendstream`);
+    const res = `<< /Font << ${fonts.map((n, i) => `/F${i} ${n} 0 R`).join(' ')} >>${img ? ` /XObject << /Im1 ${img} 0 R >>` : ''} >>`;
+    const kids = this.pages.map(p => { const c = p.ops.join('\n'); const cn = add(`<< /Length ${c.length} >>\nstream\n${c}\nendstream`); return add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${p.w.toFixed(2)} ${p.h.toFixed(2)}] /Resources ${res} /Contents ${cn} 0 R >>`); });
+    objs[0] = '<< /Type /Catalog /Pages 2 0 R >>';
+    objs[1] = `<< /Type /Pages /Kids [${kids.map(n => n + ' 0 R').join(' ')}] /Count ${kids.length} >>`;
+    const info = add(`<< /Title (${pdfStr(title)}) /Producer (Report Card Manager) >>`);
+    let out = '%PDF-1.4\n%\xE2\xE3\xCF\xD3\n'; const offs = [];
+    objs.forEach((o, i) => { offs.push(out.length); out += `${i + 1} 0 obj\n${o}\nendobj\n`; });
+    const xr = out.length;
+    out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n` + offs.map(o => String(o).padStart(10, '0') + ' 00000 n \n').join('');
+    out += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R /Info ${info} 0 R >>\nstartxref\n${xr}\n%%EOF`;
+    return bin2u8(out);
+  }
+}
+function loadImg(src) { return new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; }); }
+async function logoJpeg() {
+  const l = DB.school.logo; if (!l) return null;
+  const im = await loadImg(l); if (!im) return null;
+  const c = document.createElement('canvas'); c.width = im.width; c.height = im.height;
+  const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(im, 0, 0);
+  return { bytes: atob(c.toDataURL('image/jpeg', 0.92).split(',')[1]), w: c.width, h: c.height };
+}
+function cellText(pg, str, bx, by, bw, bh, o) {
+  let sz = o.size; str = String(str);
+  while (sz > o.size * 0.6 && textW(str, o.font, sz) > bw - 6) sz -= 0.3;
+  str = fitStr(str, o.font, sz, bw - 6);
+  const base = by + bh / 2 + sz * 0.34;
+  if (o.align === 'l') pg.text(str, bx + 3, base, { font: o.font, size: sz });
+  else if (o.align === 'r') pg.text(str, bx + bw - 3, base, { font: o.font, size: sz, align: 'r' });
+  else pg.text(str, bx + bw / 2, base, { font: o.font, size: sz, align: 'c' });
+}
+// Draws one report card with its top-left corner at (x, y), W points wide. k = width scale, v = vertical stretch. Returns the height used.
+function drawCardPDF(pg, m, x, y, W, k, v, logo) {
+  const vh = h => h * MM * k * v, F = pt => pt * k * Math.min(1, Math.sqrt(v)), sch = m.school;
+  let cy = y;
+  const lh = vh(5);
+  [sch.country, sch.name, sch.address, sch.phone].forEach((t, i) => pg.text(t, x, cy + lh * (i + 0.8), { font: 'TB', size: F(10.5) }));
+  [sch.ministry, m.year, m.period].forEach((t, i) => pg.text(t, x + W, cy + lh * (i + 0.8), { font: 'TB', size: F(10.5), align: 'r' }));
+  cy += lh * 4 + vh(1.5);
+  if (m.logo && logo) {
+    let hh = vh(17), ww = hh * logo.w / logo.h; if (ww > W * 0.3) { ww = W * 0.3; hh = ww * logo.h / logo.w; }
+    pg.image(x + W / 2 - ww / 2, cy, ww, hh); cy += hh + vh(2);
+  } else cy += vh(2);
+  const tsz = F(15), tw = textW(m.title, 'TB', tsz);
+  pg.text(m.title, x + W / 2, cy + vh(7), { font: 'TB', size: tsz, align: 'c' });
+  pg.line(x + W / 2 - tw / 2, cy + vh(7.9), x + W / 2 + tw / 2, cy + vh(7.9), 0.8);
+  cy += vh(11);
+  const rh = vh(7.2), sz = F(10.5);
+  const lv = (label, value, bx, by, bw) => {
+    pg.rect(bx, by, bw, rh); const base = by + rh / 2 + sz * 0.34, lw = textW(label + ' ', 'TB', sz);
+    pg.text(label, bx + 4, base, { font: 'TB', size: sz }); pg.text(fitStr(value, 'T', sz, bw - lw - 10), bx + 4 + lw, base, { font: 'T', size: sz });
+  };
+  lv('Student Name:', m.st.name.toUpperCase(), x, cy, W);
+  lv('Born:', (m.born || '..............') + '  at  ' + (m.pob || '..............'), x, cy + rh, W * 0.62); lv('Class:', m.clsName, x + W * 0.62, cy + rh, W * 0.38);
+  lv('ID No.:', m.idno, x, cy + 2 * rh, W * 0.28); lv('N. Students:', String(m.N), x + W * 0.28, cy + 2 * rh, W * 0.30); lv('Conduct:', m.conduct, x + W * 0.58, cy + 2 * rh, W * 0.42);
+  cy += 3 * rh + vh(3);
+  const tot = m.cols.reduce((a, c) => a + c[1], 0), cw = m.cols.map(c => W * c[1] / tot), hh2 = vh(9);
+  let cx = x;
+  m.cols.forEach((c, i) => { pg.rect(cx, cy, cw[i], hh2, { fill: '0.88 0.93 0.99' }); cellText(pg, c[0], cx, cy, cw[i], hh2, { font: 'TB', size: F(8.4), align: c[2] === 'l' ? 'l' : 'c' }); cx += cw[i]; });
+  cy += hh2;
+  m.rows.forEach(r => { cx = x; r.forEach((c, i) => { pg.rect(cx, cy, cw[i], rh); cellText(pg, c.t, cx, cy, cw[i], rh, { font: i === m.bold ? 'TB' : 'T', size: sz, align: i === 0 ? 'l' : 'c' }); cx += cw[i]; }); cy += rh; });
+  m.sums.forEach(r => { cx = x; let ci = 0; r.forEach((c, j) => { const w = cw.slice(ci, ci + c.span).reduce((a, b) => a + b, 0); pg.rect(cx, cy, w, rh, { fill: '0.95 0.97 1' }); cellText(pg, c.t, cx, cy, w, rh, { font: 'TB', size: sz, align: j === 0 ? 'l' : 'c' }); cx += w; ci += c.span; }); cy += rh; });
+  const nt = cardNote(m); if (nt) { const ls = wrapText(nt, 'TI', F(8), W); ls.forEach((ln, i) => pg.text(ln, x, cy + vh(4) + i * F(9.5), { font: 'TI', size: F(8) })); cy += vh(2) + ls.length * F(9.5); }
+  cy += vh(4);
+  const fh = vh(27);
+  pg.rect(x, cy, W / 2, fh); pg.rect(x + W / 2, cy, W / 2, fh / 2); pg.rect(x + W / 2, cy + fh / 2, W / 2, fh / 2);
+  pg.text('Observations', x + 5, cy + F(12), { font: 'TB', size: sz });
+  if (m.obs) wrapText(m.obs, 'T', F(9.5), W / 2 - 12).slice(0, 4).forEach((ln, i) => pg.text(ln, x + 5, cy + F(12) + (i + 1) * F(11.5), { font: 'T', size: F(9.5) }));
+  pg.text('Teacher Signature', x + W * 0.75, cy + F(12), { font: 'TB', size: sz, align: 'c' });
+  pg.text('Parent Signature', x + W * 0.75, cy + fh / 2 + F(12), { font: 'TB', size: sz, align: 'c' });
+  cy += fh;
+  return cy - y;
+}
+async function makeCardsPDF(models, paper) {
+  if (models.length && models[0].kind === 'year') return makeYearPDF(models, paper);
+  const logo = models.length && models[0].logo ? await logoJpeg() : null;
+  const doc = new PdfDoc(); if (logo) doc.setImage(logo.bytes, logo.w, logo.h);
+  const landscape2 = paper === '2land';
+  const [PW, PH] = paper === 'a5' ? [419.53, 595.28] : landscape2 ? [841.89, 595.28] : [595.28, 841.89];
+  const M = paper === 'a5' ? 22 : 28, per = paper === '2' || landscape2 ? 2 : 1, gap = landscape2 ? 18 : 20;
+  const boxW = landscape2 ? (PW - 2 * M - gap) / 2 : PW - 2 * M;
+  const boxH = landscape2 ? PH - 2 * M : (PH - 2 * M - gap * (per - 1)) / per;
+  const k0 = boxW / (186 * MM);
+  let page = null;
+  models.forEach((m, i) => {
+    if (i % per === 0) page = doc.addPage(PW, PH);
+    const slot = i % per;
+    const bx = landscape2 ? M + slot * (boxW + gap) : M;
+    const by = landscape2 ? M : M + slot * (boxH + gap);
+    let k = k0, W = boxW, v = 1;
+    const H = drawCardPDF(new PdfPage(1, 1), m, 0, 0, boxW, k0, 1, logo);
+    if (H <= boxH) v = Math.min(1.25, boxH / H);
+    else { v = boxH / H; if (v < 0.62) { v = 0.62; const H2 = H * 0.62; if (H2 > boxH) { k = k0 * boxH / H2; W = k * 186 * MM; } } }
+    drawCardPDF(page, m, bx + (boxW - W) / 2, by, W, k, v, logo);
+    if (!landscape2 && slot === 1) page.line(M, by - gap / 2, PW - M, by - gap / 2, 0.3);
+  });
+  if (!models.length) doc.addPage(PW, PH);
+  return doc.build('Report cards');
+}
+
+function hdrCell(pg, text, bx, by, bw, bh, sz) {
+  const words = String(text).split(' ').filter(Boolean);
+  let lines = [words.join(' ')];
+  if (words.length > 1 && textW(lines[0], 'HB', sz) > bw - 3) lines = words;
+  while (sz > 4.5 && Math.max(...lines.map(l => textW(l, 'HB', sz))) > bw - 2) sz -= 0.2;
+  const lh = sz * 1.15, top = by + (bh - lh * lines.length) / 2 + sz * 0.85;
+  lines.forEach((l, i) => pg.text(l, bx + bw / 2, top + i * lh, { font: 'HB', size: sz, align: 'c' }));
+}
+// Draws one whole-year card at (x, y), W points wide. k scales fonts and widths, v stretches row heights. Returns the height used.
+function drawYearPDF(pg, m, x, y, W, k, v, logo) {
+  const vh = h => h * k * v, F = pt => pt * k, sch = m.school, GR = '0.86 0.86 0.86', HF = '0.88 0.93 0.99', SF = '0.95 0.97 1';
+  let cy = y;
+  const bw = 250 * k, bh = vh(52);
+  pg.rect(x, cy, bw, bh);
+  [sch.country, sch.name, sch.phone].forEach((t, i) => pg.text(t, x + 8 * k, cy + vh(14.5) + i * vh(15.5), { font: 'T', size: F(10.5) }));
+  if (m.logo && logo) { let hh = bh, ww = hh * logo.w / logo.h; if (ww > W * 0.2) { ww = W * 0.2; hh = ww * logo.h / logo.w; } pg.image(x + W / 2 - ww / 2, cy + (bh - hh) / 2, ww, hh); }
+  cy += bh + vh(12);
+  pg.text(m.title, x + W / 2, cy + F(12), { font: 'TB', size: F(15), align: 'c' });
+  cy += vh(28);
+  const iz = F(9.2);
+  [[['NAMES:', m.st.name.toUpperCase()], ['Number of Students:', String(m.N)], ['Class:', m.clsName]], [["Student's No.:", m.idno], ['Option:', ''], ['School Year:', String(m.year)]]].forEach((row, ri) => {
+    row.forEach(([l, val], ci) => { const ix = x + [0, 0.42, 0.74][ci] * W, by = cy + vh(9) + ri * vh(13); pg.text(l, ix, by, { font: 'TB', size: iz }); pg.text(fitStr(val, 'T', iz, W * [0.4, 0.3, 0.26][ci] - textW(l + ' ', 'TB', iz)), ix + textW(l + ' ', 'TB', iz), by, { font: 'T', size: iz }); });
+  });
+  cy += vh(33);
+  const cw = Y_W.map(w => W * w / Y_SUM), cx = [x]; cw.forEach((w, i) => cx.push(cx[i] + w));
+  const top = cy, h1 = vh(13), h2 = vh(23), rh = vh(14.5), sz = F(8);
+  pg.rect(cx[0], cy, cw[0], h1 + h2, { fill: HF }); pg.text('Subjects', cx[0] + 3, cy + (h1 + h2) / 2 + F(3), { font: 'TB', size: F(8) });
+  Y_GROUPS.forEach(g => { const w = cx[g[1] + g[2]] - cx[g[1]]; pg.rect(cx[g[1]], cy, w, h1, { fill: HF }); hdrCell(pg, g[0], cx[g[1]], cy, w, h1, F(8)); });
+  cy += h1;
+  for (let c = 1; c < 23; c++) { pg.rect(cx[c], cy, cw[c], h2, { fill: HF }); hdrCell(pg, Y_HEAD[c], cx[c], cy, cw[c], h2, F(6.4)); }
+  cy += h2;
+  m.rows.forEach(r => { r.forEach((c, i) => { pg.rect(cx[i], cy, cw[i], rh, Y_GAIN.has(i) ? { fill: GR } : {}); cellText(pg, c.t, cx[i], cy, cw[i], rh, { font: i >= 20 ? 'TB' : 'T', size: sz, align: i === 0 ? 'l' : 'c' }); }); cy += rh; });
+  m.ysums.forEach(r => {
+    if (r.k === 'obs') {
+      const oh = vh(30), w1 = cx[15] - cx[1], w2 = cx[18] - cx[15], w3 = cx[23] - cx[18];
+      pg.rect(cx[0], cy, cw[0], oh); pg.text('Observations', cx[0] + 3, cy + F(11), { font: 'TB', size: sz });
+      pg.rect(cx[1], cy, w1, oh); wrapText(m.obs || '', 'T', F(8), w1 - 8).slice(0, 2).forEach((ln, i) => pg.text(ln, cx[1] + 4, cy + F(10.5) + i * F(10), { font: 'T', size: F(8) }));
+      pg.rect(cx[15], cy, w2, oh); pg.text('Conduct', cx[15] + 3, cy + F(11), { font: 'TB', size: sz });
+      pg.rect(cx[18], cy, w3, oh); pg.text(fitStr(m.conduct || '', 'T', sz, w3 - 8), cx[18] + 4, cy + F(11), { font: 'T', size: sz });
+      cy += oh; return;
+    }
+    const sig = r.k === 'sigT' || r.k === 'sigP', hh = sig ? vh(30) : rh; let c0 = 0;
+    r.cells.forEach((c, j) => {
+      const w = cx[c0 + c.span] - cx[c0], shaded = r.k === 'tot' && Y_GAIN.has(c0);
+      pg.rect(cx[c0], cy, w, hh, shaded ? { fill: GR } : r.k === 'tot' ? { fill: SF } : {});
+      if (sig && j === 0) pg.text(c.t, cx[c0] + 3, cy + F(10.5), { font: 'T', size: F(7.5) });
+      else if (!sig) cellText(pg, c.t, cx[c0], cy, w, hh, { font: (r.k === 'tot' || j > 0 || c.span > 1) ? 'TB' : 'T', size: r.k === 'pos' ? F(8.6) : sz, align: j === 0 ? 'l' : 'c' });
+      c0 += c.span;
+    });
+    cy += hh;
+  });
+  [1, 8, 14, 20].forEach(c => pg.line(cx[c], top, cx[c], cy, 1.3)); pg.line(cx[23], top, cx[23], cy, 1.3); pg.line(cx[0], top, cx[23], top, 1.3); pg.line(cx[0], cy, cx[23], cy, 1.3);
+  const nt = cardNote(m); if (nt) { const ls = wrapText(nt + (m.incomplete ? ' Annual points count only assessment components with marks entered.' : ''), 'TI', F(7.5), W); ls.forEach((ln, i) => pg.text(ln, x, cy + vh(8) + i * F(9), { font: 'TI', size: F(7.5) })); cy += vh(3) + ls.length * F(9); }
+  cy += vh(8);
+  const vhgt = vh(74); pg.rect(x, cy, W, vhgt);
+  pg.text('VERDICT OF THE JURY', x + W * 0.07, cy + F(14), { font: 'TB', size: F(9) });
+  ['Promoted', 'Advised to repeat', 'Proposed to resit'].forEach((t, i) => { const by = cy + F(28) + i * F(12.5), s = F(7); pg.rect(x + W * 0.17, by - s + 0.5, s, s, { lw: 0.6 }); pg.text(t, x + W * 0.17 + s + 5 * k, by, { font: 'T', size: F(8.6) }); });
+  pg.text(yDone(m), x + W * 0.6, cy + F(34), { font: 'T', size: F(8.6) });
+  pg.text('Head of the School', x + W * 0.6, cy + F(58), { font: 'T', size: F(8.6) });
+  cy += vhgt;
+  return cy - y;
+}
+async function makeYearPDF(models, paper) {
+  const logo = models.length && models[0].logo ? await logoJpeg() : null;
+  const doc = new PdfDoc(); if (logo) doc.setImage(logo.bytes, logo.w, logo.h);
+  const [PW, PH] = paper === 'a5' ? [595.28, 419.53] : [841.89, 595.28], M = paper === 'a5' ? 18 : 24, boxW = PW - 2 * M, boxH = PH - 2 * M, k0 = boxW / 794;
+  models.forEach(m => {
+    const pg = doc.addPage(PW, PH); let k = k0, W = boxW, v = 1;
+    const H = drawYearPDF(new PdfPage(1, 1), m, 0, 0, boxW, k0, 1, logo);
+    if (H <= boxH) v = Math.min(1.3, boxH / H);
+    else { v = boxH / H; if (v < 0.7) { v = 0.7; const H2 = H * 0.7; if (H2 > boxH) { k = k0 * boxH / H2; W = boxW * boxH / H2; } } }
+    drawYearPDF(pg, m, M + (boxW - W) / 2, M, W, k, v, logo);
+  });
+  if (!models.length) doc.addPage(PW, PH);
+  return doc.build('Whole-year report cards');
+}
+
+function drawResultsPDF(doc, rm) {
+  const PW = 595.28, PH = 841.89, M = 28, W = PW - 2 * M, n = rm.subjects.length;
+  const rankW = 24, totW = 40, avgW = 38, hdrBlock = 54, hdrH = 82, footN = 3, doneH = 46 + (rm.note ? 28 : 0);
+  const subjW = Math.max(16, Math.min(36, (W - rankW - totW - avgW - 120) / Math.max(1, n))), nameW = W - rankW - totW - avgW - subjW * n;
+  const availAll = PH - 2 * M - hdrBlock - hdrH, total = rm.rows.length;
+  let rowH = Math.min(15, (availAll - doneH) / (total + 1 + footN));
+  if (rowH < 11) rowH = 11;
+  const cap = Math.floor((availAll - rowH) / rowH + 1e-6), lastCap = Math.floor((availAll - rowH - doneH) / rowH + 1e-6) - footN;
+  const pages = []; let i = 0;
+  for (;;) {
+    const rest = total - i;
+    if (rest <= lastCap) { pages.push({ from: i, to: total, last: true }); break; }
+    if (rest <= cap) { pages.push({ from: i, to: total, last: false }); pages.push({ from: total, to: total, last: true }); break; }
+    pages.push({ from: i, to: i + cap, last: false }); i += cap;
+  }
+  const fs = Math.max(6.5, Math.min(9, rowH * 0.66)), hf = '0.88 0.93 0.99';
+  const xs = [M, M + rankW, M + rankW + nameW]; const sx = j => xs[2] + subjW * j; const xTot = sx(n), xAvg = xTot + totW;
+  pages.forEach((P, pi) => {
+    const pg = doc.addPage(PW, PH);
+    rm.left.forEach((t, j) => pg.text(t, M, M + 9 + j * 12, { font: 'HB', size: 8.6 }));
+    rm.right.forEach((t, j) => pg.text(t, M + W * 0.58, M + 9 + j * 12, { font: 'HB', size: 8.6 }));
+    let y = M + hdrBlock;
+    pg.rect(M, y, rankW + nameW, hdrH, { fill: hf }); pg.text('Subjects', M + 4, y + hdrH - 5, { font: 'HB', size: 8.6 });
+    const rotCell = (label, cx, cw) => { pg.rect(cx, y, cw, hdrH, { fill: hf }); let sz = 7.6; while (sz > 5.5 && textW(label, 'HB', sz) > hdrH - 8) sz -= 0.2; pg.text(fitStr(label, 'HB', sz, hdrH - 8), cx + cw / 2 + sz * 0.35, y + hdrH - 5, { font: 'HB', size: sz, rot: true }); };
+    rm.subjects.forEach((s, j) => rotCell(s, sx(j), subjW)); rotCell('Total', xTot, totW); rotCell('Avg', xAvg, avgW);
+    y += hdrH;
+    const cell = (str, cx, cw, o) => { pg.rect(cx, y, cw, rowH); o = o || {}; cellText(pg, str, cx, y, cw, rowH, { font: o.font || 'H', size: fs, align: o.align || 'r' }); };
+    cell('Rank', M, rankW, { font: 'HB', align: 'l' }); cell('Maxima', xs[1], nameW, { font: 'HB', align: 'l' });
+    rm.maxima.forEach((v, j) => cell(String(v), sx(j), subjW, { font: 'HB' })); cell(String(rm.maxTotal), xTot, totW, { font: 'HB' }); cell('%', xAvg, avgW, { font: 'HB' });
+    y += rowH;
+    rm.rows.slice(P.from, P.to).forEach(r => {
+      cell(r.pos === null ? '' : String(r.pos), M, rankW); cell(r.name, xs[1], nameW, { align: 'l' });
+      r.cells.forEach((c, j) => cell(c ? String(c.n) : '', sx(j), subjW)); cell(r.total === null ? '' : String(r.total), xTot, totW); cell(r.avg === null ? '' : r.avg.toFixed(1) + '%' + (r.inc ? ' *' : ''), xAvg, avgW, { font: 'HB' });
+      y += rowH;
+    });
+    if (P.last) {
+      const foot = (label, vals, all, fmtv) => { cell(label, M, rankW + nameW, { font: 'T', align: 'l' }); vals.forEach((v, j) => cell(fmtv(v), sx(j), subjW, { font: 'T' })); cell(fmtv(all), xTot, totW, { font: 'T' }); cell('', xAvg, avgW); y += rowH; };
+      foot('Total', rm.foot.total, rm.foot.grand, v => String(v)); foot('Success rate', rm.foot.success, rm.foot.successAll, ff); foot('Average', rm.foot.avg, rm.foot.avgAll, ff);
+      pg.text(rm.done[0], M + W * 0.5, y + 24, { font: 'H', size: 9 }); pg.text(rm.done[1], M + W * 0.5, y + 38, { font: 'H', size: 9 });
+      if (rm.note) wrapText(rm.note, 'TI', 8, W).forEach((ln, i) => pg.text(ln, M, y + 58 + i * 9.5, { font: 'TI', size: 8 }));
+    }
+    if (pages.length > 1) pg.text('Page ' + (pi + 1) + ' of ' + pages.length, PW / 2, PH - 14, { font: 'H', size: 8, align: 'c' });
+  });
+}
+function makeResultsPDF(rm) { const doc = new PdfDoc(); drawResultsPDF(doc, rm); return doc.build('Class results ' + rm.cls.name); }
+
+/* ---------- minimal .xlsx writer (zip + XML, no libraries) ---------- */
+const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(u) { let c = 0xFFFFFFFF; for (let i = 0; i < u.length; i++) c = CRC_T[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function zipStore(files) {
+  const enc = new TextEncoder(), chunks = [], cd = []; let off = 0;
+  const u32 = v => [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255], u16 = v => [v & 255, (v >>> 8) & 255];
+  files.forEach(f => {
+    const name = enc.encode(f.name), data = typeof f.data === 'string' ? enc.encode(f.data) : f.data, crc = crc32(data);
+    const lh = new Uint8Array([0x50, 0x4b, 3, 4, 20, 0, 0, 8, 0, 0, 0, 0, 0x21, 0, ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(name.length), 0, 0]);
+    chunks.push(lh, name, data); cd.push({ name, crc, size: data.length, off }); off += lh.length + name.length + data.length;
+  });
+  const start = off;
+  cd.forEach(c => { const h = new Uint8Array([0x50, 0x4b, 1, 2, 20, 0, 20, 0, 0, 8, 0, 0, 0, 0, 0x21, 0, ...u32(c.crc), ...u32(c.size), ...u32(c.size), ...u16(c.name.length), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...u32(c.off)]); chunks.push(h, c.name); off += h.length + c.name.length; });
+  chunks.push(new Uint8Array([0x50, 0x4b, 5, 6, 0, 0, 0, 0, ...u16(cd.length), ...u16(cd.length), ...u32(off - start), ...u32(start), 0, 0]));
+  const out = new Uint8Array(chunks.reduce((a, c) => a + c.length, 0)); let p = 0; chunks.forEach(c => { out.set(c, p); p += c.length; }); return out;
+}
+const xc = n => { let s = ''; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };
+const xe = s => String(s).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+class XStyles {
+  constructor() { this.fonts = []; this.fills = ['<fill><patternFill patternType="none"/></fill>', '<fill><patternFill patternType="gray125"/></fill>']; this.xfs = []; this.keys = {}; this.fmts = []; this.get({}); }
+  get(o) {
+    const key = JSON.stringify(o); if (this.keys[key] !== undefined) return this.keys[key];
+    const font = `<font>${o.b ? '<b/>' : ''}${o.i ? '<i/>' : ''}${o.u ? '<u/>' : ''}<sz val="${o.sz || 11}"/><color rgb="FF${o.color || '000000'}"/><name val="${o.font || 'Arial'}"/></font>`;
+    let fi = this.fonts.indexOf(font); if (fi < 0) { this.fonts.push(font); fi = this.fonts.length - 1; }
+    let fl = 0; if (o.fill) { const f = `<fill><patternFill patternType="solid"><fgColor rgb="FF${o.fill}"/><bgColor indexed="64"/></patternFill></fill>`; fl = this.fills.indexOf(f); if (fl < 0) { this.fills.push(f); fl = this.fills.length - 1; } }
+    let nf = 0; if (o.fmt) { let i = this.fmts.indexOf(o.fmt); if (i < 0) { this.fmts.push(o.fmt); i = this.fmts.length - 1; } nf = 164 + i; }
+    const al = `<alignment${o.h ? ` horizontal="${o.h}"` : ''} vertical="${o.v || 'center'}"${o.rot ? ` textRotation="${o.rot}"` : ''}${o.wrap ? ' wrapText="1"' : ''}/>`;
+    this.xfs.push(`<xf numFmtId="${nf}" fontId="${fi}" fillId="${fl}" borderId="${o.border ? 1 : 0}" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">${al}</xf>`);
+    return (this.keys[key] = this.xfs.length - 1);
+  }
+  xml() {
+    const side = n => `<${n} style="thin"><color rgb="FF000000"/></${n}>`;
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">` +
+      (this.fmts.length ? `<numFmts count="${this.fmts.length}">${this.fmts.map((f, i) => `<numFmt numFmtId="${164 + i}" formatCode="${xe(f)}"/>`).join('')}</numFmts>` : '') +
+      `<fonts count="${this.fonts.length}">${this.fonts.join('')}</fonts><fills count="${this.fills.length}">${this.fills.join('')}</fills>` +
+      `<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border>${side('left')}${side('right')}${side('top')}${side('bottom')}<diagonal/></border></borders>` +
+      `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="${this.xfs.length}">${this.xfs.join('')}</cellXfs>` +
+      `<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+  }
+}
+class XSheet {
+  constructor(name) { this.name = name; this.rows = {}; this.merges = []; this.cw = {}; this.rh = {}; this.breaks = []; this.images = []; this.o = {}; }
+  cell(r, c, v, s) { (this.rows[r] = this.rows[r] || {})[c] = { v, s }; }
+  put(r, c, v, s, cs, rs) {
+    cs = cs || 1; rs = rs || 1; this.cell(r, c, v, s);
+    for (let i = 0; i < rs; i++) for (let j = 0; j < cs; j++) if (i || j) this.cell(r + i, c + j, null, s);
+    if (cs > 1 || rs > 1) this.merges.push(`${xc(c)}${r}:${xc(c + cs - 1)}${r + rs - 1}`);
+  }
+  xml(maxCol) {
+    const rowNums = Object.keys(this.rows).map(Number).sort((a, b) => a - b), last = rowNums.length ? rowNums[rowNums.length - 1] : 1;
+    const sd = rowNums.map(r => {
+      const cs = Object.keys(this.rows[r]).map(Number).sort((a, b) => a - b).map(c => {
+        const { v, s } = this.rows[r][c], ref = xc(c) + r;
+        if (v === null || v === undefined || v === '') return `<c r="${ref}" s="${s}"/>`;
+        if (typeof v === 'number') return `<c r="${ref}" s="${s}"><v>${v}</v></c>`;
+        return `<c r="${ref}" s="${s}" t="inlineStr"><is><t xml:space="preserve">${xe(v)}</t></is></c>`;
+      }).join('');
+      return `<row r="${r}"${this.rh[r] ? ` ht="${this.rh[r]}" customHeight="1"` : ''}>${cs}</row>`;
+    }).join('');
+    const cols = Object.keys(this.cw).map(Number).sort((a, b) => a - b).map(c => `<col min="${c}" max="${c}" width="${this.cw[c]}" customWidth="1"/>`).join('');
+    const o = this.o;
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">` +
+      (o.fitW ? '<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>' : '') + `<dimension ref="A1:${xc(maxCol)}${last}"/><sheetViews><sheetView workbookViewId="0" showGridLines="0"/></sheetViews><sheetFormatPr defaultRowHeight="15"/>` +
+      (cols ? `<cols>${cols}</cols>` : '') + `<sheetData>${sd}</sheetData>` + (this.merges.length ? `<mergeCells count="${this.merges.length}">${this.merges.map(m => `<mergeCell ref="${m}"/>`).join('')}</mergeCells>` : '') +
+      `<printOptions horizontalCentered="1"/><pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/>` +
+      `<pageSetup paperSize="9" ${o.fitW ? 'fitToWidth="1" fitToHeight="0"' : `scale="${o.scale || 100}"`} orientation="${o.landscape ? 'landscape' : 'portrait'}"/>` +
+      (this.breaks.length ? `<rowBreaks count="${this.breaks.length}" manualBreakCount="${this.breaks.length}">${this.breaks.map(b => `<brk id="${b}" max="16383" man="1"/>`).join('')}</rowBreaks>` : '') +
+      (this.images.length ? '<drawing r:id="rId1"/>' : '') + '</worksheet>';
+  }
+}
+function packXlsx(sheet, S, maxCol, png) {
+  const files = [];
+  const hasImg = sheet.images.length && png;
+  files.push({ name: '[Content_Types].xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${hasImg ? '<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>' : ''}</Types>` });
+  files.push({ name: '_rels/.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' });
+  const dn = sheet.o.printTitles ? `<definedNames><definedName name="_xlnm.Print_Titles" localSheetId="0">'${xe(sheet.name)}'!${sheet.o.printTitles}</definedName></definedNames>` : '';
+  files.push({ name: 'xl/workbook.xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets><sheet name="${xe(sheet.name)}" sheetId="1" r:id="rId1"/></sheets>${dn}</workbook>` });
+  files.push({ name: 'xl/_rels/workbook.xml.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>' });
+  files.push({ name: 'xl/styles.xml', data: S.xml() });
+  if (!hasImg) sheet.images = [];
+  files.push({ name: 'xl/worksheets/sheet1.xml', data: sheet.xml(maxCol) });
+  if (hasImg) {
+    files.push({ name: 'xl/worksheets/_rels/sheet1.xml.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/></Relationships>' });
+    files.push({ name: 'xl/drawings/_rels/drawing1.xml.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image1.png"/></Relationships>' });
+    files.push({ name: 'xl/drawings/drawing1.xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+      sheet.images.map((im, i) => `<xdr:oneCellAnchor><xdr:from><xdr:col>${im.col}</xdr:col><xdr:colOff>${im.colOff}</xdr:colOff><xdr:row>${im.row}</xdr:row><xdr:rowOff>${im.rowOff}</xdr:rowOff></xdr:from><xdr:ext cx="${im.cx}" cy="${im.cy}"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="${i + 2}" name="School logo ${i + 1}"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${im.cx}" cy="${im.cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor>`).join('') + '</xdr:wsDr>' });
+    files.push({ name: 'xl/media/image1.png', data: png });
+  }
+  return zipStore(files);
+}
+
+function resultsWorkbook(rm) {
+  const S = new XStyles(), sh = new XSheet('Class results'), n = rm.subjects.length, last = 4 + n, TNR = 'Times New Roman';
+  const st = {
+    hd: S.get({ b: 1, sz: 10, h: 'left' }),
+    hdr: S.get({ b: 1, sz: 9, rot: 90, h: 'center', v: 'bottom', border: 1, fill: 'DCE9FB' }), hdrL: S.get({ b: 1, sz: 10, h: 'left', v: 'bottom', border: 1, fill: 'DCE9FB' }),
+    mxL: S.get({ b: 1, sz: 10, h: 'left', border: 1 }), mx: S.get({ b: 1, sz: 10, h: 'right', border: 1 }),
+    rank: S.get({ sz: 10, h: 'right', border: 1 }), name: S.get({ sz: 10, h: 'left', border: 1 }), num: S.get({ sz: 10, h: 'right', border: 1 }),
+    avg: S.get({ b: 1, sz: 10, h: 'right', border: 1, fmt: '0.0"%"' }),
+    fl: S.get({ sz: 10, font: TNR, h: 'left', border: 1 }), fn: S.get({ sz: 10, font: TNR, h: 'right', border: 1 }), fd: S.get({ sz: 10, font: TNR, h: 'right', border: 1, fmt: '0.0' })
+  };
+  for (let i = 0; i < 4; i++) { if (rm.left[i]) sh.put(1 + i, 1, rm.left[i], st.hd, 2); sh.put(1 + i, 3, rm.right[i] || '', st.hd, last - 2); sh.rh[1 + i] = 15; }
+  sh.put(6, 1, 'Subjects', st.hdrL, 2); rm.subjects.forEach((s, j) => sh.put(6, 3 + j, s, st.hdr)); sh.put(6, 3 + n, 'Total', st.hdr); sh.put(6, 4 + n, 'Avg', st.hdr); sh.rh[6] = 96;
+  sh.put(7, 1, 'Rank', st.mxL); sh.put(7, 2, 'Maxima', st.mxL); rm.maxima.forEach((v, j) => sh.put(7, 3 + j, v, st.mx)); sh.put(7, 3 + n, rm.maxTotal, st.mx); sh.put(7, 4 + n, '%', st.mx);
+  let r = 8;
+  rm.rows.forEach(x => {
+    sh.put(r, 1, x.pos === null ? null : x.pos, st.rank); sh.put(r, 2, x.name, st.name);
+    x.cells.forEach((c, j) => sh.put(r, 3 + j, c ? c.n : null, st.num));
+    sh.put(r, 3 + n, x.total, st.num); sh.put(r, 4 + n, x.inc ? x.avg.toFixed(1) + '% *' : x.avg, st.avg); r++;
+  });
+  const foot = (label, vals, all, sty, sty2) => { sh.put(r, 1, label, st.fl, 2); vals.forEach((v, j) => sh.put(r, 3 + j, v === null || v === undefined ? null : r1(v), sty)); sh.put(r, 3 + n, all === null || all === undefined ? null : r1(all), sty); sh.put(r, 4 + n, null, st.fn); r++; };
+  foot('Total', rm.foot.total, rm.foot.grand, st.fn); foot('Success rate', rm.foot.success, rm.foot.successAll, st.fd); foot('Average', rm.foot.avg, rm.foot.avgAll, st.fd);
+  r++; sh.put(r, 3, rm.done[0], st.hd, last - 2); r++; sh.put(r, 3, rm.done[1], st.hd, last - 2);
+  if (rm.note) { r += 2; sh.put(r, 1, rm.note, S.get({ i: 1, sz: 9, h: 'left', v: 'top', wrap: 1 }), last); sh.rh[r] = 28; }
+  sh.cw[1] = 6; sh.cw[2] = 38; for (let j = 0; j < n; j++) sh.cw[3 + j] = 9; sh.cw[3 + n] = 9; sh.cw[4 + n] = 9;
+  sh.o = { fitW: true, printTitles: '$6:$7' };
+  return packXlsx(sh, S, last, null);
+}
+const allocSpans = (rel, total) => {
+  const s = rel.reduce((a, b) => a + b, 0), raw = rel.map(r => r / s * total), base = raw.map(r => Math.max(1, Math.floor(r)));
+  let used = base.reduce((a, b) => a + b, 0); const order = raw.map((r, i) => [r - Math.floor(r), i]).sort((a, b) => b[0] - a[0]); let k = 0;
+  while (used < total) { base[order[k % order.length][1]]++; used++; k++; }
+  while (used > total) { const i = base.indexOf(Math.max(...base)); base[i]--; used--; }
+  return base;
+};
+async function logoPng() {
+  const l = DB.school.logo; if (!l || !/^data:image\/png;base64,/.test(l)) return null;
+  const im = await loadImg(l); if (!im) return null;
+  return { bytes: bin2u8(atob(l.split(',')[1])), w: im.width, h: im.height };
+}
+async function yearWorkbook(models) {
+  const S = new XStyles(), sh = new XSheet('Report cards'), G = 23, TNR = 'Times New Roman', SC = 1.15;
+  const logo = models.length && models[0].logo ? await logoPng() : null;
+  Y_W.forEach((w, i) => { sh.cw[i + 1] = Math.round(w * SC * 10) / 10; });
+  const pxW = Y_W.reduce((a, w) => a + Math.trunc(w * SC * 7 + 5), 0);
+  const f = o => S.get(Object.assign({ sz: 9, font: TNR, h: 'center', border: 1 }, o));
+  const st = {
+    box: S.get({ b: 1, sz: 11, font: TNR, h: 'left', border: 1 }), title: S.get({ b: 1, sz: 15, font: TNR, h: 'center' }),
+    inf: S.get({ sz: 10, font: TNR, h: 'left' }), th: f({ b: 1, fill: 'DCE9FB', wrap: 1, sz: 8 }), thl: f({ b: 1, fill: 'DCE9FB', h: 'left', sz: 9 }),
+    lab: f({ b: 1, h: 'left' }), val: f({ h: 'left' }), note: S.get({ i: 1, sz: 8, font: TNR, h: 'left', v: 'top', wrap: 1 }),
+    ob: f({ h: 'left', v: 'top', wrap: 1 }), ver: S.get({ sz: 10, font: TNR, h: 'left', v: 'top', border: 1, wrap: 1 })
+  };
+  const val = c => c.n !== undefined ? c.n : c.t;
+  const cs = (c, o) => f(Object.assign({ fmt: c.pct ? '0.0"%"' : undefined }, o));
+  let r = 1;
+  models.forEach(m => {
+    const sch = m.school;
+    [sch.country, sch.name, sch.phone].forEach(t => { sh.put(r, 1, t, st.box, 8); sh.rh[r] = 17; r++; });
+    if (logo) {
+      const hpx = 56; let wpx = hpx * logo.w / logo.h, hh = hpx; if (wpx > 220) { hh = hpx * 220 / wpx; wpx = 220; }
+      const x0 = Math.max(0, (pxW - wpx) / 2); let acc = 0, col = 0; while (col < G && acc + Math.trunc(Y_W[col] * SC * 7 + 5) <= x0) { acc += Math.trunc(Y_W[col] * SC * 7 + 5); col++; }
+      sh.images.push({ col, colOff: Math.round((x0 - acc) * 9525), row: r - 4, rowOff: 0, cx: Math.round(wpx * 9525), cy: Math.round(hh * 9525) });
+    }
+    sh.rh[r++] = 8;
+    sh.put(r, 1, m.title, st.title, G); sh.rh[r] = 24; r++;
+    sh.put(r, 1, 'NAMES: ' + m.st.name.toUpperCase(), st.inf, 10); sh.put(r, 11, 'Number of Students: ' + m.N, st.inf, 7); sh.put(r, 18, 'Class: ' + m.clsName, st.inf, 6); sh.rh[r++] = 16;
+    sh.put(r, 1, "Student's No.: " + m.idno, st.inf, 10); sh.put(r, 11, 'Option:', st.inf, 7); sh.put(r, 18, 'School Year: ' + m.year, st.inf, 6); sh.rh[r++] = 16;
+    sh.rh[r++] = 6;
+    sh.put(r, 1, 'Subjects', st.thl, 1, 2); Y_GROUPS.forEach(g => sh.put(r, g[1] + 1, g[0], st.th, g[2])); sh.rh[r++] = 15;
+    for (let c = 1; c < 23; c++) sh.put(r, c + 1, Y_HEAD[c], st.th); sh.rh[r++] = 26;
+    m.rows.forEach(row => { row.forEach((cell, i) => sh.put(r, i + 1, val(cell), i === 0 ? f({ h: 'left' }) : cs(cell, { fill: Y_GAIN.has(i) ? 'E6E6E6' : undefined, b: i >= 20 ? 1 : undefined }))); sh.rh[r++] = 17; });
+    m.ysums.forEach(row => {
+      if (row.k === 'obs') { sh.put(r, 1, 'Observations', st.lab); sh.put(r, 2, m.obs || '', st.ob, 14); sh.put(r, 16, 'Conduct', st.lab, 3); sh.put(r, 19, m.conduct || '', st.val, 5); sh.rh[r++] = 34; return; }
+      const sig = row.k === 'sigT' || row.k === 'sigP'; let c0 = 1;
+      row.cells.forEach((cell, j) => { sh.put(r, c0, val(cell), j === 0 ? f({ h: 'left', b: sig ? undefined : 1, v: sig ? 'top' : 'center' }) : cs(cell, { b: 1, fill: row.k === 'tot' ? (Y_GAIN.has(c0 - 1) ? 'E6E6E6' : 'F2F6FC') : undefined }), cell.span); c0 += cell.span; });
+      sh.rh[r++] = sig ? 34 : 17;
+    });
+    if (cardNote(m)) { sh.put(r, 1, cardNote(m) + (m.incomplete ? ' Annual points count only assessment components with marks entered.' : ''), st.note, G); sh.rh[r] = 24; r++; }
+    sh.rh[r++] = 8;
+    sh.put(r, 1, 'VERDICT OF THE JURY\n\n   ☐  Promoted\n   ☐  Advised to repeat\n   ☐  Proposed to resit', st.ver, 12, 4);
+    sh.put(r, 13, yDone(m) + '\n\n\nHead of the School', st.ver, 11, 4);
+    for (let i = 0; i < 4; i++) sh.rh[r + i] = 20;
+    r += 4; sh.breaks.push(r - 1); r += 2;
+  });
+  sh.o = { scale: 76, landscape: true };
+  return packXlsx(sh, S, G, logo ? logo.bytes : null);
+}
+async function cardsWorkbook(models) {
+  if (models.length && models[0].kind === 'year') return yearWorkbook(models);
+  const S = new XStyles(), sh = new XSheet('Report cards'), G = 16, TNR = 'Times New Roman';
+  const logo = models.length && models[0].logo ? await logoPng() : null;
+  for (let c = 1; c <= G; c++) sh.cw[c] = 6.2;
+  const st = {
+    hl: S.get({ b: 1, sz: 10, font: TNR, h: 'left' }), hr: S.get({ b: 1, sz: 10, font: TNR, h: 'right' }), title: S.get({ b: 1, u: 1, sz: 14, font: TNR, h: 'center' }),
+    lab: S.get({ b: 1, sz: 10, font: TNR, h: 'left', border: 1 }), val: S.get({ sz: 10, font: TNR, h: 'left', border: 1 }),
+    th: S.get({ b: 1, sz: 9, font: TNR, h: 'center', border: 1, fill: 'DCE9FB', wrap: 1 }), thl: S.get({ b: 1, sz: 9, font: TNR, h: 'left', border: 1, fill: 'DCE9FB', wrap: 1 }),
+    c: S.get({ sz: 10, font: TNR, h: 'center', border: 1 }), cl: S.get({ sz: 10, font: TNR, h: 'left', border: 1 }), cb: S.get({ b: 1, sz: 10, font: TNR, h: 'center', border: 1 }),
+    cp: S.get({ sz: 10, font: TNR, h: 'center', border: 1, fmt: '0.0"%"' }), cbp: S.get({ b: 1, sz: 10, font: TNR, h: 'center', border: 1, fmt: '0.0"%"' }),
+    s: S.get({ b: 1, sz: 10, font: TNR, h: 'center', border: 1, fill: 'F2F6FC' }), sl: S.get({ b: 1, sz: 10, font: TNR, h: 'left', border: 1, fill: 'F2F6FC' }), sp: S.get({ b: 1, sz: 10, font: TNR, h: 'center', border: 1, fill: 'F2F6FC', fmt: '0.0"%"' }),
+    note: S.get({ i: 1, sz: 9, font: TNR, h: 'left', v: 'top', wrap: 1 }), obs: S.get({ b: 1, sz: 10, font: TNR, h: 'left', v: 'top', border: 1, wrap: 1 }), sig: S.get({ b: 1, sz: 10, font: TNR, h: 'center', v: 'top', border: 1 })
+  };
+  const val = c => c.n !== undefined ? c.n : c.t;
+  let r = 1;
+  models.forEach(m => {
+    const sch = m.school;
+    [[sch.country, sch.ministry], [sch.name, m.year], [sch.address, m.period], [sch.phone, '']].forEach(([a, b]) => { sh.put(r, 1, a, st.hl, 8); sh.put(r, 9, b, st.hr, 8); sh.rh[r] = 15; r++; });
+    if (logo) {
+      sh.rh[r] = 56; const hpx = 64; let wpx = hpx * logo.w / logo.h, hh = hpx; if (wpx > 300) { hh = hpx * 300 / wpx; wpx = 300; }
+      const x0 = Math.max(0, (G * 48 - wpx) / 2); sh.images.push({ col: Math.floor(x0 / 48), colOff: Math.round((x0 % 48) * 9525), row: r - 1, rowOff: 4 * 9525, cx: Math.round(wpx * 9525), cy: Math.round(hh * 9525) });
+    } else sh.rh[r] = 6;
+    r++;
+    sh.put(r, 1, m.title, st.title, G); sh.rh[r] = 26; r++;
+    sh.put(r, 1, 'Student Name:', st.lab, 3); sh.put(r, 4, m.st.name.toUpperCase(), st.val, 13); sh.rh[r] = 20; r++;
+    sh.put(r, 1, 'Born:', st.lab, 2); sh.put(r, 3, (m.born || '') + (m.pob ? '  at  ' + m.pob : ''), st.val, 8); sh.put(r, 11, 'Class:', st.lab, 3); sh.put(r, 14, m.clsName, st.val, 3); sh.rh[r] = 20; r++;
+    sh.put(r, 1, 'ID No.:', st.lab, 2); sh.put(r, 3, m.idno, st.val, 3); sh.put(r, 6, 'N. Students:', st.lab, 3); sh.put(r, 9, m.N, st.val, 2); sh.put(r, 11, 'Conduct:', st.lab, 3); sh.put(r, 14, m.conduct, st.val, 3); sh.rh[r] = 20; r++;
+    sh.rh[r++] = 6;
+    const sp = allocSpans(m.cols.map(c => c[1]), G); let c0 = 1;
+    m.cols.forEach((c, i) => { sh.put(r, c0, c[0], c[2] === 'l' ? st.thl : st.th, sp[i]); c0 += sp[i]; }); sh.rh[r++] = 26;
+    m.rows.forEach(row => { c0 = 1; row.forEach((cell, i) => { sh.put(r, c0, val(cell), i === 0 ? st.cl : i === m.bold ? (cell.pct ? st.cbp : st.cb) : (cell.pct ? st.cp : st.c), sp[i]); c0 += sp[i]; }); sh.rh[r++] = 20; });
+    m.sums.forEach(row => { c0 = 1; let ci = 0; row.forEach((cell, j) => { const span = sp.slice(ci, ci + cell.span).reduce((a, b) => a + b, 0); sh.put(r, c0, val(cell), j === 0 ? st.sl : (cell.pct ? st.sp : st.s), span); c0 += span; ci += cell.span; }); sh.rh[r++] = 20; });
+    if (cardNote(m)) { sh.put(r, 1, cardNote(m), st.note, G); sh.rh[r] = 24; r++; }
+    sh.rh[r++] = 8;
+    sh.put(r, 1, 'Observations' + (m.obs ? '\n' + m.obs : ''), st.obs, 8, 2); sh.put(r, 9, 'Teacher Signature', st.sig, 8); sh.put(r + 1, 9, 'Parent Signature', st.sig, 8); sh.rh[r] = 34; sh.rh[r + 1] = 34; r += 2;
+    sh.breaks.push(r - 1); r += 2;
+  });
+  sh.o = { scale: 92 };
+  return packXlsx(sh, S, G, logo ? logo.bytes : null);
+}
+
+/* ---------- CSV: same layout as the printed class list ---------- */
+function csvResults() {
+  const cls = curClass(); if (!cls) return;
+  const m = resultsModel(), n = m.subjects.length, W = n + 4, q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"', blank = () => new Array(W).fill('');
+  const out = [];
+  for (let i = 0; i < 4; i++) { const r = blank(); r[0] = m.left[i] || ''; r[2] = m.right[i] || ''; out.push(r); }
+  out.push(blank());
+  out.push(['', 'Subjects', ...m.subjects, 'Total', 'Avg']);
+  out.push(['Rank', 'Maxima', ...m.maxima, m.maxTotal, '%']);
+  m.rows.forEach(x => out.push([x.pos === null ? '' : x.pos, x.name, ...x.cells.map(c => c ? c.n : ''), x.total === null ? '' : x.total, x.avg === null ? '' : x.avg.toFixed(1) + '%' + (x.inc ? ' *' : '')]));
+  out.push(['', 'Total', ...m.foot.total, m.foot.grand, '']);
+  out.push(['', 'Success rate', ...m.foot.success.map(ff), ff(m.foot.successAll), '']);
+  out.push(['', 'Average', ...m.foot.avg.map(ff), ff(m.foot.avgAll), '']);
+  out.push(blank()); const d1 = blank(); d1[2] = m.done[0]; out.push(d1); const d2 = blank(); d2[2] = m.done[1]; out.push(d2);
+  if (m.note) { out.push(blank()); const d3 = blank(); d3[0] = m.note; out.push(d3); }
+  download('Class-results_' + tag() + '_' + m.scope + '.csv', '﻿' + out.map(r => r.map(q).join(',')).join('\r\n'), 'text/csv;charset=utf-8');
+}
+
+/* ---------- buttons ---------- */
+let _printed = false;
+window.addEventListener('beforeprint', () => { _printed = true; });
+async function doPrint() {
+  _printed = false; try { window.print(); } catch (_) {}
+  await new Promise(r => setTimeout(r, 700));
+  if (!_printed) await say('This window did not open the print dialog. Some viewers and previews block printing.\n\nUse “Download PDF” instead: it always fits the paper, and you can print the PDF from any PDF viewer. You can also open this file directly in Chrome or Edge and print from there.');
+}
+function cardsFileName(sel, ext) {
+  const one = ui.rcStudent !== 'all' && sel.selected.length === 1;
+  return (one ? 'Report-card_' + safeName(sel.selected[0].st.name) + '_' : 'Report-cards_') + tag() + '_' + sel.scope + '.' + ext;
+}
+async function exportCards(kind) {
+  const sel = cardsSelection(); if (!sel || !sel.selected.length) { await say('There are no report cards to download. Choose a learner, or change Show / Find so at least one learner is listed.'); return; }
+  const models = sel.selected.map(x => cardModel(x, sel.cls, sel.scope, sel.term, sel.ctx));
+  if (kind === 'pdf') download(cardsFileName(sel, 'pdf'), await makeCardsPDF(models, ui.perPage), 'application/pdf');
+  else download(cardsFileName(sel, 'xlsx'), await cardsWorkbook(models), MIME_XLSX);
+}
+async function exportResults(kind) {
+  if (!curClass()) return; const rm = resultsModel();
+  if (kind === 'pdf') download('Class-results_' + tag() + '_' + rm.scope + '.pdf', makeResultsPDF(rm), 'application/pdf');
+  else download('Class-results_' + tag() + '_' + rm.scope + '.xlsx', resultsWorkbook(rm), MIME_XLSX);
+}
+
+function backup() { DB.lastBackup = new Date().toISOString(); save(); download('report-card-backup-' + stamp() + '.json', JSON.stringify(DB, null, 1), 'application/json'); renderBanner(); if (ui.tab === 'settings') render(); }
+
+document.addEventListener('click', async e => {
+  const t = e.target.closest('[data-tab]');
+  if (t) { e.preventDefault(); ui.tab = t.dataset.tab; render(); return; }
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const act = b.dataset.act, id = b.dataset.id, y = Y();
+  if (await cloudAct(act, b)) return;
+  switch (act) {
+    case 'newYear': await newYear(); break;
+    case 'pasteMarks': await pasteMarksDialog(); break;
+    case 'startYear': await newYear(String(new Date().getFullYear())); break;
+    case 'hideYear': ui.yearBannerHidden = true; renderBanner(); break;
+    case 'print': await doPrint(); break;
+    case 'csv': csvResults(); break;
+    case 'pdfResults': await exportResults('pdf'); break;
+    case 'xlsxResults': await exportResults('xlsx'); break;
+    case 'pdfCards': await exportCards('pdf'); break;
+    case 'xlsxCards': await exportCards('xlsx'); break;
+    case 'backup': backup(); break;
+    case 'hideBanner': ui.bannerHidden = true; renderBanner(); break;
+    case 'addClass': {
+      const n = $('newClass').value.trim(); if (!n) return;
+      if (y.classes.some(c => c.name.toLowerCase() === n.toLowerCase())) { say('A class with this name already exists.'); return; }
+      let lvl = $('newLevel').value; if (lvl === 'auto') lvl = guessLevel(n);
+      const c = { id: uid(), name: n, subjects: lvl === 'blank' ? [] : TEMPLATES[lvl].subs.map(([nm, mid, cat, ex]) => mkSubj(nm, mid, cat, ex)) };
+      y.classes.push(c); DB.current.classId = c.id; save(); render(); break; }
+    case 'renameClass': {
+      const c = y.classes.find(c => c.id === id), n = (await askText('New name for the class:', c.name) || '').trim();
+      if (n) { if (y.classes.some(x => x.id !== c.id && x.name.trim().toLowerCase() === n.toLowerCase())) { await say('A class with this name already exists.'); break; } c.name = n; save(); render(); } break; }
+    case 'delClass': {
+      const c = y.classes.find(c => c.id === id), k = y.students.filter(s => s.classId === id);
+      if (!await ask(`Delete class ${c.name}${k.length ? ' together with its ' + k.length + ' learners and ALL their marks' : ''}? This cannot be undone.`)) return;
+      k.forEach(s => { delete y.marks[s.id]; delete y.comments[s.id]; });
+      y.students = y.students.filter(s => s.classId !== id); y.classes = y.classes.filter(c => c.id !== id); save(); render(); break; }
+    case 'addSubj': {
+      const n = $('newSubj').value.trim(), c = curClass(); if (!n || !c) return;
+      if (c.subjects.some(s => s.name.trim().toLowerCase() === n.toLowerCase())) { await say('This subject already exists in the class.'); break; }
+      c.subjects.push(mkSubj(n, 30, 30, 60)); save(); render(); break; }
+    case 'copySubj': {
+      const src = y.classes.find(c => c.id === $('copyFrom').value), c = curClass();
+      if (!src || !await ask('Replace the subjects of ' + c.name + ' with those of ' + src.name + '? Marks already entered for the current subjects will be hidden.')) return;
+      c.subjects = src.subjects.map(s => JSON.parse(JSON.stringify(Object.assign({}, s, { id: uid() })))); save(); render(); break; }
+    case 'delSubj': {
+      const c = curClass(), s = c.subjects.find(s => s.id === id);
+      if (!await ask('Remove subject ' + s.name + ' and all marks entered for it in this class?')) return;
+      c.subjects = c.subjects.filter(s => s.id !== id);
+      Object.values(y.marks).forEach(m => delete m[id]); save(); render(); break; }
+    case 'addLearners': {
+      const c = curClass(), names = $('bulkNames').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean); if (!names.length) return;
+      const have = new Set(studentsOf(c.id).map(s => s.name.toLowerCase())), dup = [];
+      names.forEach(n => { if (have.has(n.toLowerCase())) dup.push(n); else { have.add(n.toLowerCase()); y.students.push({ id: uid(), classId: c.id, name: n, idno: '' }); } });
+      save(); render(); if (dup.length) say('Not added because they are already in this class:\n' + dup.join('\n')); break; }
+    case 'delStudent': {
+      const s = y.students.find(s => s.id === id);
+      if (!await ask('Remove ' + s.name + ' and all their marks for ' + DB.current.year + '?')) return;
+      delete y.marks[id]; delete y.comments[id]; y.students = y.students.filter(s => s.id !== id); save(); render(); break; }
+    case 'moveSubj': {
+      const c = curClass(), i = c.subjects.findIndex(s => s.id === id), j = i + (+b.dataset.d);
+      if (i < 0 || j < 0 || j >= c.subjects.length) return;
+      [c.subjects[i], c.subjects[j]] = [c.subjects[j], c.subjects[i]]; save(); render(); break; }
+    case 'applyTpl': {
+      const c = curClass(), tpl = TEMPLATES[$('tplSel').value];
+      if (!await ask('Set ' + c.name + ' to the standard subjects and maximums for ' + tpl.label + '?\n\nThe maximums of ALL three terms are reset to the standard values, which changes the percentages of any marks already entered. Subjects that are not in the standard list are removed. Marks of subjects with the same name are kept.')) return;
+      const conflicts = [];
+      tpl.subs.forEach(([nm, mid, cat, ex]) => {
+        const old = c.subjects.find(s => s.name.trim().toLowerCase() === nm.toLowerCase());
+        if (!old) return;
+        const next = { mid, cat, exam: ex };
+        [1, 2, 3].forEach(t => ['mid', 'cat', 'exam'].forEach(k => {
+          // Check every learner before lowering a maximum.
+          y.students.filter(st => st.classId === c.id).forEach(st => {
+            const v = num((((y.marks[st.id] || {})[old.id] || {})[t] || {})[k]);
+            if (v !== null && v > next[k]) conflicts.push(st.name + ' – ' + nm + ' – Term ' + t + ' ' + k.toUpperCase() + ': ' + v + ' exceeds new maximum ' + next[k]);
+          });
+        }));
+      });
+      if (conflicts.length) { await say('The standard maximums cannot be applied yet because existing marks would exceed them. Correct these marks or keep the current maximums first:\n\n' + conflicts.slice(0, 12).join('\n') + (conflicts.length > 12 ? '\n… and ' + (conflicts.length - 12) + ' more.' : '')); break; }
+      c.subjects = tpl.subs.map(([nm, mid, cat, ex]) => {
+        const old = c.subjects.find(s => s.name.trim().toLowerCase() === nm.toLowerCase());
+        if (old) { old.mid = mid; old.cat = cat; old.exam = ex; delete old.tm; return old; }
+        return mkSubj(nm, mid, cat, ex);
+      });
+      save(); render(); break; }
+    case 'delLogo': DB.school.logo = ''; save(); render(); break;
+    case 'addBand': { const used = new Set(DB.settings.bands.map(x => Number(x.min))); let m = 99; while (m > 0 && used.has(m)) m--; if (used.has(m)) { await say('There is no free starting percentage left for a new row.'); break; } DB.settings.bands.push({ min: m, grade: 'New', remark: '' }); save(); render(); break; }
+    case 'delBand': { const keep = DB.settings.bands.filter((_, k) => k !== +b.dataset.i), err = bandsError(keep); if (err) { await say('This row cannot be deleted. ' + err); break; } DB.settings.bands = keep; save(); render(); break; }
+  }
+});
+
+document.addEventListener('change', async e => {
+  const el = e.target, y = Y();
+  if (await cloudChange(el)) return;
+  if (el.id === 'selYear') { DB.current.year = el.value; DB.current.classId = null; save(); render(); return; }
+  if (el.id === 'selTerm') { DB.current.term = +el.value; save(); render(); return; }
+  if (el.id === 'selClass') { DB.current.classId = el.value; save(); render(); return; }
+  if (el.id === 'restoreFile') { restore(el.files[0]); el.value = ''; return; }
+  if (el.id === 'logoFile') { setLogo(el.files[0]); el.value = ''; return; }
+  if (el.classList.contains('mk') && el.dataset.st) { return markChange(el); }
+  switch (el.dataset.f) {
+    case 'part': ui.part = el.value; render(); break;
+    case 'resScope': ui.resScope = el.value; render(); break;
+    case 'rcScope': ui.rcScope = el.value; render(); break;
+    case 'rcStudent': ui.rcStudent = el.value; render(); break;
+    case 'cmt': { const k = commentKey(ui.rcScope); const c = y.comments[el.dataset.st] = y.comments[el.dataset.st] || {}; (c[k] = c[k] || {})[el.dataset.who] = el.value; save(); break; }
+    case 'subj': {
+      const cl = curClass(), s = cl.subjects.find(s => s.id === el.dataset.id), k = el.dataset.k, term = DB.current.term;
+      if (k === 'name') { const v = el.value.trim(); if (!v) { el.value = s.name; return; } if (cl.subjects.some(x => x.id !== s.id && x.name.trim().toLowerCase() === v.toLowerCase())) { el.value = s.name; await say('This subject already exists in the class.'); return; } s.name = v; save(); render(); break; }
+      const v = num(el.value), cur = smax(s, term);
+      const tot = ['cat', 'mid', 'exam'].reduce((a, p) => a + (p === k ? (v || 0) : (+cur[p] || 0)), 0);
+      if (v === null || v < 0 || tot <= 0) { say('Enter a maximum of 0 or more. Use 0 for an assessment this subject does not have. The three together must be above 0.'); el.value = cur[k]; break; }
+      let terms = ui.maxAll ? [1, 2, 3] : [term];
+      if (ui.maxAll) {
+        const others = [1, 2, 3].filter(t => t !== term && termHasMarks(s.id, t));
+        if (others.length) {
+          if (!await ask('Term ' + others.join(' and Term ') + (others.length > 1 ? ' already have' : ' already has') + ' marks for ' + s.name + '. Changing the maximum for all terms would also change those results.\n\nOK = change Term ' + term + ' only.\nCancel = change nothing.')) { el.value = cur[k]; break; }
+          terms = [term];
+        }
+      }
+      const bad = terms.filter(t => anyOver(s.id, t, k, v));
+      if (bad.length) { say('Some marks already entered for ' + s.name + ' (Term ' + bad.join(', ') + ') are higher than ' + v + '. Correct those marks first, or choose a higher maximum.'); el.value = cur[k]; break; }
+      s.tm = s.tm || {};
+      terms.forEach(t => { s.tm[t] = Object.assign({}, smax(s, t), { [k]: v }); });
+      save(); render(); break; }
+    case 'stname': { const s = y.students.find(s => s.id === el.dataset.id), v = el.value.trim(); if (!v) { el.value = s.name; return; } if (y.students.some(x => x.id !== s.id && x.classId === s.classId && x.name.trim().toLowerCase() === v.toLowerCase())) { el.value = s.name; await say('A learner with this name already exists in the class.'); return; } s.name = v; save(); render(); break; }
+    case 'stid': y.students.find(s => s.id === el.dataset.id).idno = el.value.trim(); save(); break;
+    case 'stdob': y.students.find(s => s.id === el.dataset.id).dob = el.value; save(); break;
+    case 'stpob': y.students.find(s => s.id === el.dataset.id).pob = el.value.trim(); save(); break;
+    case 'maxAll': ui.maxAll = el.checked; break;
+    case 'perPage': ui.perPage = el.value; render(); break;
+    case 'rcSort': ui.rcSort = el.value; render(); break;
+    case 'rcFilter': ui.rcFilter = el.value; render(); break;
+    case 'mkSort': ui.mkSort = el.value; render(); break;
+    case 'resSort': ui.resSort = el.value; render(); break;
+    case 'logo': setLogo(el.files[0]); el.value = ''; break;
+    case 'stclass': {
+      const s = y.students.find(s => s.id === el.dataset.id);
+      if (y.students.some(x => x.id !== s.id && x.classId === el.value && x.name.trim().toLowerCase() === s.name.trim().toLowerCase())) { el.value = s.classId; await say('A learner with this name already exists in the selected class.'); return; }
+      if (!await ask(s.name + ' will move to the selected class. Marks entered under the old class\'s subjects will not carry over to the new class. Continue?')) { el.value = s.classId; return; }
+      s.classId = el.value; save(); render(); break; }
+    case 'school': DB.school[el.dataset.k] = el.value.trim(); save(); renderHeader(); break;
+    case 'pass': { const v = num(el.value); if (v === null || v < 0 || v > 100) { say('The pass mark must be between 0 and 100.'); el.value = DB.settings.passPct; return; } DB.settings.passPct = v; save(); break; }
+    case 'band': { const bd = DB.settings.bands[+el.dataset.i], k = el.dataset.k, old = bd[k]; if (k === 'min') { const v = num(el.value); if (v === null) { say('Enter a percentage from 0 to 100.'); el.value = old; return; } bd.min = v; } else bd[k] = el.value.trim(); const err = bandsError(DB.settings.bands); if (err) { bd[k] = old; el.value = old; say(err); return; } save(); break; }
+  }
+});
+
+function termHasMarks(subjId, t) {
+  return studentsOf(curClass().id).some(st => { const m = ((((Y().marks[st.id] || {})[subjId]) || {})[t]); return m && PARTS.some(p => num(m[p]) !== null); });
+}
+function anyOver(subjId, t, k, v) {
+  return studentsOf(curClass().id).some(st => { const m = ((((Y().marks[st.id] || {})[subjId]) || {})[t]) || {}; const x = num(m[k]); return x !== null && x > v; });
+}
+/* ---------- paste many marks at once ---------- */
+const nn = t => String(t == null ? '' : t).toUpperCase().replace(/\s+/g, ' ').trim();
+const isMarkText = t => /^(\d+\.?\d*|\.\d+)$/.test(String(t == null ? '' : t).trim().replace(',', '.'));
+function buildPlan(entries) {
+  const term = DB.current.term, part = ui.part, plan = { ok: [], bad: [], overwrite: 0, same: 0, notes: [] };
+  entries.forEach(e => {
+    const raw = String(e.raw == null ? '' : e.raw).trim();
+    if (raw === '') return;
+    const label = e.st.name + ' – ' + e.sj.name, mx = +smax(e.sj, term)[part] || 0, t = raw.replace(',', '.');
+    if (!canWrite(curClass().id, e.sj.id)) { plan.bad.push(label + ': you are not assigned to this subject'); return; }
+    if (!isMarkText(raw)) { plan.bad.push(label + ': “' + raw + '” is not a valid mark'); return; }
+    if (mx <= 0) { plan.bad.push(label + ': ' + PART_LABEL[part] + ' is not used for this subject'); return; }
+    const v = Number(t);
+    if (v > mx) { plan.bad.push(label + ': ' + v + ' is above the maximum of ' + mx); return; }
+    const old = num((((Y().marks[e.st.id] || {})[e.sj.id] || {})[term] || {})[part]);
+    if (old === v) plan.same++; else if (old !== null) plan.overwrite++;
+    plan.ok.push({ st: e.st, sj: e.sj, v });
+  });
+  return plan;
+}
+function parseGrid(text) {
+  return String(text).replace(/\r/g, '').split('\n').filter(l => l.trim() !== '').map(l => l.split(l.includes('\t') ? '\t' : ';'));
+}
+function entriesFromText(text) {
+  const cls = curClass(), studs = studentsOf(cls.id), subs = cls.subjects, notes = [], bad = [], entries = [];
+  const byName = new Map(studs.map(st => [nn(st.name), st]));
+  const q = (ui.q.marks || '').trim().toLowerCase();
+  const order = (ui.mkSort === 'namez' ? studs.slice().reverse() : studs).filter(st => !q || (st.name + ' ' + (st.idno || '')).toLowerCase().includes(q));
+  const rows = parseGrid(text), first = rows[0] || [];
+  const matched = first.map(h => { const x = nn(h); return x.length < 2 ? -1 : subs.findIndex(sj => nn(sj.name) === x || (x.length >= 3 && nn(sj.name).startsWith(x))); });
+  if (rows.length > 1 && matched.some(i => i >= 0) && !first.some(isMarkText)) {
+    // header row with subject names: columns matched by header, any other column (No., Total, Avg…) is ignored
+    const data = rows.slice(1);
+    let nameCol = -1, best = 0;
+    first.forEach((_, c) => { if (matched[c] >= 0) return; const n = data.filter(r => byName.has(nn(r[c]))).length; if (n > best) { best = n; nameCol = c; } });
+    data.forEach((r, i) => {
+      const st = nameCol >= 0 ? byName.get(nn(r[nameCol])) : order[i];
+      if (!st) { if (nameCol >= 0 && r.some(isMarkText) && String(r[nameCol] || '').trim() !== '') bad.push('“' + String(r[nameCol]).trim() + '”: no learner with this name in ' + cls.name); else if (nameCol < 0) notes.push('Row ' + (i + 2) + ' had no learner to go with and was ignored.'); return; }
+      first.forEach((_, c) => { if (matched[c] >= 0) entries.push({ st, sj: subs[matched[c]], raw: r[c] }); });
+    });
+    const used = matched.filter(i => i >= 0).length;
+    notes.push('Matched ' + used + ' subject column' + (used === 1 ? '' : 's') + ' from the header row' + (nameCol >= 0 ? ' and the learners by name.' : ' and the learners by the order shown on screen.'));
+    return { entries, notes: Array.from(new Set(notes)), bad };
+  }
+  // no header: drop a leading "No." column only when the next cell is a known learner name
+  const rows2 = rows.map(r => (r.length > 1 && isMarkText(r[0]) && byName.has(nn(r[1]))) ? r.slice(1) : r);
+  const textFirst = rows2.filter(r => String(r[0]).trim() !== '' && !isMarkText(r[0])).length;
+  if (rows2.length && textFirst * 2 >= rows2.length) {
+    rows2.forEach(r => {
+      const st = byName.get(nn(r[0]));
+      if (!st) { if (r.slice(1).some(isMarkText)) bad.push('“' + String(r[0]).trim() + '”: no learner with this name in ' + cls.name); return; }
+      r.slice(1).forEach((c, j) => { if (j >= subs.length) { if (String(c).trim() !== '') notes.push('Extra column(s) after the last subject were ignored.'); return; } entries.push({ st, sj: subs[j], raw: c }); });
+    });
+    notes.push('Learners were matched by name; columns go to the subjects in the order of the class (' + subs.map(x => x.name).join(', ') + ').');
+  } else {
+    rows2.forEach((r, i) => { const st = order[i]; if (!st) { notes.push('Row ' + (i + 1) + ' had no learner to go with and was ignored.'); return; }
+      r.forEach((c, j) => { if (j >= subs.length) { if (String(c).trim() !== '') notes.push('Extra column(s) after the last subject were ignored.'); return; } entries.push({ st, sj: subs[j], raw: c }); }); });
+    notes.push('No names found: rows were matched to the learners in the order shown on screen, columns to the subjects in the order of the class (' + subs.map(x => x.name).join(', ') + ').');
+  }
+  return { entries, notes: Array.from(new Set(notes)), bad };
+}
+async function confirmAndApply(entries, notes, preBad) {
+  const cls = curClass(), part = ui.part, term = DB.current.term, plan = buildPlan(entries);
+  plan.bad = (preBad || []).concat(plan.bad); plan.notes = notes || [];
+  const head = PART_LABEL[part] + ', Term ' + term + ', ' + cls.name;
+  if (!plan.ok.length) { await say('Nothing was entered into ' + head + '.' + (plan.bad.length ? '\n\nProblems:\n• ' + plan.bad.slice(0, 8).join('\n• ') + (plan.bad.length > 8 ? '\n• … and ' + (plan.bad.length - 8) + ' more' : '') : '\n\nNo marks were found in the pasted text.')); return false; }
+  const kids = new Set(plan.ok.map(x => x.st.id)).size;
+  let msg = 'Ready to enter ' + plan.ok.length + ' mark' + (plan.ok.length === 1 ? '' : 's') + ' for ' + kids + ' learner' + (kids === 1 ? '' : 's') + ' into ' + head + '.';
+  if (plan.overwrite) msg += '\n\n' + plan.overwrite + ' mark' + (plan.overwrite === 1 ? '' : 's') + ' already entered will be replaced.';
+  if (plan.bad.length) msg += '\n\n' + plan.bad.length + ' cell' + (plan.bad.length === 1 ? '' : 's') + ' will be SKIPPED:\n• ' + plan.bad.slice(0, 8).join('\n• ') + (plan.bad.length > 8 ? '\n• … and ' + (plan.bad.length - 8) + ' more' : '');
+  if (plan.notes.length) msg += '\n\n' + plan.notes.join('\n');
+  msg += '\n\nBlank cells are left unchanged.';
+  const yes = await dialog({ message: msg, ok: 'Enter these marks', cancel: 'Cancel', danger: !!plan.overwrite });
+  if (!yes) return false;
+  const m = Y().marks, term2 = DB.current.term;
+  plan.ok.forEach(x => { (((m[x.st.id] = m[x.st.id] || {})[x.sj.id] = m[x.st.id][x.sj.id] || {})[term2] = m[x.st.id][x.sj.id][term2] || {})[part] = x.v; });
+  save(); render();
+  return true;
+}
+async function pasteMarksDialog() {
+  const cls = curClass(); if (!cls) return;
+  const names = cls.subjects.map(s => s.name).join(', ');
+  const txt = await dialog({ wide: true, input: true, area: true, ok: 'Check the marks', cancel: 'Cancel',
+    message: 'Paste the marks for ' + PART_LABEL[ui.part] + ', Term ' + DB.current.term + ', ' + cls.name + '.\n\n1. In your spreadsheet select the cells and copy them (Ctrl+C), then paste below (Ctrl+V).\n2. Best layout: first column = learner name, then one column per subject in this order: ' + names + '. A header row with subject names also works, in any order.\n3. Without names, rows go to the learners in the order shown on screen.\n4. You will see a summary to approve before anything is saved.' });
+  if (txt === null || !txt.trim()) return;
+  const r = entriesFromText(txt);
+  await confirmAndApply(r.entries, r.notes, r.bad);
+}
+document.addEventListener('paste', async e => {
+  const el = e.target;
+  if (!(el && el.classList && el.classList.contains('mk') && el.dataset.st)) return;
+  const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+  if (!/[\t\n]/.test(text.replace(/\r/g, '').replace(/\n+$/, ''))) return;   // a single value: normal paste
+  e.preventDefault();
+  const trs = Array.from(document.querySelectorAll('#view tr[data-row]')).filter(tr => !tr.classList.contains('hid'));
+  const start = trs.indexOf(el.closest('tr')), c0 = Array.from(el.closest('tr').querySelectorAll('input.mk')).indexOf(el);
+  const rows = text.replace(/\r/g, '').replace(/\n+$/, '').split('\n').map(l => l.split('\t'));
+  const cls = curClass(), entries = [], notes = [], bad = [];
+  let lostRows = 0, lostCols = 0;
+  rows.forEach((r, i) => {
+    const tr = trs[start + i]; if (!tr) { lostRows++; return; }
+    const inputs = Array.from(tr.querySelectorAll('input.mk')), st = studentsOf(cls.id).find(x => x.id === inputs[0].dataset.st);
+    r.forEach((c, j) => { const inp = inputs[c0 + j]; if (!inp) { if (String(c).trim() !== '') lostCols++; return; }
+      entries.push({ st, sj: cls.subjects.find(x => x.id === inp.dataset.sj), raw: c }); });
+  });
+  if (lostRows) notes.push(lostRows + ' pasted row' + (lostRows === 1 ? '' : 's') + ' did not fit below the chosen cell and ' + (lostRows === 1 ? 'was' : 'were') + ' ignored.');
+  if (lostCols) notes.push(lostCols + ' pasted cell' + (lostCols === 1 ? '' : 's') + ' fell beyond the last subject and ' + (lostCols === 1 ? 'was' : 'were') + ' ignored.');
+  notes.push('Pasted from the cell you clicked, matching learners in the order shown on screen.');
+  await confirmAndApply(entries, notes, bad);
+});
+function markChange(el) {
+  const cls = curClass(), s = cls.subjects.find(s => s.id === el.dataset.sj), st = el.dataset.st, term = DB.current.term, part = ui.part;
+  if (!canWrite(cls.id, s.id)) { say('You are not assigned to ' + s.name + ' in this class.'); render(); return; }
+  const m = Y().marks;
+  const old = (((m[st] || {})[s.id] || {})[term] || {})[part];
+  const raw = el.value.trim().replace(',', '.');
+  if (raw === '') {
+    if (m[st] && m[st][s.id] && m[st][s.id][term]) { delete m[st][s.id][term][part]; }
+  } else {
+    const v = Number(raw);
+    if (!Number.isFinite(v) || v < 0 || v > smax(s, term)[part]) {
+      el.classList.add('bad'); say(`Invalid mark. ${s.name} ${PART_LABEL[part]} must be a number from 0 to ${smax(s, term)[part]}.`);
+      el.value = old === undefined ? '' : old; setTimeout(() => el.classList.remove('bad'), 800); el.focus(); el.select(); return;
+    }
+    ((m[st] = m[st] || {})[s.id] = m[st][s.id] || {})[term] = m[st][s.id][term] || {};
+    m[st][s.id][term][part] = v; el.value = v;
+  }
+  save(); updateRow(st);
+}
+function applyLiveFilter() {
+  const q = (ui.q[ui.tab] || '').trim().toLowerCase();
+  const els = document.querySelectorAll('#view [data-name]');
+  let shown = 0;
+  els.forEach(el => { const ok = !q || el.dataset.name.includes(q); el.classList.toggle('hid', !ok); if (ok) shown++; });
+  const c = $('qCount'); if (c) c.textContent = q ? shown + ' of ' + els.length + ' shown' : '';
+}
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.dataset && el.dataset.f === 'q') { ui.q[ui.tab] = el.value; applyLiveFilter(); }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('mk') && e.target.dataset.r !== undefined) {
+    e.preventDefault(); const t = e.target; t.blur();
+    let r = +t.dataset.r + 1, nx;
+    while ((nx = document.querySelector(`.mk[data-r="${r}"][data-c="${t.dataset.c}"]`)) && nx.closest('tr').classList.contains('hid')) r++;
+    if (nx) { nx.focus(); nx.select(); }
+  }
+});
+
+function setLogo(file) {
+  if (!file) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const h = Math.min(160, img.height), w = Math.max(1, Math.round(img.width * h / img.height));
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      DB.school.logo = c.toDataURL('image/png'); save(); render();
+    };
+    img.onerror = () => say('That file could not be read as an image.');
+    img.src = rd.result;
+  };
+  rd.readAsDataURL(file);
+}
+function restore(file) {
+  if (!file) return;
+  const rd = new FileReader();
+  rd.onload = async () => {
+    try {
+      const o = JSON.parse(rd.result);
+      if (!o || typeof o !== 'object' || !o.years || !o.school || !o.settings) throw new Error('bad');
+      if (!await ask('This will REPLACE all data currently saved ' + (CLOUD.on ? 'in the ONLINE database, for everybody,' : 'in this browser') + ' with the contents of the backup file (' + Object.keys(o.years).length + ' academic year(s)). Continue?')) return;
+      DB = normalize(o);
+      if (!DB.years[DB.current.year]) DB.current.year = Object.keys(DB.years).sort().pop();
+      fixClass(); save(); render(); say('Backup restored.');
+    } catch (err) { say('This file is not a valid backup from this app. Nothing was changed.'); }
+  };
+  rd.readAsText(file);
+}
+
+/* =====================================================================
+   ONLINE DATABASE (Supabase): login, roles and automatic saving.
+   Without a connection (no URL/key below) the app works exactly as before, saving in this browser only.
+   ===================================================================== */
+const CLOUD = { on: false, sb: null, user: null, profile: null, assign: [], allAssign: [], profiles: [], last: new Map(), sig: '', dirty: false, busy: false, again: false, err: '', timer: null, legacy: null, ready: false, cfgFromStorage: false };
+function baseUrl(u) { u = String(u || '').trim(); try { if (!/^https?:\/\//i.test(u)) u = 'https://' + u; return new URL(u).origin; } catch (e) { return u.replace(/\/+$/, ''); } }
+function cloudCfg() {
+  let c = {};
+  try { c = JSON.parse(document.getElementById('cloud-config').textContent || '{}'); } catch (e) {}
+  if (c.url && c.key) return { url: baseUrl(c.url), key: String(c.key).trim(), fromStorage: false };
+  try { const l = JSON.parse(localStorage.getItem('rcm_cloud_cfg') || '{}'); if (l.url && l.key) return { url: baseUrl(l.url), key: String(l.key).trim(), fromStorage: true }; } catch (e) {}
+  return { url: '', key: '', fromStorage: false };
+}
+CLOUD.cfg = cloudCfg(); CLOUD.on = !!(CLOUD.cfg.url && CLOUD.cfg.key); CLOUD.cfgFromStorage = CLOUD.cfg.fromStorage;
+const isAdmin = () => !CLOUD.on || !!(CLOUD.profile && CLOUD.profile.role === 'admin');
+const canWrite = (cid, sid) => isAdmin() || CLOUD.assign.some(a => a.class_id === cid && (a.subject_id === '*' || a.subject_id === sid));
+const uiKey = () => 'rcm_ui_' + (CLOUD.user ? CLOUD.user.id : 'x');
+function friendly(e) {
+  const m = String((e && e.message) || e || '');
+  if (/invalid login credentials/i.test(m)) return 'The email or password is not correct.';
+  if (/email not confirmed/i.test(m)) return 'Please confirm your email first (open the message we sent you), then sign in.';
+  if (/already registered|already been registered/i.test(m)) return 'An account with this email already exists. Please sign in instead.';
+  if (/password should be at least|weak/i.test(m)) return 'The password is too short or too weak. Use at least 8 characters.';
+  if (/rate limit|too many/i.test(m)) return 'Too many attempts. Please wait a few minutes and try again.';
+  if (/failed to fetch|network|load failed/i.test(m)) return 'Cannot reach the online database. Check the internet connection and try again.';
+  if (/row-level security|permission denied|42501/i.test(m)) return 'You are not allowed to do this.';
+  if (/above the maximum/i.test(m)) return m;
+  return m || 'Something went wrong.';
+}
+
+/* ---------- rows <-> app data ---------- */
+const rowKey = (t, r) => t + '|' + (t === 'marks' ? [r.student_id, r.subject_id, r.term] : t === 'comments' ? [r.student_id, r.key] : t === 'academic_years' ? [r.year] : t === 'app_config' ? [1] : [r.id]).join('|');
+function snapshot() {
+  const m = new Map(), adm = isAdmin(), add = (t, r) => m.set(rowKey(t, r), { t, r, j: JSON.stringify(r) });
+  if (adm) add('app_config', { id: 1, school: DB.school, settings: DB.settings });
+  Object.keys(DB.years).forEach(yr => {
+    const Yd = DB.years[yr]; if (adm) add('academic_years', { year: yr });
+    const subj = {}, stClass = {};
+    Yd.classes.forEach((c, i) => { subj[c.id] = new Set(c.subjects.map(s => s.id)); if (adm) add('classes', { id: c.id, year: yr, name: c.name, subjects: c.subjects, sort: i }); });
+    Yd.students.forEach(s => { if (!subj[s.classId]) return; stClass[s.id] = s.classId; if (adm) add('students', { id: s.id, class_id: s.classId, name: s.name, idno: s.idno || '', dob: s.dob || '', pob: s.pob || '' }); });
+    Object.keys(Yd.marks).forEach(sid => {
+      if (!stClass[sid]) return;
+      Object.keys(Yd.marks[sid]).forEach(sj => {
+        if (!subj[stClass[sid]].has(sj)) return;
+        const byT = Yd.marks[sid][sj];
+        Object.keys(byT).forEach(t => {
+          const e = byT[t] || {}, mid = num(e.mid), cat = num(e.cat), exam = num(e.exam);
+          if (mid === null && cat === null && exam === null) return;
+          if (![1, 2, 3].includes(+t)) return;
+          add('marks', { student_id: sid, subject_id: sj, term: +t, mid, cat, exam });
+        });
+      });
+    });
+    Object.keys(Yd.comments).forEach(sid => {
+      if (!stClass[sid]) return;
+      Object.keys(Yd.comments[sid]).forEach(k => {
+        const c = Yd.comments[sid][k] || {};
+        if ((!c.teacher && !c.conduct) || !['1', '2', '3', 'y'].includes(k)) return;
+        add('comments', { student_id: sid, key: k, teacher: c.teacher || '', conduct: c.conduct || '' });
+      });
+    });
+  });
+  return m;
+}
+function cloudBuild(rows) {
+  const o = defaults();
+  const cfg = rows.config[0];
+  if (cfg) { o.school = Object.assign(o.school, cfg.school || {}); o.settings = Object.assign(o.settings, cfg.settings || {}); }
+  const years = {}; rows.years.forEach(r => { years[r.year] = { classes: [], students: [], marks: {}, comments: {} }; });
+  const cy = {};
+  rows.classes.slice().sort((a, b) => ((a.sort || 0) - (b.sort || 0)) || String(a.name).localeCompare(String(b.name))).forEach(c => { if (!years[c.year]) return; cy[c.id] = c.year; years[c.year].classes.push({ id: c.id, name: c.name, subjects: c.subjects || [] }); });
+  const sy = {};
+  rows.students.forEach(s => { const yr = cy[s.class_id]; if (!yr) return; sy[s.id] = yr; years[yr].students.push({ id: s.id, classId: s.class_id, name: s.name, idno: s.idno || '', dob: s.dob || '', pob: s.pob || '' }); });
+  rows.marks.forEach(m => {
+    const yr = sy[m.student_id]; if (!yr) return;
+    const e = {}; ['mid', 'cat', 'exam'].forEach(p => { if (m[p] !== null && m[p] !== undefined) e[p] = Number(m[p]); });
+    const mk = years[yr].marks; ((mk[m.student_id] = mk[m.student_id] || {})[m.subject_id] = mk[m.student_id][m.subject_id] || {})[m.term] = e;
+  });
+  rows.comments.forEach(c => { const yr = sy[c.student_id]; if (!yr) return; const cm = years[yr].comments; (cm[c.student_id] = cm[c.student_id] || {})[c.key] = { teacher: c.teacher || '', conduct: c.conduct || '' }; });
+  if (!isAdmin()) Object.keys(years).forEach(y => { if (!years[y].classes.length) delete years[y]; });
+  if (!Object.keys(years).length) years[String(new Date().getFullYear())] = { classes: [], students: [], marks: {}, comments: {} };
+  o.years = years;
+  let saved = null; try { saved = JSON.parse(localStorage.getItem(uiKey()) || 'null'); } catch (e) {}
+  if (saved) o.current = Object.assign(o.current, { year: saved.year, term: saved.term, classId: saved.classId });
+  DB = normalize(o);
+  if (!DB.years[DB.current.year]) DB.current.year = Object.keys(DB.years).sort().pop();
+  fixClass();
+}
+
+/* ---------- loading from the database ---------- */
+async function fetchAll(t, order) {
+  let all = [], from = 0;
+  for (;;) {
+    let q = CLOUD.sb.from(t).select('*'); order.forEach(c => { q = q.order(c); });
+    const r = await q.range(from, from + 999);
+    if (r.error) throw r.error;
+    all = all.concat(r.data || []); if (!r.data || r.data.length < 1000) break; from += 1000;
+  }
+  return all;
+}
+async function loadRows() {
+  const adm = isAdmin();
+  const [config, years, classes, students, marks, comments, assign, profiles] = await Promise.all([
+    fetchAll('app_config', ['id']), fetchAll('academic_years', ['year']), fetchAll('classes', ['id']), fetchAll('students', ['id']),
+    fetchAll('marks', ['student_id', 'subject_id', 'term']), fetchAll('comments', ['student_id', 'key']), fetchAll('assignments', ['id']),
+    adm ? fetchAll('profiles', ['created_at', 'id']) : Promise.resolve([])
+  ]);
+  return { config, years, classes, students, marks, comments, assign, profiles };
+}
+async function cloudLoad(first) {
+  const rows = await loadRows();
+  CLOUD.sig = JSON.stringify([rows.config, rows.years, rows.classes, rows.students, rows.marks, rows.comments, rows.assign, rows.profiles]);
+  CLOUD.profiles = rows.profiles; CLOUD.allAssign = rows.assign; CLOUD.assign = rows.assign.filter(a => a.teacher_id === CLOUD.user.id);
+  const empty = !rows.config.length && !rows.years.length;
+  if (first && empty && isAdmin()) {
+    let useLegacy = false;
+    if (CLOUD.legacy) {
+      const yrs = Object.keys(CLOUD.legacy.years).length, kids = Object.values(CLOUD.legacy.years).reduce((a, y) => a + y.students.length, 0);
+      useLegacy = await ask('The online database is still empty, but this computer has school data saved from before (' + yrs + ' academic year' + (yrs === 1 ? '' : 's') + ', ' + kids + ' learners).\n\nUpload that data to the online database now?', { ok: 'Yes, upload it', cancel: 'No, start empty', danger: false });
+    }
+    if (useLegacy) { DB = normalize(JSON.parse(JSON.stringify(CLOUD.legacy))); }
+    else cloudBuild(rows);
+    if (useLegacy) { try { const sv = JSON.parse(localStorage.getItem(uiKey()) || 'null'); if (sv) DB.current = Object.assign(DB.current, sv); } catch (e) {} if (!DB.years[DB.current.year]) DB.current.year = Object.keys(DB.years).sort().pop(); fixClass(); }
+    CLOUD.last = new Map(); CLOUD.ready = true; CLOUD.dirty = true;
+    await cloudPush();
+    return;
+  }
+  cloudBuild(rows);
+  CLOUD.last = snapshot(); CLOUD.ready = true;
+}
+async function cloudReload(force) {
+  if (!CLOUD.ready || CLOUD.busy) return;
+  try {
+    const rows = await loadRows();
+    const sig = JSON.stringify([rows.config, rows.years, rows.classes, rows.students, rows.marks, rows.comments, rows.assign, rows.profiles]);
+    CLOUD.profiles = rows.profiles; CLOUD.allAssign = rows.assign; CLOUD.assign = rows.assign.filter(a => a.teacher_id === CLOUD.user.id);
+    if (sig === CLOUD.sig && !force) return;
+    if (CLOUD.dirty && !force) return;
+    CLOUD.sig = sig; cloudBuild(rows); CLOUD.last = snapshot(); CLOUD.dirty = false; CLOUD.err = ''; setStatus('saved'); render();
+  } catch (e) { /* stay on the screen we have; the next refresh tries again */ }
+}
+
+/* ---------- saving (only what changed is sent) ---------- */
+const chunk = (a, n) => { const o = []; for (let i = 0; i < a.length; i += n) o.push(a.slice(i, i + n)); return o; };
+async function pool(items, n, fn) { let i = 0; await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => { while (i < items.length) { const it = items[i++]; await fn(it); } })); }
+const CONFLICT = { app_config: 'id', academic_years: 'year', classes: 'id', students: 'id', marks: 'student_id,subject_id,term', comments: 'student_id,key' };
+const T_ORDER = ['app_config', 'academic_years', 'classes', 'students', 'marks', 'comments'];
+function setStatus(k) {
+  const el = $('saveStatus'); if (!el) return;
+  el.className = 'st-' + k;
+  el.textContent = { saving: 'Saving…', pending: 'Saving…', saved: 'Saved ✓ ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), error: '⚠ Not saved yet – retrying' }[k] || '';
+}
+function cloudDiff() {
+  const cur = snapshot(), up = [], del = [];
+  cur.forEach((v, k) => { const o = CLOUD.last.get(k); if (!o || o.j !== v.j) up.push([k, v]); });
+  CLOUD.last.forEach((v, k) => { if (!cur.has(k)) del.push([k, v]); });
+  return { up, del };
+}
+async function cloudPush() {
+  if (!CLOUD.on || !CLOUD.ready) return;
+  if (CLOUD.busy) { CLOUD.again = true; return; }
+  CLOUD.busy = true; setStatus('saving');
+  try {
+    do {
+      CLOUD.again = false;
+      const { up, del } = cloudDiff();
+      if (!up.length && !del.length) break;
+      const sb = CLOUD.sb, ok = r => { if (r.error) throw r.error; };
+      const gone = { academic_years: new Set(), classes: new Set(), students: new Set() };
+      del.forEach(([, v]) => { if (gone[v.t]) gone[v.t].add(v.t === 'academic_years' ? v.r.year : v.r.id); });
+      const needDel = del.filter(([, v]) => v.t === 'classes' ? !gone.academic_years.has(v.r.year) : v.t === 'students' ? !gone.classes.has(v.r.class_id) : (v.t === 'marks' || v.t === 'comments') ? !gone.students.has(v.r.student_id) : true);
+      for (const t of ['comments', 'marks', 'students', 'classes', 'academic_years']) {
+        const rows = needDel.filter(([, v]) => v.t === t);
+        if (t === 'marks') await pool(rows, 8, async ([k, v]) => { ok(await sb.from('marks').delete().eq('student_id', v.r.student_id).eq('subject_id', v.r.subject_id).eq('term', v.r.term)); CLOUD.last.delete(k); });
+        else if (t === 'comments') await pool(rows, 8, async ([k, v]) => { ok(await sb.from('comments').delete().eq('student_id', v.r.student_id).eq('key', v.r.key)); CLOUD.last.delete(k); });
+        else for (const part of chunk(rows, 100)) { const col = t === 'academic_years' ? 'year' : 'id'; ok(await sb.from(t).delete().in(col, part.map(([, v]) => v.r[col]))); part.forEach(([k]) => CLOUD.last.delete(k)); }
+      }
+      // rows removed by cascade must not be deleted again later
+      del.forEach(([k]) => CLOUD.last.delete(k));
+      for (const t of T_ORDER) {
+        const rows = up.filter(([, v]) => v.t === t);
+        for (const part of chunk(rows, 400)) { ok(await sb.from(t).upsert(part.map(([, v]) => v.r), { onConflict: CONFLICT[t] })); part.forEach(([k, v]) => CLOUD.last.set(k, v)); }
+      }
+    } while (CLOUD.again);
+    const rest = cloudDiff(); CLOUD.dirty = !!(rest.up.length || rest.del.length);
+    CLOUD.err = ''; setStatus(CLOUD.dirty ? 'pending' : 'saved'); renderBanner();
+  } catch (e) {
+    CLOUD.err = friendly(e); setStatus('error'); renderBanner();
+    const code = e && e.code, msg = String((e && e.message) || '');
+    if (code === '42501' || code === '23514' || code === '23503' || /row-level security|above the maximum/i.test(msg)) {
+      CLOUD.busy = false; CLOUD.dirty = false;
+      await say('This change could not be saved: ' + friendly(e) + '\n\nThe screen will now show the data as it is saved online.');
+      await cloudReload(true); return;
+    }
+    clearTimeout(CLOUD.timer); CLOUD.timer = setTimeout(cloudPush, 8000);
+  } finally { CLOUD.busy = false; }
+}
+function cloudSave() {
+  if (!CLOUD.ready) return;
+  try { localStorage.setItem(uiKey(), JSON.stringify({ year: DB.current.year, term: DB.current.term, classId: DB.current.classId })); } catch (e) {}
+  CLOUD.dirty = true; setStatus('pending');
+  clearTimeout(CLOUD.timer); CLOUD.timer = setTimeout(cloudPush, 700);
+}
+window.addEventListener('beforeunload', e => { if (CLOUD.on && (CLOUD.dirty || CLOUD.busy)) { e.preventDefault(); e.returnValue = ''; } });
+
+/* ---------- login screens ---------- */
+function authShow(mode, msg, bad) {
+  let el = $('auth'); if (!el) { el = document.createElement('div'); el.id = 'auth'; el.className = 'auth-ov noprint'; document.body.appendChild(el); }
+  document.body.classList.add('locked');
+  const e = esc, note = msg ? `<p class="auth-msg ${bad || mode === 'error' ? 'bad' : ''}">${e(msg)}</p>` : '';
+  const head = (t, s) => `<div class="auth-ribbon"></div><h1>${e(DB.school.name || 'Report Card Manager')}</h1><h2>${t}</h2>${s ? `<p class="muted">${s}</p>` : ''}`;
+  const field = (id, label, type, extra) => `<label>${label}<input name="${id}" type="${type}" ${extra || ''} required></label>`;
+  let body = '';
+  if (mode === 'login') body = head('Sign in') + note + `<form class="authform" data-mode="login">${field('email', 'Email', 'email', 'autocomplete="username"')}${field('password', 'Password', 'password', 'autocomplete="current-password"')}<button type="submit">Sign in</button></form>
+    <p class="auth-links"><a href="#" data-auth="forgot">Forgot password?</a> · <a href="#" data-auth="signup">Create an account</a></p>${CLOUD.cfgFromStorage ? '<p class="auth-links"><a href="#" data-auth="disconnect">Disconnect from the online database</a></p>' : ''}`;
+  else if (mode === 'signup') body = head('Create an account', 'Teachers: create your account, then wait for the administrator to approve it. The very first account created for this school becomes the administrator.') + note + `<form class="authform" data-mode="signup">${field('name', 'Full name', 'text', 'autocomplete="name"')}${field('email', 'Email', 'email', 'autocomplete="username"')}${field('password', 'Password (at least 8 characters)', 'password', 'minlength="8" autocomplete="new-password"')}${field('password2', 'Repeat the password', 'password', 'minlength="8" autocomplete="new-password"')}<button type="submit">Create account</button></form><p class="auth-links"><a href="#" data-auth="login">Back to sign in</a></p>`;
+  else if (mode === 'forgot') body = head('Reset your password', 'We will email you a link to choose a new password.') + note + `<form class="authform" data-mode="forgot">${field('email', 'Email', 'email', 'autocomplete="username"')}<button type="submit">Send the link</button></form><p class="auth-links"><a href="#" data-auth="login">Back to sign in</a></p>`;
+  else if (mode === 'recovery' || mode === 'change') body = head(mode === 'change' ? 'Change your password' : 'Choose a new password') + note + `<form class="authform" data-mode="${mode}">${field('password', 'New password (at least 8 characters)', 'password', 'minlength="8" autocomplete="new-password"')}${field('password2', 'Repeat the new password', 'password', 'minlength="8" autocomplete="new-password"')}<button type="submit">Save the new password</button></form>${mode === 'change' ? '<p class="auth-links"><a href="#" data-auth="close">Cancel</a></p>' : ''}`;
+  else if (mode === 'pending') body = head('Waiting for approval', 'Your account is created. The administrator must approve it before you can see any class. Please ask the administrator, then press “Check again”.') + note + `<div class="auth-row"><button data-auth="again">Check again</button><button class="ghost" data-auth="signout">Sign out</button></div>`;
+  else if (mode === 'error') body = head('Something went wrong') + note + `<div class="auth-row"><button data-auth="again">Try again</button><button class="ghost" data-auth="signout">Sign out</button></div>`;
+  else body = head('One moment…') + `<p class="muted">${e(msg || 'Loading…')}</p>`;
+  el.innerHTML = `<div class="auth-card">${body}</div>`;
+  const f = el.querySelector('input'); if (f) setTimeout(() => { const ac = document.activeElement; if (!ac || ac === document.body || !el.contains(ac)) f.focus(); }, 30);
+}
+function authHide() { const el = $('auth'); if (el) el.remove(); document.body.classList.remove('locked'); }
+document.addEventListener('submit', async e => {
+  const f = e.target.closest && e.target.closest('form.authform'); if (!f) return;
+  e.preventDefault();
+  const d = Object.fromEntries(new FormData(f).entries()), mode = f.dataset.mode, sb = CLOUD.sb, btn = f.querySelector('button'); if (btn) btn.disabled = true;
+  try {
+    if (mode === 'login') {
+      const r = await sb.auth.signInWithPassword({ email: d.email.trim(), password: d.password });
+      if (r.error) throw r.error; await afterLogin(r.data.user);
+    } else if (mode === 'signup') {
+      if (!d.name.trim()) throw new Error('Please enter your full name.');
+      if (d.password.length < 8) throw new Error('The password must have at least 8 characters.');
+      if (d.password !== d.password2) throw new Error('The two passwords are not the same.');
+      const r = await sb.auth.signUp({ email: d.email.trim(), password: d.password, options: { data: { full_name: d.name.trim() } } });
+      if (r.error) throw r.error;
+      if (r.data.session) await afterLogin(r.data.session.user);
+      else authShow('login', 'Account created. Open the confirmation email we sent you, then sign in here.');
+    } else if (mode === 'forgot') {
+      const r = await sb.auth.resetPasswordForEmail(d.email.trim(), { redirectTo: location.href.split('#')[0] });
+      if (r.error) throw r.error; authShow('login', 'If this email has an account, a message with a reset link is on its way.');
+    } else if (mode === 'recovery' || mode === 'change') {
+      if (d.password.length < 8) throw new Error('The password must have at least 8 characters.');
+      if (d.password !== d.password2) throw new Error('The two passwords are not the same.');
+      const r = await sb.auth.updateUser({ password: d.password }); if (r.error) throw r.error;
+      if (mode === 'change') { authHide(); await say('Your password was changed.'); } else { const s = await sb.auth.getSession(); if (s.data.session) await afterLogin(s.data.session.user); else authShow('login', 'Password changed. Please sign in.'); }
+    }
+  } catch (err) { authShow(mode, friendly(err), true); }
+});
+document.addEventListener('click', async e => {
+  const a = e.target.closest && e.target.closest('[data-auth]'); if (!a) return;
+  e.preventDefault(); const k = a.dataset.auth;
+  if (k === 'login' || k === 'signup' || k === 'forgot') authShow(k);
+  else if (k === 'close') authHide();
+  else if (k === 'again') { if (!CLOUD.sb) { location.reload(); return; } if (CLOUD.user) await afterLogin(CLOUD.user); else authShow('login'); }
+  else if (k === 'signout') await cloudSignOut();
+  else if (k === 'disconnect') { if (await ask('Disconnect this copy from the online database? It will go back to saving only in this browser.', { ok: 'Disconnect', danger: true })) { try { localStorage.removeItem('rcm_cloud_cfg'); } catch (x) {} location.reload(); } }
+});
+async function cloudSignOut() {
+  try { if (CLOUD.dirty) { clearTimeout(CLOUD.timer); await cloudPush(); } } catch (e) {}
+  if (CLOUD.dirty && !await ask('Some changes could not be saved yet and will be lost if you sign out. Sign out anyway?', { ok: 'Sign out anyway', danger: true })) return;
+  try { await CLOUD.sb.auth.signOut(); } catch (e) {}
+  CLOUD.user = null; CLOUD.profile = null; CLOUD.ready = false; CLOUD.dirty = false; CLOUD.assign = []; CLOUD.allAssign = []; CLOUD.profiles = []; CLOUD.last = new Map();
+  DB = defaults(); DB.years[String(new Date().getFullYear())] = { classes: [], students: [], marks: {}, comments: {} }; DB.current.year = Object.keys(DB.years)[0];
+  $('view').innerHTML = ''; $('acct').innerHTML = ''; authShow('login');
+}
+async function afterLogin(user) {
+  authShow('loading', 'Opening your school data…'); CLOUD.user = user;
+  try {
+    const r = await CLOUD.sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
+    if (r.error) throw r.error;
+    if (!r.data) { authShow('error', 'Your account has no profile yet. Please sign out and sign in again.'); return; }
+    CLOUD.profile = r.data; CLOUD.ready = false;
+    if (!r.data.active) { authShow('pending'); return; }
+    await cloudLoad(true);
+    authHide(); ui.tab = isAdmin() ? (Y().classes.length ? 'marks' : 'classes') : 'marks'; render(); setStatus(CLOUD.dirty ? 'pending' : 'saved');
+  } catch (e) { authShow('error', friendly(e)); }
+}
+async function cloudBoot() {
+  CLOUD.legacy = hasData() ? JSON.parse(JSON.stringify(DB)) : null;
+  DB = defaults(); DB.years[String(new Date().getFullYear())] = { classes: [], students: [], marks: {}, comments: {} }; DB.current.year = Object.keys(DB.years)[0];
+  authShow('loading', 'Connecting…');
+  if (!window.supabase || !window.supabase.createClient) { authShow('error', 'The online service could not be loaded. Check the internet connection, then press “Try again”.'); CLOUD.user = null; return; }
+  CLOUD.sb = window.supabase.createClient(CLOUD.cfg.url, CLOUD.cfg.key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+  CLOUD.sb.auth.onAuthStateChange((ev) => { if (ev === 'PASSWORD_RECOVERY') setTimeout(() => authShow('recovery'), 0); });
+  try {
+    const s = await CLOUD.sb.auth.getSession();
+    if (s.data && s.data.session && !/type=recovery/.test(location.hash)) await afterLogin(s.data.session.user); else if (!/type=recovery/.test(location.hash)) authShow('login');
+  } catch (e) { authShow('error', friendly(e)); }
+  setInterval(() => { if (CLOUD.ready && !CLOUD.dirty && !CLOUD.busy && !document.hidden && !(document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) && !$('auth')) cloudReload(false); }, 60000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && CLOUD.ready && !CLOUD.dirty && !CLOUD.busy && !$('auth')) cloudReload(false); });
+}
+
+/* ---------- administrator: users and class access ---------- */
+function viewUsers() {
+  if (!CLOUD.on || !isAdmin()) return '<div class="panel">Only the administrator can manage users.</div>';
+  const me = CLOUD.user.id, ps = CLOUD.profiles, y = Y(), yr = DB.current.year;
+  const nm = p => esc(p.full_name || p.email), when = p => p.created_at ? new Date(p.created_at).toLocaleDateString() : '';
+  const wait = ps.filter(p => !p.active), adm = ps.filter(p => p.active && p.role === 'admin'), tch = ps.filter(p => p.active && p.role === 'teacher');
+  const row = (p, btns) => `<tr><td><b>${nm(p)}</b></td><td>${esc(p.email)}</td><td>${when(p)}</td><td>${btns}</td></tr>`;
+  const table = (rows, empty) => rows.length ? `<table><thead><tr><th>Name</th><th>Email</th><th>Created</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table>` : `<p class="muted">${empty}</p>`;
+  const grid = t => y.classes.length ? y.classes.map(c => {
+    const rows = CLOUD.allAssign.filter(a => a.teacher_id === t.id && a.class_id === c.id), all = rows.some(a => a.subject_id === '*');
+    const subs = all ? '' : c.subjects.map(s => `<label class="chk"><input type="checkbox" data-f="asgSubj" data-t="${t.id}" data-c="${c.id}" data-s="${s.id}" ${rows.some(a => a.subject_id === s.id) ? 'checked' : ''}> ${esc(s.name)}</label>`).join('');
+    return `<div class="asg"><label class="chk"><input type="checkbox" data-f="asgClass" data-t="${t.id}" data-c="${c.id}" ${rows.length ? 'checked' : ''}> <b>${esc(c.name)}</b></label>${rows.length ? `<label class="chk"><input type="checkbox" data-f="asgAll" data-t="${t.id}" data-c="${c.id}" ${all ? 'checked' : ''}> All subjects</label>${subs}` : ''}</div>`;
+  }).join('') : `<p class="muted">There are no classes in ${esc(yr)} yet.</p>`;
+  return `<div class="panel"><h2>Users and access</h2>
+   <p class="muted">Teachers create their own account on the sign-in page (“Create an account”). Approve them here, then choose which classes and subjects each teacher may open and enter marks for. A teacher can never see or change any other class, the settings, or the list of learners.</p>
+   <h3>Waiting for approval or deactivated</h3>
+   ${table(wait.map(p => row(p, `<button class="small" data-act="uApprove" data-id="${p.id}">Approve as teacher</button> <button class="small ghost" data-act="uApproveAdmin" data-id="${p.id}">Approve as administrator</button>`)), 'Nobody is waiting.')}
+   <h3>Teachers</h3>
+   ${tch.length ? tch.map(t => `<div class="ucard"><div class="row"><b>${nm(t)}</b> <span class="muted">${esc(t.email)}</span> <button class="small danger" data-act="uDeactivate" data-id="${t.id}">Deactivate</button> <button class="small ghost" data-act="uMakeAdmin" data-id="${t.id}">Make administrator</button></div>
+      <div class="muted">Classes this teacher may use in ${esc(yr)} (change the academic year at the top to set other years):</div>${grid(t)}</div>`).join('') : '<p class="muted">No approved teachers yet.</p>'}
+   ${tch.length ? `<div class="row"><button class="ghost" data-act="uCopyAsg">Copy the previous year’s class access into ${esc(yr)}</button><span class="muted">Matches classes and subjects by name.</span></div>` : ''}
+   <h3>Administrators</h3>
+   ${table(adm.map(p => row(p, p.id === me ? '<span class="muted">you</span>' : `<button class="small ghost" data-act="uMakeTeacher" data-id="${p.id}">Make teacher</button> <button class="small danger" data-act="uDeactivate" data-id="${p.id}">Deactivate</button>`)), '')}
+  </div>`;
+}
+async function uSetProfile(id, patch) {
+  const r = await CLOUD.sb.from('profiles').update(patch).eq('id', id);
+  if (r.error) { await say('Could not save: ' + friendly(r.error)); return false; }
+  const p = CLOUD.profiles.find(x => x.id === id); if (p) Object.assign(p, patch); render(); return true;
+}
+async function uSetAssign(tid, cid, desired) {
+  const cur = CLOUD.allAssign.filter(a => a.teacher_id === tid && a.class_id === cid), sb = CLOUD.sb;
+  const del = cur.filter(a => !desired.includes(a.subject_id)), add = desired.filter(s => !cur.some(a => a.subject_id === s));
+  try {
+    if (del.length) { const r = await sb.from('assignments').delete().in('id', del.map(a => a.id)); if (r.error) throw r.error; CLOUD.allAssign = CLOUD.allAssign.filter(a => !del.includes(a)); }
+    if (add.length) { const r = await sb.from('assignments').insert(add.map(s => ({ teacher_id: tid, class_id: cid, subject_id: s }))).select(); if (r.error) throw r.error; CLOUD.allAssign = CLOUD.allAssign.concat(r.data || []); }
+  } catch (e) { await say('Could not save: ' + friendly(e)); const r = await sb.from('assignments').select('*'); if (!r.error) CLOUD.allAssign = r.data; }
+  render();
+}
+async function cloudChange(el) {
+  const f = el.dataset.f; if (!CLOUD.on || !['asgClass', 'asgAll', 'asgSubj'].includes(f)) return false;
+  const t = el.dataset.t, c = el.dataset.c, cls = Y().classes.find(x => x.id === c); if (!cls) return true;
+  const cur = CLOUD.allAssign.filter(a => a.teacher_id === t && a.class_id === c).map(a => a.subject_id), subj = cls.subjects.map(s => s.id);
+  if (f === 'asgClass') await uSetAssign(t, c, el.checked ? ['*'] : []);
+  else if (f === 'asgAll') await uSetAssign(t, c, el.checked ? ['*'] : subj);
+  else { const want = new Set(cur.filter(s => s !== '*')); if (el.checked) want.add(el.dataset.s); else want.delete(el.dataset.s); await uSetAssign(t, c, want.size === subj.length ? ['*'] : [...want]); }
+  return true;
+}
+async function cloudAct(act, b) {
+  switch (act) {
+    case 'signOut': await cloudSignOut(); return true;
+    case 'changePw': authShow('change'); return true;
+    case 'uApprove': await uSetProfile(b.dataset.id, { active: true, role: 'teacher' }); return true;
+    case 'uApproveAdmin': if (await ask('An administrator can change everything, including other people’s access. Approve this person as administrator?', { ok: 'Approve as administrator', danger: false })) await uSetProfile(b.dataset.id, { active: true, role: 'admin' }); return true;
+    case 'uMakeAdmin': if (await ask('Make this teacher an administrator? They will be able to change everything.', { ok: 'Make administrator', danger: false })) await uSetProfile(b.dataset.id, { role: 'admin' }); return true;
+    case 'uMakeTeacher': await uSetProfile(b.dataset.id, { role: 'teacher' }); return true;
+    case 'uDeactivate': if (await ask('Deactivate this account? The person can no longer open any data until you approve them again.', { ok: 'Deactivate', danger: true })) await uSetProfile(b.dataset.id, { active: false }); return true;
+    case 'uCopyAsg': {
+      const yrs = Object.keys(DB.years).sort(), i = yrs.indexOf(DB.current.year), prev = i > 0 ? DB.years[yrs[i - 1]] : null;
+      if (!prev) { await say('There is no previous academic year to copy from.'); return true; }
+      const norm = s => String(s).trim().toLowerCase(); let n = 0;
+      for (const a of CLOUD.allAssign.slice()) {
+        const pc = prev.classes.find(c => c.id === a.class_id); if (!pc) continue;
+        const nc = Y().classes.find(c => norm(c.name) === norm(pc.name)); if (!nc) continue;
+        let sid = '*'; if (a.subject_id !== '*') { const ps = pc.subjects.find(s => s.id === a.subject_id), ns = ps && nc.subjects.find(s => norm(s.name) === norm(ps.name)); if (!ns) continue; sid = ns.id; }
+        if (CLOUD.allAssign.some(x => x.teacher_id === a.teacher_id && x.class_id === nc.id && x.subject_id === sid)) continue;
+        const r = await CLOUD.sb.from('assignments').insert({ teacher_id: a.teacher_id, class_id: nc.id, subject_id: sid }).select();
+        if (!r.error) { CLOUD.allAssign = CLOUD.allAssign.concat(r.data || []); n++; }
+      }
+      render(); await say(n ? n + ' class access entr' + (n === 1 ? 'y was' : 'ies were') + ' copied.' : 'Nothing new to copy.'); return true;
+    }
+    case 'cloudConnect': {
+      const url = ($('cfgUrl') || {}).value || '', key = ($('cfgKey') || {}).value || '';
+      if (!/^https:\/\/[^\s]+\.supabase\.co\/?$/i.test(url.trim()) && !/^https?:\/\/[^\s]+$/i.test(url.trim())) { await say('Please paste the Project URL exactly as Supabase shows it (it starts with https://).'); return true; }
+      if (key.trim().length < 20) { await say('Please paste the “anon public” key from Supabase.'); return true; }
+      if (!await ask('Connect this copy of the app to the online database? After this, people must sign in. Data saved only on this computer can be uploaded once, after the administrator signs in.', { ok: 'Connect', danger: false })) return true;
+      try { localStorage.setItem('rcm_cloud_cfg', JSON.stringify({ url: url.trim(), key: key.trim() })); } catch (e) { await say('This browser does not allow saving the connection.'); return true; }
+      location.reload(); return true;
+    }
+    case 'refreshCloud': await cloudReload(true); return true;
+  }
+  return false;
+}
+function cloudPanel() {
+  if (!CLOUD.on) return `<div class="panel"><h2>Online database and logins</h2>
+   <p>Right now all data is saved only in this browser. To let the administrator and the teachers sign in with their own email and password and always find the same data on any computer, connect the app to your online database (see the setup guide).</p>
+   <div class="row"><label>Project URL<input id="cfgUrl" placeholder="https://xxxx.supabase.co" style="width:340px"></label><label>Anon public key<input id="cfgKey" placeholder="eyJ…" style="width:340px"></label><button data-act="cloudConnect">Connect</button></div></div>`;
+  return `<div class="panel"><h2>Online database</h2>
+   <p>Connected to <b>${esc(CLOUD.cfg.url)}</b>. Every change is saved online automatically; nobody needs to download backups to keep their work.</p>
+   <div class="row"><button class="ghost" data-act="refreshCloud">Refresh from the database now</button>${CLOUD.legacy ? '<span class="muted">Data saved on this computer from before is still in this browser; it was offered for upload the first time the administrator signed in.</span>' : ''}</div></div>`;
+}
+
+if (CLOUD.on) {
+  // the online library loads asynchronously; wait for it (or its failure) before connecting
+  const waitLib = () => { if (window.supabase || window.__sbFail || Date.now() - CLOUD.t0 > 15000) cloudBoot(); else setTimeout(waitLib, 80); };
+  CLOUD.t0 = Date.now(); authShow('loading', 'Connecting…'); waitLib();
+} else {
+  ui.tab = Y().classes.length ? 'marks' : 'classes';
+  render();
+  save();
+}
+</script>
+</body>
+</html>
