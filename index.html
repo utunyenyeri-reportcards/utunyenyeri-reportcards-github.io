@@ -350,6 +350,7 @@ nav#tabs button[data-tab="users"]{--c:#00a1de}
     <label>Academic year <select id="selYear"></select></label>
     <button class="ghost" data-act="newYear">+ New academic year</button>
     <button class="ghost" data-act="renameYear" title="Change the name of this academic year">✎ Rename year</button>
+    <button class="ghost danger" data-act="deleteYear" title="Delete this academic year and everything in it">🗑 Delete year</button>
     <label>Term <select id="selTerm"><option value="1">Term 1</option><option value="2">Term 2</option><option value="3">Term 3</option></select></label>
     <label>Class <select id="selClass"></select></label>
     <span id="saveStatus"></span><span id="acct"></span>
@@ -551,7 +552,7 @@ function renderHeader() {
   const cl = Y().classes;
   $('selClass').innerHTML = cl.length ? cl.map(c => `<option value="${c.id}" ${c.id === DB.current.classId ? 'selected' : ''}>${esc(c.name)}</option>`).join('') : '<option value="">(no classes yet)</option>';
   document.querySelectorAll('#tabs button').forEach(b => { b.classList.toggle('on', b.dataset.tab === ui.tab); const t = b.dataset.tab; b.style.display = (t === 'users' ? (CLOUD.on && isAdmin()) : (isAdmin() || (t !== 'classes' && t !== 'settings'))) ? '' : 'none'; });
-  document.querySelectorAll('[data-act="newYear"],[data-act="renameYear"]').forEach(b => { b.style.display = isAdmin() ? '' : 'none'; });
+  document.querySelectorAll('[data-act="newYear"],[data-act="renameYear"],[data-act="deleteYear"]').forEach(b => { b.style.display = isAdmin() ? '' : 'none'; });
   $('acct').innerHTML = CLOUD.on && CLOUD.profile ? '👤 ' + esc(CLOUD.profile.full_name || CLOUD.profile.email) + ' · ' + (isAdmin() ? 'Administrator' : 'Teacher') + ' <button class="small" data-act="changePw">Password</button> <button class="small" data-act="signOut">Sign out</button>' : '';
   renderBanner();
 }
@@ -995,6 +996,28 @@ async function renameYear() {
   DB.current.year = name; ui.yearBannerHidden = false;
   if (CLOUD.on) { CLOUD.last = snapshot(); CLOUD.dirty = false; setStatus('saved'); }
   save(); render();
+}
+async function deleteYear() {
+  if (!isAdmin()) return;
+  const yr = DB.current.year, Yd = DB.years[yr];
+  if (Object.keys(DB.years).length < 2) { await say('This is the only academic year, so it cannot be deleted. Create or start another academic year first.'); return; }
+  const nMarks = Object.values(Yd.marks).reduce((a, st) => a + Object.values(st).reduce((b, sj) => b + Object.values(sj).filter(e => e && PARTS.some(p => num(e[p]) !== null)).length, 0), 0);
+  if (!await ask('Delete the academic year “' + yr + '”?\n\nThis will PERMANENTLY remove ' + Yd.classes.length + ' class' + (Yd.classes.length === 1 ? '' : 'es') + ', ' + Yd.students.length + ' learner' + (Yd.students.length === 1 ? '' : 's') + ' and ' + nMarks + ' saved mark entr' + (nMarks === 1 ? 'y' : 'ies') + (CLOUD.on ? ', online, for everybody, and the teachers’ access to these classes' : '') + '.\n\nA backup file will be downloaded first so you can restore it if this was a mistake.', { ok: 'Download backup and continue', danger: true })) return;
+  backup();
+  const typed = await askText('To confirm, type the name of the academic year you are deleting (' + yr + '):', '');
+  if (typed === null || typed === undefined) return;
+  if (String(typed).trim() !== yr) { await say('The name did not match, so nothing was deleted.'); return; }
+  if (CLOUD.on) {
+    clearTimeout(CLOUD.timer);
+    for (let i = 0; i < 100 && CLOUD.busy; i++) await new Promise(r => setTimeout(r, 100));
+    await cloudPush();
+    if (CLOUD.dirty || CLOUD.err) { await say('The latest changes are not saved online yet, so the year cannot be deleted right now. Wait until the top bar says “Saved”, then try again.'); return; }
+  }
+  delete DB.years[yr];
+  DB.current.year = Object.keys(DB.years).sort().pop(); DB.current.classId = null; fixClass();
+  save();
+  if (CLOUD.on) { clearTimeout(CLOUD.timer); await cloudPush(); if (CLOUD.dirty || CLOUD.err) { render(); return; } }
+  render(); await say('The academic year “' + yr + '” was deleted. Showing ' + DB.current.year + '.');
 }
 /* ================= downloads: PDF, Excel (.xlsx) and CSV =================
    These are built inside this page, so they work even where printing is blocked. */
@@ -1558,6 +1581,7 @@ document.addEventListener('click', async e => {
   switch (act) {
     case 'newYear': await newYear(); break;
     case 'renameYear': await renameYear(); break;
+    case 'deleteYear': await deleteYear(); break;
     case 'pasteMarks': await pasteMarksDialog(); break;
     case 'startYear': await newYear(String(new Date().getFullYear())); break;
     case 'hideYear': ui.yearBannerHidden = true; renderBanner(); break;
