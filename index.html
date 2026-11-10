@@ -328,12 +328,13 @@ body.locked{overflow:hidden}
 #acct{display:inline-flex;gap:6px;align-items:center;color:#e8f1ff;font-size:12px;font-weight:700}
 #acct button{padding:4px 10px;font-size:12px}
 .ucard{border:2px solid var(--line);border-radius:14px;padding:12px 14px;margin:10px 0}
+.asum{margin:6px 0;padding:7px 10px;border-radius:9px;background:#e7f6ee;color:#14603d;font-size:13px}.asum.warn{background:#fff4d6;color:#7a5200}
 .asg{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;padding:6px 0;border-top:1px dashed var(--line)}
 label.chk{display:inline-flex;gap:6px;align-items:center;font-weight:600;font-size:13px}
 nav#tabs button[data-tab="users"]{--c:#00a1de}
 @media print{#auth,#acct{display:none!important}}
 </style>
-<script id="cloud-config" type="application/json">{"url":"https://jlktazcoqmoboservzxb.supabase.co/rest/v1/","key":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impsa3RhemNvcW1vYm9zZXJ2enhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQxODg4NDksImV4cCI6MjEwOTc2NDg0OX0.umWwGm50vMre8Y1mvsvINOUTlQoc4yvOcSHLglepSFA"}</script>
+<script id="cloud-config" type="application/json">{"url":"https://jlktazcoqmoboservzxb.supabase.co","key":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impsa3RhemNvcW1vYm9zZXJ2enhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQxODg4NDksImV4cCI6MjEwOTc2NDg0OX0.umWwGm50vMre8Y1mvsvINOUTlQoc4yvOcSHLglepSFA"}</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" async onerror="window.__sbFail=1"></script>
 </head>
 <body>
@@ -348,6 +349,7 @@ nav#tabs button[data-tab="users"]{--c:#00a1de}
    <div class="ctl">
     <label>Academic year <select id="selYear"></select></label>
     <button class="ghost" data-act="newYear">+ New academic year</button>
+    <button class="ghost" data-act="renameYear" title="Change the name of this academic year">✎ Rename year</button>
     <label>Term <select id="selTerm"><option value="1">Term 1</option><option value="2">Term 2</option><option value="3">Term 3</option></select></label>
     <label>Class <select id="selClass"></select></label>
     <span id="saveStatus"></span><span id="acct"></span>
@@ -549,7 +551,7 @@ function renderHeader() {
   const cl = Y().classes;
   $('selClass').innerHTML = cl.length ? cl.map(c => `<option value="${c.id}" ${c.id === DB.current.classId ? 'selected' : ''}>${esc(c.name)}</option>`).join('') : '<option value="">(no classes yet)</option>';
   document.querySelectorAll('#tabs button').forEach(b => { b.classList.toggle('on', b.dataset.tab === ui.tab); const t = b.dataset.tab; b.style.display = (t === 'users' ? (CLOUD.on && isAdmin()) : (isAdmin() || (t !== 'classes' && t !== 'settings'))) ? '' : 'none'; });
-  const ny = document.querySelector('[data-act="newYear"]'); if (ny) ny.style.display = isAdmin() ? '' : 'none';
+  document.querySelectorAll('[data-act="newYear"],[data-act="renameYear"]').forEach(b => { b.style.display = isAdmin() ? '' : 'none'; });
   $('acct').innerHTML = CLOUD.on && CLOUD.profile ? '👤 ' + esc(CLOUD.profile.full_name || CLOUD.profile.email) + ' · ' + (isAdmin() ? 'Administrator' : 'Teacher') + ' <button class="small" data-act="changePw">Password</button> <button class="small" data-act="signOut">Sign out</button>' : '';
   renderBanner();
 }
@@ -578,28 +580,30 @@ const subjHeaderCells = (subjects, part, term) => subjects.map(s => `<th>${esc(s
 function viewMarks() {
   const cls = curClass(); if (!cls) return needClass();
   const studs = ui.mkSort === 'namez' ? studentsOf(cls.id).reverse() : studentsOf(cls.id);
-  const sets = DB.settings, part = ui.part, term = DB.current.term;
+  const sets = DB.settings, part = ui.part, term = DB.current.term, vs = visSubjects(cls);
   if (!cls.subjects.length) return `<div class="panel">This class has no subjects yet. Add them in <a href="#" data-tab="classes">Classes &amp; learners</a>.</div>`;
+  if (!vs.length) return `<div class="panel">You are not assigned to any subject of ${esc(cls.name)} yet. Please ask the administrator to give you your subjects.</div>`;
   if (!studs.length) return `<div class="panel">This class has no learners yet. Add them in <a href="#" data-tab="classes">Classes &amp; learners</a>.</div>`;
   const opt = k => `<option value="${k}" ${part === k ? 'selected' : ''}>${PART_LABEL[k]}</option>`;
   let body = '';
   studs.forEach((st, r) => {
-    body += `<tr data-row="${st.id}" data-name="${esc((st.name + ' ' + (st.idno || '')).toLowerCase())}"><td>${r + 1}</td><td class="l">${esc(st.name)}</td>` + cls.subjects.map((s, c) => {
+    body += `<tr data-row="${st.id}" data-name="${esc((st.name + ' ' + (st.idno || '')).toLowerCase())}"><td>${r + 1}</td><td class="l">${esc(st.name)}</td>` + vs.map((s, c) => {
       const v = (((Y().marks[st.id] || {})[s.id] || {})[term] || {})[part];
       return `<td><input class="mk" inputmode="decimal" data-r="${r}" data-c="${c}" data-st="${st.id}" data-sj="${s.id}" ${+smax(s, term)[part] <= 0 ? 'disabled title="Not used for this subject (maximum is 0)"' : !canWrite(cls.id, s.id) ? 'disabled title="You are not assigned to this subject"' : ''} value="${v === undefined || v === null ? '' : esc(v)}"></td>`;
     }).join('') + `<td id="tot-${st.id}"></td><td id="pct-${st.id}"></td></tr>`;
   });
   setTimeout(() => studs.forEach(st => updateRow(st.id)), 0);
-  return `<div class="panel"><h2>Enter marks – ${esc(cls.name)}, Term ${term}, ${esc(DB.current.year)}</h2>
+  const mine = CLOUD.on && !isAdmin() ? `<p class="muted"><b>Your subjects in ${esc(cls.name)}:</b> ${vs.map(s => esc(s.name)).join(', ')}. Other subjects of this class are not shown to you.</p>` : '';
+  return `<div class="panel"><h2>Enter marks – ${esc(cls.name)}, Term ${term}, ${esc(DB.current.year)}</h2>${mine}
   <div class="row"><label>Assessment you are entering&nbsp;<select id="selPart" data-f="part">${opt('mid')}${opt('cat')}${opt('exam')}</select></label>
   <label>Sort by<select data-f="mkSort">${optList(ui.mkSort, [['name', 'Name A–Z'], ['namez', 'Name Z–A']])}</select></label>${findBox()}
   <button class="ghost" data-act="pasteMarks">Paste marks from spreadsheet</button>
   <span class="muted">Type a mark and press Enter (moves down) or Tab (moves right). Leave blank if the child has no mark yet; type 0 for a real zero. Marks above the maximum are refused. Everything saves automatically. <b>To enter many at once:</b> copy a block of marks in Excel, click the first cell here and press Ctrl+V, or use “Paste marks from spreadsheet”.</span></div>
-  <div class="tablewrap"><table><thead><tr><th>#</th><th class="l">Learner</th>${subjHeaderCells(cls.subjects, part, term)}<th>Total</th><th>%</th></tr></thead><tbody>${body}</tbody></table></div></div>`;
+  <div class="tablewrap"><table><thead><tr><th>#</th><th class="l">Learner</th>${subjHeaderCells(vs, part, term)}<th>Total</th><th>%</th></tr></thead><tbody>${body}</tbody></table></div></div>`;
 }
 function updateRow(stId) {
   const cls = curClass(); if (!cls) return;
-  const s = studentSummary(Y().marks[stId], cls.subjects, ui.part, DB.current.term, DB.settings);
+  const s = studentSummary(Y().marks[stId], visSubjects(cls), ui.part, DB.current.term, DB.settings);
   const t = $('tot-' + stId), p = $('pct-' + stId);
   if (t) t.textContent = s.avg === null ? '' : `${r1(s.total)}/${r1(s.totalMax)}`;
   if (p) p.textContent = s.avg === null ? '' : fmt(s.avg);
@@ -618,7 +622,7 @@ const cPct = (v, span) => (v === null || v === undefined) ? cT('', span) : { t: 
 const cMark = (v, mx) => +mx > 0 ? cNum(v) : cT('—');
 
 function resultsModel() {
-  const cls = curClass(), scope = ui.resScope, term = DB.current.term, sc = DB.school, subs = cls.subjects;
+  const cls = curClass(), scope = ui.resScope, term = DB.current.term, sc = DB.school, subs = visSubjects(cls);
   const cr = classResults(studentsOf(cls.id), Y().marks, subs, scope, term, DB.settings), st = cr.stats;
   const maxOf = s => { if (scope === 'year') return [1, 2, 3].reduce((a, t) => { const m = smax(s, t); return a + (+m.cat || 0) + (+m.mid || 0) + (+m.exam || 0); }, 0); const m = smax(s, term); return scope === 'term' ? (+m.cat || 0) + (+m.mid || 0) + (+m.exam || 0) : (+m[scope] || 0); };
   const period = scope === 'year' ? 'Whole year' : ordinal(term) + ' Term' + (scope === 'term' ? '' : ' – ' + PART_LABEL[scope]);
@@ -656,7 +660,8 @@ function viewResults() {
    <tr><td colspan="2" class="nm">Average</td>${m.foot.avg.map(v => `<td>${ff(v)}</td>`).join('')}<td>${ff(m.foot.avgAll)}</td><td></td></tr>`;
   const incomplete = m.cr.list.some(x => x.sum.avg !== null && !x.sum.complete);
   const bars = m.cr.subjStats.map(s => { const v = s.mean === null ? 0 : Math.max(0, Math.min(100, s.mean)); return `<div class="bar"><span class="bl">${esc(s.subj.name)}</span><div class="bt"><i class="${s.mean !== null && s.mean + 1e-9 < pass ? 'low' : ''}" style="width:${v}%"></i><u style="left:${pass}%" title="Pass mark ${pass}%"></u></div><b>${s.mean === null ? '–' : ff(s.mean) + '%'}</b></div>`; }).join('');
-  return `<div class="panel noprint"><h2>Class results – ${esc(cls.name)}</h2>
+  const onlyMine = CLOUD.on && !isAdmin() && !seesAll(cls.id) ? `<p class="muted"><b>Showing only your subjects:</b> ${m.subjects.map(x => esc(x.name || x)).join(', ')}. Totals, averages and positions here count only these subjects.</p>` : '';
+  return `<div class="panel noprint"><h2>Class results – ${esc(cls.name)}</h2>${onlyMine}
    <div class="row"><label>Show results for&nbsp;<select data-f="resScope">${SCOPE_OPTS(m.scope)}</select></label>
     <label>Sort by<select data-f="resSort">${optList(ui.resSort, [['rank', 'Position (best first)'], ['rankrev', 'Position (last first)'], ['name', 'Name A–Z'], ['namez', 'Name Z–A']])}</select></label>${findBox()}</div>
    <div class="row actions"><button data-act="print">🖨️ Print</button><button class="b-pdf" data-act="pdfResults">⬇ Download PDF</button><button class="b-xls" data-act="xlsxResults">⬇ Download Excel (.xlsx)</button><button class="ghost" data-act="csv">⬇ Download CSV</button>
@@ -851,6 +856,7 @@ function cardsSelection() {
 }
 
 function viewCards() {
+  { const c0 = curClass(); if (c0 && CLOUD.on && !isAdmin() && !seesAll(c0.id)) return `<div class="panel">Report cards need every subject of the class, so they are prepared by the class teacher or the administrator. You can enter your marks in <a href="#" data-tab="marks">Enter marks</a> and see your results in <a href="#" data-tab="results">Class results</a>.</div>`; }
   const sel = cardsSelection(); if (!sel) return needClass();
   const { cls, scope, term, studs, ctx, chosen, selected } = sel;
   if (!studs.length) return `<div class="panel">This class has no learners yet.</div>`;
@@ -957,7 +963,7 @@ const say = msg => dialog({ message: msg, ok: 'OK' });
 const ask = (msg, o) => dialog({ message: msg, ok: (o && o.ok) || (isRisky(msg) ? 'Yes, continue' : 'OK'), cancel: (o && o.cancel) || 'Cancel', danger: o && o.danger !== undefined ? o.danger : isRisky(msg) });
 const askText = (msg, def) => dialog({ message: msg, input: true, def, ok: 'OK', cancel: 'Cancel' });
 async function newYear(preset) {
-  const cur = DB.current.year, guess = /^\d+$/.test(cur) ? String(+cur + 1) : '';
+  const cur = DB.current.year, rg = /^(\d{4})(\s*[-–\/]\s*)(\d{4})$/.exec(cur), guess = /^\d+$/.test(cur) ? String(+cur + 1) : rg ? (+rg[1] + 1) + rg[2] + (+rg[3] + 1) : '';
   const name = (preset || (await askText('Name of the new academic year (for example ' + (guess || '2027') + '):', guess)) || '').trim();
   if (!name) return;
   if (DB.years[name]) { if (await ask('The year ' + name + ' already exists. Switch to it?', { ok: 'Switch to ' + name, danger: false })) { DB.current.year = name; DB.current.classId = null; save(); render(); } return; }
@@ -971,6 +977,24 @@ async function newYear(preset) {
   }
   DB.years[name] = ny; DB.current.year = name; DB.current.term = 1; DB.current.classId = ny.classes.length ? ny.classes[0].id : null;
   ui.yearBannerHidden = false; save(); render();
+}
+async function renameYear() {
+  if (!isAdmin()) return;
+  const old = DB.current.year;
+  let name = await askText('New name for the academic year “' + old + '” (for example 2026-2027). All its classes, learners and marks stay exactly as they are:', old);
+  if (name === null || name === undefined) return;
+  name = String(name).replace(/\s+/g, ' ').trim();
+  if (!name || name === old) return;
+  if (name.length > 30) { await say('Please use a shorter name (30 characters at most).'); return; }
+  if (DB.years[name]) { await say('There is already an academic year called “' + name + '”. Choose a different name.'); return; }
+  if (!await ask('Rename the academic year “' + old + '” to “' + name + '”?\nNothing is deleted. Only the name changes on screen, in report cards and in the online database.', { ok: 'Rename', danger: false })) return;
+  if (CLOUD.on) {
+    if (!await cloudRenameYear(old, name)) return;
+  }
+  const ny = {}; Object.keys(DB.years).forEach(k => { ny[k === old ? name : k] = DB.years[k]; }); DB.years = ny;
+  DB.current.year = name; ui.yearBannerHidden = false;
+  if (CLOUD.on) { CLOUD.last = snapshot(); CLOUD.dirty = false; setStatus('saved'); }
+  save(); render();
 }
 /* ================= downloads: PDF, Excel (.xlsx) and CSV =================
    These are built inside this page, so they work even where printing is blocked. */
@@ -1533,6 +1557,7 @@ document.addEventListener('click', async e => {
   if (await cloudAct(act, b)) return;
   switch (act) {
     case 'newYear': await newYear(); break;
+    case 'renameYear': await renameYear(); break;
     case 'pasteMarks': await pasteMarksDialog(); break;
     case 'startYear': await newYear(String(new Date().getFullYear())); break;
     case 'hideYear': ui.yearBannerHidden = true; renderBanner(); break;
@@ -1699,7 +1724,7 @@ function parseGrid(text) {
   return String(text).replace(/\r/g, '').split('\n').filter(l => l.trim() !== '').map(l => l.split(l.includes('\t') ? '\t' : ';'));
 }
 function entriesFromText(text) {
-  const cls = curClass(), studs = studentsOf(cls.id), subs = cls.subjects, notes = [], bad = [], entries = [];
+  const cls = curClass(), studs = studentsOf(cls.id), subs = visSubjects(cls), notes = [], bad = [], entries = [];
   const byName = new Map(studs.map(st => [nn(st.name), st]));
   const q = (ui.q.marks || '').trim().toLowerCase();
   const order = (ui.mkSort === 'namez' ? studs.slice().reverse() : studs).filter(st => !q || (st.name + ' ' + (st.idno || '')).toLowerCase().includes(q));
@@ -1756,7 +1781,7 @@ async function confirmAndApply(entries, notes, preBad) {
 }
 async function pasteMarksDialog() {
   const cls = curClass(); if (!cls) return;
-  const names = cls.subjects.map(s => s.name).join(', ');
+  const names = visSubjects(cls).map(s => s.name).join(', ');
   const txt = await dialog({ wide: true, input: true, area: true, ok: 'Check the marks', cancel: 'Cancel',
     message: 'Paste the marks for ' + PART_LABEL[ui.part] + ', Term ' + DB.current.term + ', ' + cls.name + '.\n\n1. In your spreadsheet select the cells and copy them (Ctrl+C), then paste below (Ctrl+V).\n2. Best layout: first column = learner name, then one column per subject in this order: ' + names + '. A header row with subject names also works, in any order.\n3. Without names, rows go to the learners in the order shown on screen.\n4. You will see a summary to approve before anything is saved.' });
   if (txt === null || !txt.trim()) return;
@@ -1871,6 +1896,8 @@ function cloudCfg() {
 }
 CLOUD.cfg = cloudCfg(); CLOUD.on = !!(CLOUD.cfg.url && CLOUD.cfg.key); CLOUD.cfgFromStorage = CLOUD.cfg.fromStorage;
 const isAdmin = () => !CLOUD.on || !!(CLOUD.profile && CLOUD.profile.role === 'admin');
+const seesAll = cid => isAdmin() || CLOUD.assign.some(a => a.class_id === cid && a.subject_id === '*');
+const visSubjects = cls => !CLOUD.on || isAdmin() ? cls.subjects : cls.subjects.filter(s => canWrite(cls.id, s.id));
 const canWrite = (cid, sid) => isAdmin() || CLOUD.assign.some(a => a.class_id === cid && (a.subject_id === '*' || a.subject_id === sid));
 const uiKey = () => 'rcm_ui_' + (CLOUD.user ? CLOUD.user.id : 'x');
 function friendly(e) {
@@ -2053,6 +2080,21 @@ async function cloudPush() {
     clearTimeout(CLOUD.timer); CLOUD.timer = setTimeout(cloudPush, 8000);
   } finally { CLOUD.busy = false; }
 }
+async function cloudRenameYear(old, name) {
+  // first send everything that is still waiting, so nothing is lost; then rename the year row (the classes follow it automatically)
+  clearTimeout(CLOUD.timer);
+  for (let i = 0; i < 100 && CLOUD.busy; i++) await new Promise(r => setTimeout(r, 100));
+  await cloudPush();
+  if (CLOUD.dirty || CLOUD.err) { await say('The latest changes are not saved online yet, so the year cannot be renamed right now. Wait until the top bar says “Saved”, then try again.'); return false; }
+  CLOUD.busy = true;
+  try {
+    const r = await CLOUD.sb.from('academic_years').update({ year: name }).eq('year', old).select();
+    if (r.error) throw r.error;
+    if (!r.data || !r.data.length) throw new Error('The academic year was not found online. Press “Refresh from the database now” and try again.');
+    return true;
+  } catch (e) { await say('The academic year could not be renamed: ' + friendly(e)); return false; }
+  finally { CLOUD.busy = false; }
+}
 function cloudSave() {
   if (!CLOUD.ready) return;
   try { localStorage.setItem(uiKey(), JSON.stringify({ year: DB.current.year, term: DB.current.term, classId: DB.current.classId })); } catch (e) {}
@@ -2160,6 +2202,7 @@ function viewUsers() {
   const wait = ps.filter(p => !p.active), adm = ps.filter(p => p.active && p.role === 'admin'), tch = ps.filter(p => p.active && p.role === 'teacher');
   const row = (p, btns) => `<tr><td><b>${nm(p)}</b></td><td>${esc(p.email)}</td><td>${when(p)}</td><td>${btns}</td></tr>`;
   const table = (rows, empty) => rows.length ? `<table><thead><tr><th>Name</th><th>Email</th><th>Created</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table>` : `<p class="muted">${empty}</p>`;
+  const summary = t => { const parts = y.classes.map(c => { const rows = CLOUD.allAssign.filter(a => a.teacher_id === t.id && a.class_id === c.id); if (!rows.length) return ''; const all = rows.some(a => a.subject_id === '*'); return '<b>' + esc(c.name) + '</b>: ' + (all ? 'all subjects' : c.subjects.filter(s => rows.some(a => a.subject_id === s.id)).map(s => esc(s.name)).join(', ')); }).filter(Boolean); return parts.length ? '<div class="asum">✔ Teaches in ' + esc(yr) + ' — ' + parts.join(' · ') + '</div>' : '<div class="asum warn">⚠ No class chosen for ' + esc(yr) + ' yet — this teacher cannot see any class. Tick the classes below.</div>'; };
   const grid = t => y.classes.length ? y.classes.map(c => {
     const rows = CLOUD.allAssign.filter(a => a.teacher_id === t.id && a.class_id === c.id), all = rows.some(a => a.subject_id === '*');
     const subs = all ? '' : c.subjects.map(s => `<label class="chk"><input type="checkbox" data-f="asgSubj" data-t="${t.id}" data-c="${c.id}" data-s="${s.id}" ${rows.some(a => a.subject_id === s.id) ? 'checked' : ''}> ${esc(s.name)}</label>`).join('');
@@ -2171,7 +2214,7 @@ function viewUsers() {
    ${table(wait.map(p => row(p, `<button class="small" data-act="uApprove" data-id="${p.id}">Approve as teacher</button> <button class="small ghost" data-act="uApproveAdmin" data-id="${p.id}">Approve as administrator</button>`)), 'Nobody is waiting.')}
    <h3>Teachers</h3>
    ${tch.length ? tch.map(t => `<div class="ucard"><div class="row"><b>${nm(t)}</b> <span class="muted">${esc(t.email)}</span> <button class="small danger" data-act="uDeactivate" data-id="${t.id}">Deactivate</button> <button class="small ghost" data-act="uMakeAdmin" data-id="${t.id}">Make administrator</button></div>
-      <div class="muted">Classes this teacher may use in ${esc(yr)} (change the academic year at the top to set other years):</div>${grid(t)}</div>`).join('') : '<p class="muted">No approved teachers yet.</p>'}
+      ${summary(t)}<div class="muted">Step 1: tick the class. Step 2: leave “All subjects” ticked, or untick it and tick only the subjects this teacher teaches. The teacher then sees only those classes and subjects. (Showing academic year ${esc(yr)}; change the year at the top to set other years.)</div>${grid(t)}</div>`).join('') : '<p class="muted">No approved teachers yet.</p>'}
    ${tch.length ? `<div class="row"><button class="ghost" data-act="uCopyAsg">Copy the previous year’s class access into ${esc(yr)}</button><span class="muted">Matches classes and subjects by name.</span></div>` : ''}
    <h3>Administrators</h3>
    ${table(adm.map(p => row(p, p.id === me ? '<span class="muted">you</span>' : `<button class="small ghost" data-act="uMakeTeacher" data-id="${p.id}">Make teacher</button> <button class="small danger" data-act="uDeactivate" data-id="${p.id}">Deactivate</button>`)), '')}
