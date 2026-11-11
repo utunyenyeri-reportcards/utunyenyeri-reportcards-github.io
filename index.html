@@ -333,11 +333,84 @@ body.locked{overflow:hidden}
 label.chk{display:inline-flex;gap:6px;align-items:center;font-weight:600;font-size:13px}
 nav#tabs button[data-tab="users"]{--c:#00a1de}
 @media print{#auth,#acct{display:none!important}}
+
+/* print: no browser header/footer (page margin 0 top and bottom, the same space is kept inside the page); only our date and time */
+#printStamp{display:none}
+@media print{
+#view{padding:var(--pv,10mm) 0;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+#printStamp{display:block;position:fixed;left:0;right:0;bottom:3.2mm;text-align:center;font:9px/1.2 Arial,Helvetica,sans-serif;color:#444}
+.hscroll{display:none!important}
+}
+/* always-visible scrollbars, scroll buttons and fixed headings for mouse-only desktops */
+@media screen{
+.tablewrap,.proc,.cards.yr{overflow:auto;scrollbar-width:auto;scrollbar-color:#1d8fe1 #dbe6f5}
+.tablewrap::-webkit-scrollbar,.proc::-webkit-scrollbar,.cards.yr::-webkit-scrollbar{height:16px;width:16px}
+.tablewrap::-webkit-scrollbar-track,.proc::-webkit-scrollbar-track,.cards.yr::-webkit-scrollbar-track{background:#dbe6f5;border-radius:8px}
+.tablewrap::-webkit-scrollbar-thumb,.proc::-webkit-scrollbar-thumb,.cards.yr::-webkit-scrollbar-thumb{background:#1d8fe1;border-radius:8px;border:3px solid #dbe6f5}
+.tablewrap,.proc{max-height:calc(100vh - 150px);max-height:calc(100dvh - 150px);min-height:120px}
+.tablewrap thead th{position:sticky;top:0;z-index:3;background:#e4f0ff}
+.mktab th:nth-child(1),.mktab td:nth-child(1){position:sticky;left:0;z-index:2;min-width:36px}
+.mktab th:nth-child(2),.mktab td:nth-child(2){position:sticky;left:36px;z-index:2;min-width:150px;box-shadow:2px 0 0 var(--line)}
+.mktab thead th:nth-child(-n+2){z-index:4}
+.mktab tbody tr td:nth-child(-n+2){background:#fff}
+.mktab tbody tr:nth-child(even) td:nth-child(-n+2){background:#f6faff}
+.hscroll{display:flex;gap:8px;align-items:center;margin:0 0 6px;font-size:12px;color:var(--muted)}
+.hscroll[hidden]{display:none}
+.hscroll button{padding:5px 14px;font-size:15px;line-height:1}
+}
+
+@media screen{.ctl .sm{display:none}}
+/* ===== phones and small tablets: compact header, nothing wider than the screen, finger-sized controls ===== */
+@media screen and (max-width:760px){
+html,body{overflow-x:hidden}
+.hwrap{padding:8px 10px 0}
+.brandrow{gap:6px 12px}
+.brand h1{font-size:16px}.brand .sub{display:none}
+.sunlogo{width:34px;height:34px}
+.ctl{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;align-items:end;margin-top:6px}
+.ctl>label{grid-column:span 2}.ctl>button{grid-column:span 2}
+.ctl .lg{display:none}.ctl .sm{display:inline}
+.ctl label{min-width:0}.ctl select{min-width:0;width:100%}
+.ctl .ghost,.ctl>button{padding:7px 6px;font-size:12px;white-space:normal;line-height:1.15;min-height:36px}
+.ctl>label:nth-of-type(1){order:1}.ctl>label:nth-of-type(2){order:2}.ctl>label:nth-of-type(3){order:3}.ctl>button{order:4}
+#saveStatus,#acct{grid-column:1/-1;order:6}
+#acct{flex-wrap:wrap}
+#banner .b{font-size:13px;padding:8px 10px}
+nav#tabs{flex-wrap:nowrap;overflow-x:auto;gap:4px;margin-top:8px;padding-bottom:0;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+nav#tabs::-webkit-scrollbar{display:none}
+nav#tabs button{flex:none;padding:8px 11px 7px;font-size:13px;gap:5px;white-space:nowrap}
+nav#tabs button .ic{font-size:15px}
+main{padding:10px 8px 40px}
+.panel{padding:14px 12px;border-radius:14px}
+.panel h2{font-size:18px}
+input,select,textarea{font-size:16px}
+button{min-height:40px}
+button.small{min-height:34px}
+.row{gap:8px}
+.row>label,.row>select,.row>input:not([type=checkbox]):not([type=radio]):not([type=file]){max-width:100%}
+.row>label{flex:1 1 100%}.row>label select,.row>label input:not([type=checkbox]){width:100%}
+.row>button{flex:1 1 auto}
+select{max-width:100%}
+input[style*="width"],textarea[style*="min-width"],select[style*="width"]{width:100%!important;min-width:0!important;max-width:100%}
+.mk{width:62px}
+.dlg{max-width:calc(100vw - 20px);padding:16px 14px}
+.dlg-btns button{flex:1 1 auto}
+.mktab th:nth-child(1),.mktab td:nth-child(1){min-width:28px}
+.mktab th:nth-child(2),.mktab td:nth-child(2){left:28px;min-width:112px;font-size:13px}
+.tablewrap,.proc{max-height:calc(100vh - 120px);max-height:calc(100dvh - 120px)}
+.stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+.auth-card{padding:0 18px 20px}
+}
+@media screen and (max-width:420px){
+.ctl>label:nth-of-type(1),.ctl>label:nth-of-type(2){grid-column:span 3}
+.ctl>label:nth-of-type(3){grid-column:1/-1}
+}
 </style>
 <script id="cloud-config" type="application/json">{"url":"https://jlktazcoqmoboservzxb.supabase.co","key":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impsa3RhemNvcW1vYm9zZXJ2enhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQxODg4NDksImV4cCI6MjEwOTc2NDg0OX0.umWwGm50vMre8Y1mvsvINOUTlQoc4yvOcSHLglepSFA"}</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" async onerror="window.__sbFail=1"></script>
 </head>
 <body>
+<div id="printStamp" aria-hidden="true"></div>
 <header class="top noprint">
  <div class="ribbon"></div>
  <div class="hwrap">
@@ -348,9 +421,9 @@ nav#tabs button[data-tab="users"]{--c:#00a1de}
    </div>
    <div class="ctl">
     <label>Academic year <select id="selYear"></select></label>
-    <button class="ghost" data-act="newYear">+ New academic year</button>
-    <button class="ghost" data-act="renameYear" title="Change the name of this academic year">✎ Rename year</button>
-    <button class="ghost danger" data-act="deleteYear" title="Delete this academic year and everything in it">🗑 Delete year</button>
+    <button class="ghost" data-act="newYear"><span class="lg">+ New academic year</span><span class="sm">+ New year</span></button>
+    <button class="ghost" data-act="renameYear" title="Change the name of this academic year"><span class="lg">✎ Rename year</span><span class="sm">✎ Rename</span></button>
+    <button class="ghost danger" data-act="deleteYear" title="Delete this academic year and everything in it"><span class="lg">🗑 Delete year</span><span class="sm">🗑 Delete</span></button>
     <label>Term <select id="selTerm"><option value="1">Term 1</option><option value="2">Term 2</option><option value="3">Term 3</option></select></label>
     <label>Class <select id="selClass"></select></label>
     <span id="saveStatus"></span><span id="acct"></span>
@@ -470,7 +543,7 @@ function classResults(students, marks, subjects, scope, term, settings) {
 //#CALC-END
 
 /* ---------- state & storage ---------- */
-const ui = { tab: 'marks', part: 'mid', perPage: '1', maxAll: true, rcSort: 'name', rcFilter: 'all', mkSort: 'name', resSort: 'rank', q: { marks: '', results: '', cards: '' }, resScope: 'term', rcScope: 'term', rcStudent: 'all', storageOk: true, bannerHidden: false };
+const ui = { tab: 'marks', part: 'mid', perPage: '1', maxAll: true, rcSort: 'custom', rcFilter: 'all', mkSort: 'custom', resSort: 'rank', q: { marks: '', results: '', cards: '' }, resScope: 'term', rcScope: 'term', rcStudent: 'all', storageOk: true, bannerHidden: false };
 const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const $ = id => document.getElementById(id);
@@ -539,6 +612,20 @@ try { if (navigator.storage && navigator.storage.persist) navigator.storage.pers
 const Y = () => DB.years[DB.current.year];
 const curClass = () => Y().classes.find(c => c.id === DB.current.classId) || null;
 const studentsOf = cid => Y().students.filter(s => s.classId === cid).sort((a, b) => a.name.localeCompare(b.name));
+const personalKey = cid => 'rcm_order_' + (CLOUD.user ? CLOUD.user.id : 'local') + '_' + cid;
+function customOrder(cid) {
+  let ids = null;
+  if (CLOUD.on && !isAdmin()) { try { ids = JSON.parse(localStorage.getItem(personalKey(cid)) || 'null'); } catch (e) {} }
+  return Array.isArray(ids) ? ids : ((DB.settings.order || {})[cid] || []);
+}
+function orderStudents(list, mode, cid) {
+  const nm = (a, b) => a.name.localeCompare(b.name), l = list.slice();
+  if (mode === 'namez') return l.sort((a, b) => nm(b, a));
+  if (mode === 'idno') return l.sort((a, b) => { const x = String(a.idno || '').trim(), y = String(b.idno || '').trim(); if (!x !== !y) return x ? -1 : 1; return x.localeCompare(y, undefined, { numeric: true }) || nm(a, b); });
+  if (mode === 'custom') { const pos = new Map(customOrder(cid).map((id, i) => [id, i])); return l.filter(s => pos.has(s.id)).sort((a, b) => pos.get(a.id) - pos.get(b.id)).concat(l.filter(s => !pos.has(s.id)).sort(nm)); }
+  return l.sort(nm);
+}
+const SORT_OPTS = [['custom', 'Custom order (arranged by hand)'], ['name', 'Name A–Z'], ['namez', 'Name Z–A'], ['idno', 'ID number']];
 function fixClass() { if (!curClass()) DB.current.classId = Y().classes.length ? Y().classes[0].id : null; }
 fixClass();
 
@@ -572,15 +659,24 @@ function renderBanner() {
 }
 
 /* ---------- views ---------- */
-function applyPaper() { try { let el = document.getElementById('pageStyle'); if (!el) { el = document.createElement('style'); el.id = 'pageStyle'; document.head.appendChild(el); } const yr = ui.tab === 'cards' && ui.rcScope === 'year', a5 = ui.perPage === 'a5', wide2 = ui.tab === 'cards' && ui.rcScope !== 'year' && ui.perPage === '2land'; el.textContent = '@page{size:' + (a5 ? 'A5' : 'A4') + ((yr || wide2) ? ' landscape' : '') + ';margin:' + (a5 ? '8mm' : '10mm') + '}'; } catch (_) {} }
-function render() { if (CLOUD.on && !CLOUD.ready) return; if (!isAdmin() && ['classes', 'settings', 'users'].includes(ui.tab)) ui.tab = 'marks'; fixClass(); renderHeader(); applyPaper(); $('view').dataset.screen = ui.tab; const v = { marks: viewMarks, results: viewResults, cards: viewCards, classes: viewClasses, settings: viewSettings, users: viewUsers }[ui.tab]; $('view').innerHTML = v(); applyLiveFilter(); }
+function applyPaper() { try { let el = document.getElementById('pageStyle'); if (!el) { el = document.createElement('style'); el.id = 'pageStyle'; document.head.appendChild(el); } const yr = ui.tab === 'cards' && ui.rcScope === 'year', a5 = ui.perPage === 'a5', wide2 = ui.tab === 'cards' && ui.rcScope !== 'year' && ui.perPage === '2land'; const pm = a5 ? '8mm' : '10mm'; el.textContent = '@page{size:' + (a5 ? 'A5' : 'A4') + ((yr || wide2) ? ' landscape' : '') + ';margin:0 ' + pm + '}:root{--pv:' + pm + '}'; } catch (_) {} }
+function render() { if (CLOUD.on && !CLOUD.ready) return; if (!isAdmin() && ['classes', 'settings', 'users'].includes(ui.tab)) ui.tab = 'marks'; fixClass(); renderHeader(); applyPaper(); $('view').dataset.screen = ui.tab; const v = { marks: viewMarks, results: viewResults, cards: viewCards, classes: viewClasses, settings: viewSettings, users: viewUsers }[ui.tab]; $('view').innerHTML = v(); addScrollers(); applyLiveFilter(); }
 const needClass = () => `<div class="panel">Please add a class first (for example <b>P1 A</b>) in <a href="#" data-tab="classes">Classes &amp; learners</a>.</div>`;
 const fmt = (x, d = 1) => x === null || x === undefined ? '—' : r1(x).toFixed(1);
 const subjHeaderCells = (subjects, part, term) => subjects.map(s => `<th>${esc(s.name)}${part ? `<br><small class="muted">/${smax(s, term)[part]}</small>` : ''}</th>`).join('');
 
+function arrangePanel(cls) {
+  const a = ui.arr; if (!a || a.cid !== cls.id) return '';
+  const byId = new Map(Y().students.map(s => [s.id, s])), shared = !CLOUD.on || isAdmin();
+  const rows = a.ids.map((id, i) => byId.get(id) ? `<tr><td>${i + 1}</td><td class="l">${esc(byId.get(id).name)}</td><td style="white-space:nowrap"><button class="small ghost" data-act="arrMove" data-i="${i}" data-d="-1" ${i === 0 ? 'disabled' : ''} aria-label="Move up">▲</button> <button class="small ghost" data-act="arrMove" data-i="${i}" data-d="1" ${i === a.ids.length - 1 ? 'disabled' : ''} aria-label="Move down">▼</button></td></tr>` : '').join('');
+  return `<div class="panel arr"><h2>Arrange the order – ${esc(cls.name)}</h2>
+   <p class="muted">${shared ? 'This order is saved for the whole school: everybody who picks “Custom order” sees it.' : 'This order is saved only for you, on this device. Other teachers are not affected.'} Use ▲ ▼ to move a learner, or sort automatically first and then adjust.</p>
+   <div class="row"><span>Sort automatically:</span><button class="small ghost" data-act="arrAuto" data-m="name">A–Z</button><button class="small ghost" data-act="arrAuto" data-m="namez">Z–A</button><button class="small ghost" data-act="arrAuto" data-m="idno">By ID number</button><button data-act="arrSave">Save this order</button><button class="ghost" data-act="arrCancel">Cancel</button></div>
+   <div class="tablewrap" style="max-height:55vh"><table><thead><tr><th>#</th><th class="l">Learner</th><th>Move</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
 function viewMarks() {
   const cls = curClass(); if (!cls) return needClass();
-  const studs = ui.mkSort === 'namez' ? studentsOf(cls.id).reverse() : studentsOf(cls.id);
+  const studs = orderStudents(studentsOf(cls.id), ui.mkSort, cls.id);
   const sets = DB.settings, part = ui.part, term = DB.current.term, vs = visSubjects(cls);
   if (!cls.subjects.length) return `<div class="panel">This class has no subjects yet. Add them in <a href="#" data-tab="classes">Classes &amp; learners</a>.</div>`;
   if (!vs.length) return `<div class="panel">You are not assigned to any subject of ${esc(cls.name)} yet. Please ask the administrator to give you your subjects.</div>`;
@@ -595,12 +691,13 @@ function viewMarks() {
   });
   setTimeout(() => studs.forEach(st => updateRow(st.id)), 0);
   const mine = CLOUD.on && !isAdmin() ? `<p class="muted"><b>Your subjects in ${esc(cls.name)}:</b> ${vs.map(s => esc(s.name)).join(', ')}. Other subjects of this class are not shown to you.</p>` : '';
-  return `<div class="panel"><h2>Enter marks – ${esc(cls.name)}, Term ${term}, ${esc(DB.current.year)}</h2>${mine}
+  return arrangePanel(cls) + `<div class="panel"><h2>Enter marks – ${esc(cls.name)}, Term ${term}, ${esc(DB.current.year)}</h2>${mine}
   <div class="row"><label>Assessment you are entering&nbsp;<select id="selPart" data-f="part">${opt('mid')}${opt('cat')}${opt('exam')}</select></label>
-  <label>Sort by<select data-f="mkSort">${optList(ui.mkSort, [['name', 'Name A–Z'], ['namez', 'Name Z–A']])}</select></label>${findBox()}
+  <label>Sort by<select data-f="mkSort">${optList(ui.mkSort, SORT_OPTS)}</select></label><button class="ghost" data-act="arrOpen" title="Put the learners in the order you want">↕ Arrange order…</button>${findBox()}
   <button class="ghost" data-act="pasteMarks">Paste marks from spreadsheet</button>
+  <button class="b-pdf" data-act="pdfMarks" title="Quotation sheet of the marks shown here">⬇ Marks sheet (PDF)</button><button class="b-xls" data-act="xlsxMarks" title="Quotation sheet of the marks shown here">⬇ Marks sheet (Excel)</button>
   <span class="muted">Type a mark and press Enter (moves down) or Tab (moves right). Leave blank if the child has no mark yet; type 0 for a real zero. Marks above the maximum are refused. Everything saves automatically. <b>To enter many at once:</b> copy a block of marks in Excel, click the first cell here and press Ctrl+V, or use “Paste marks from spreadsheet”.</span></div>
-  <div class="tablewrap"><table><thead><tr><th>#</th><th class="l">Learner</th>${subjHeaderCells(vs, part, term)}<th>Total</th><th>%</th></tr></thead><tbody>${body}</tbody></table></div></div>`;
+  <div class="tablewrap"><table class="mktab"><thead><tr><th>#</th><th class="l">Learner</th>${subjHeaderCells(vs, part, term)}<th>Total</th><th>%</th></tr></thead><tbody>${body}</tbody></table></div></div>`;
 }
 function updateRow(stId) {
   const cls = curClass(); if (!cls) return;
@@ -664,7 +761,7 @@ function viewResults() {
   const onlyMine = CLOUD.on && !isAdmin() && !seesAll(cls.id) ? `<p class="muted"><b>Showing only your subjects:</b> ${m.subjects.map(x => esc(x.name || x)).join(', ')}. Totals, averages and positions here count only these subjects.</p>` : '';
   return `<div class="panel noprint"><h2>Class results – ${esc(cls.name)}</h2>${onlyMine}
    <div class="row"><label>Show results for&nbsp;<select data-f="resScope">${SCOPE_OPTS(m.scope)}</select></label>
-    <label>Sort by<select data-f="resSort">${optList(ui.resSort, [['rank', 'Position (best first)'], ['rankrev', 'Position (last first)'], ['name', 'Name A–Z'], ['namez', 'Name Z–A']])}</select></label>${findBox()}</div>
+    <label>Sort by<select data-f="resSort">${optList(ui.resSort, [['rank', 'Position (best first)'], ['rankrev', 'Position (last first)'], ...SORT_OPTS])}</select></label>${findBox()}</div>
    <div class="row actions"><button data-act="print">🖨️ Print</button><button class="b-pdf" data-act="pdfResults">⬇ Download PDF</button><button class="b-xls" data-act="xlsxResults">⬇ Download Excel (.xlsx)</button><button class="ghost" data-act="csv">⬇ Download CSV</button>
     <span class="muted">PDF, Excel and CSV all have the same layout as the printed list below. They work even where printing is blocked.</span></div>
    <div class="stats"><div class="stat t-sky">Learners with marks<b>${st.ranked} / ${st.enrolled}</b></div><div class="stat t-leaf">Passed (average ≥ ${pass}%)<b>${st.passed}</b></div><div class="stat t-coral">Failed<b>${st.failed}</b></div><div class="stat t-violet">Class success rate<b>${fmt(st.success)}%</b></div><div class="stat t-sun">Class average<b>${fmt(st.mean)}%</b></div></div>
@@ -826,6 +923,7 @@ function cardFromModel(m) {
 function sortLearners(list, mode) {
   const nm = (a, b) => a.st.name.localeCompare(b.st.name);
   const l = list.slice();
+  if (mode === 'idno' || mode === 'custom') { const c = curClass(), idx = new Map(orderStudents(l.map(x => x.st), mode, c ? c.id : '').map((s, i) => [s.id, i])); return l.sort((a, b) => idx.get(a.st.id) - idx.get(b.st.id)); }
   if (mode === 'name') return l.sort(nm);
   if (mode === 'namez') return l.sort((a, b) => nm(b, a));
   const has = l.filter(x => x.pos !== null).sort((a, b) => (a.pos - b.pos) || nm(a, b));
@@ -870,7 +968,7 @@ function viewCards() {
   return `<div class="panel noprint"><h2>Report cards – ${esc(cls.name)}</h2>${logoBox}<div class="row">
    <label>Print<select data-f="rcScope">${SCOPE_OPTS(scope)}</select></label>
    <label>Which report cards?<select data-f="rcStudent"><option value="all">All learners shown below (${chosen.length})</option>${studs.map(s => `<option value="${s.id}" ${ui.rcStudent === s.id ? 'selected' : ''}>Only: ${esc(s.name)}</option>`).join('')}</select></label>
-   <label>Sort by<select data-f="rcSort">${optList(ui.rcSort, [['name', 'Name A–Z'], ['namez', 'Name Z–A'], ['rank', 'Position (best first)'], ['rankrev', 'Position (last first)']])}</select></label>
+   <label>Sort by<select data-f="rcSort">${optList(ui.rcSort, [...SORT_OPTS, ['rank', 'Position (best first)'], ['rankrev', 'Position (last first)']])}</select></label>
    <label>Show<select data-f="rcFilter">${optList(fl, [['all', 'All learners'], ['pass', 'Passed (average ≥ ' + pass + '%)'], ['fail', 'Below pass mark'], ['incomplete', 'Marks not complete'], ['nomarks', 'No marks yet']])}</select></label>
    ${findBox()}
    <label>Cards per page<select data-f="perPage">${optList(yr ? (ui.perPage === 'a5' ? 'a5' : '1') : ui.perPage, yr ? [['1', 'A4 landscape (1 card per page)'], ['a5', 'A5 landscape']] : [['1', '1 per page (A4 portrait)'], ['2', '2 per page (A4 portrait, smaller)'], ['2land', '2 per page (A4 landscape, side by side)'], ['a5', '1 per page (A5)']])}</select></label></div>
@@ -901,9 +999,10 @@ function viewClasses() {
    <div class="row" style="margin-top:10px"><input id="newSubj" placeholder="New subject name"><button data-act="addSubj">Add subject</button></div>
    <div class="row"><select id="tplSel"><option value="lower">${esc(TEMPLATES.lower.label)}</option><option value="upper">${esc(TEMPLATES.upper.label)}</option></select><button class="ghost" data-act="applyTpl">Set the school's standard subjects and maximums</button>${others.length ? `<select id="copyFrom">${others.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select><button class="ghost" data-act="copySubj">Copy subjects from this class</button>` : ''}</div>
    <div class="muted">A maximum of 0 means that assessment is not used for the subject. A maximum cannot be set below a mark that was already entered.</div></div>`;
-  const studs = studentsOf(cls.id);
-  out += `<div class="panel"><h2>Learners of ${esc(cls.name)} (${studs.length})</h2>
+  const studs = orderStudents(studentsOf(cls.id), 'custom', cls.id);
+  out += arrangePanel(cls) + `<div class="panel"><h2>Learners of ${esc(cls.name)} (${studs.length})</h2>
    <div class="row"><textarea id="bulkNames" rows="4" style="min-width:300px" placeholder="Paste or type names, one per line"></textarea><button data-act="addLearners">Add these learners</button></div>
+   ${studs.length ? `<div class="row"><button class="ghost" data-act="arrOpen">↕ Arrange order…</button><button class="small danger" data-act="delAllStudents">Remove ALL learners from this class</button><span class="muted">The list below shows the custom order (A–Z until you arrange it).</span></div>` : ''}
    <div class="tablewrap"><table><thead><tr><th>#</th><th class="l">Name</th><th>ID no. (optional)</th><th>Date of birth</th><th>Place of birth</th><th>Class</th><th></th></tr></thead><tbody>${studs.map((s, i) => `<tr><td>${i + 1}</td><td class="l"><input data-f="stname" data-id="${s.id}" value="${esc(s.name)}" style="width:100%"></td><td><input data-f="stid" data-id="${s.id}" value="${esc(s.idno || '')}"></td><td><input type="date" data-f="stdob" data-id="${s.id}" value="${esc(s.dob || '')}"></td><td><input data-f="stpob" data-id="${s.id}" value="${esc(s.pob || '')}"></td><td><select data-f="stclass" data-id="${s.id}">${y.classes.map(c => `<option value="${c.id}" ${c.id === s.classId ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></td><td><button class="small danger" data-act="delStudent" data-id="${s.id}">Remove</button></td></tr>`).join('')}</tbody></table></div></div>`;
   return out;
 }
@@ -1528,6 +1627,80 @@ async function cardsWorkbook(models) {
   return packXlsx(sh, S, G, logo ? logo.bytes : null);
 }
 
+
+/* ---------- quotation sheet: the marks of the lessons this person enters (one column per lesson) ---------- */
+function marksSheetModel() {
+  const cls = curClass(); if (!cls) return null;
+  const term = DB.current.term, part = ui.part, subs = visSubjects(cls).filter(x => +smax(x, term)[part] > 0);
+  const studs = orderStudents(studentsOf(cls.id), ui.mkSort, cls.id);
+  const who = CLOUD.on && CLOUD.profile ? (CLOUD.profile.full_name || CLOUD.profile.email || '') : '';
+  const d = new Date();
+  return {
+    title: 'QUOTATION SHEET ' + DB.current.year, school: DB.school.name || '', cls, term, part, partLabel: PART_LABEL[part], teacher: who,
+    subjects: subs.map(x => x.name.toUpperCase()), maxima: subs.map(x => +smax(x, term)[part]),
+    rows: studs.map((st, i) => ({ no: i + 1, name: st.name.toUpperCase(), vals: subs.map(x => num((((Y().marks[st.id] || {})[x.id] || {})[term] || {})[part])) })),
+    printed: d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  };
+}
+const msSub = m => m.cls.name + ' · Term ' + m.term + ' · ' + m.partLabel;
+function drawMarksPDF(doc, m) {
+  const PW = 595.28, PH = 841.89, M = 36, W = PW - 2 * M, n = Math.max(1, m.subjects.length), noW = 30;
+  const subjW = Math.max(40, Math.min(90, (W - noW - 200) / n)), nameW = Math.max(110, Math.min(W - noW - subjW * n, 280)), tw = noW + nameW + subjW * m.subjects.length, x0 = M + Math.max(0, (W - tw) / 2);
+  const rowH = 17, hdrH = 30, top = M + 92, bottom = PH - M - 22, cap = Math.floor((bottom - top - hdrH - rowH) / rowH), sigH = 60;
+  const pages = []; let i = 0;
+  for (;;) { const rest = m.rows.length - i; if (rest <= cap) { pages.push({ from: i, to: m.rows.length }); break; } pages.push({ from: i, to: i + cap }); i += cap; }
+  const lastRows = pages[pages.length - 1].to - pages[pages.length - 1].from;
+  if ((bottom - top - hdrH - rowH) - lastRows * rowH < sigH) pages.push({ from: m.rows.length, to: m.rows.length });
+  pages.forEach((P, pi) => {
+    const pg = doc.addPage(PW, PH);
+    pg.text(m.title, PW / 2, M + 16, { font: 'HB', size: 16, align: 'c' });
+    pg.text(m.school, PW / 2, M + 34, { font: 'HB', size: 10.5, align: 'c' });
+    pg.text(msSub(m), PW / 2, M + 50, { font: 'H', size: 10.5, align: 'c' });
+    if (m.teacher) pg.text('Teacher: ' + m.teacher, PW / 2, M + 65, { font: 'H', size: 10, align: 'c' });
+    let y = top;
+    const cell = (str, cx, cw, ch, o) => { pg.rect(cx, y, cw, ch, o.fill ? { fill: o.fill } : {}); cellText(pg, str, cx, y, cw, ch, { font: o.font || 'H', size: o.size || 9, align: o.align || 'c' }); };
+    cell('No.', x0, noW, hdrH, { font: 'HB', fill: '0.88 0.93 0.99' }); cell('Learner', x0 + noW, nameW, hdrH, { font: 'HB', fill: '0.88 0.93 0.99', align: 'l' });
+    m.subjects.forEach((s, j) => cell(s, x0 + noW + nameW + subjW * j, subjW, hdrH, { font: 'HB', size: 8.5, fill: '0.88 0.93 0.99' }));
+    y += hdrH;
+    cell('', x0, noW, rowH, { font: 'HB' }); cell('Maximum', x0 + noW, nameW, rowH, { font: 'HB', align: 'l' });
+    m.maxima.forEach((v, j) => cell(String(v), x0 + noW + nameW + subjW * j, subjW, rowH, { font: 'HB' }));
+    y += rowH;
+    m.rows.slice(P.from, P.to).forEach(r => {
+      cell(String(r.no), x0, noW, rowH, {}); cell(r.name, x0 + noW, nameW, rowH, { align: 'l' });
+      r.vals.forEach((v, j) => cell(v === null ? '' : String(v), x0 + noW + nameW + subjW * j, subjW, rowH, {}));
+      y += rowH;
+    });
+    if (pi === pages.length - 1) { pg.text('Teacher signature: ........................................', x0, y + 34, { font: 'H', size: 10 }); pg.text('Date: ........................', x0 + tw - 120, y + 34, { font: 'H', size: 10 }); }
+    pg.text('Printed on ' + m.printed, M, PH - 16, { font: 'H', size: 8 });
+    if (pages.length > 1) pg.text('Page ' + (pi + 1) + ' of ' + pages.length, PW - M, PH - 16, { font: 'H', size: 8, align: 'r' });
+  });
+}
+function marksWorkbook(m) {
+  const S = new XStyles(), sh = new XSheet('Quotation sheet'), n = m.subjects.length, last = 2 + Math.max(1, n);
+  const st = {
+    title: S.get({ b: 1, sz: 15, h: 'center' }), info: S.get({ sz: 10, h: 'center' }), infoB: S.get({ b: 1, sz: 11, h: 'center' }),
+    th: S.get({ b: 1, sz: 10, h: 'center', border: 1, fill: 'DCE9FB', wrap: 1 }), thl: S.get({ b: 1, sz: 10, h: 'left', border: 1, fill: 'DCE9FB' }),
+    mxL: S.get({ b: 1, sz: 10, h: 'left', border: 1 }), mx: S.get({ b: 1, sz: 10, h: 'center', border: 1 }), no: S.get({ sz: 10, h: 'center', border: 1 }), name: S.get({ sz: 10, h: 'left', border: 1 }), num: S.get({ sz: 10, h: 'center', border: 1 }), sig: S.get({ sz: 10, h: 'left' })
+  };
+  sh.put(1, 1, m.title, st.title, last); sh.rh[1] = 24; sh.put(2, 1, m.school, st.infoB, last); sh.put(3, 1, msSub(m), st.info, last);
+  if (m.teacher) sh.put(4, 1, 'Teacher: ' + m.teacher, st.info, last);
+  sh.put(6, 1, 'No.', st.th); sh.put(6, 2, 'Learner', st.thl); m.subjects.forEach((x, j) => sh.put(6, 3 + j, x, st.th)); sh.rh[6] = 30;
+  sh.put(7, 1, '', st.mx); sh.put(7, 2, 'Maximum', st.mxL); m.maxima.forEach((v, j) => sh.put(7, 3 + j, v, st.mx));
+  let r = 8; m.rows.forEach(x => { sh.put(r, 1, x.no, st.no); sh.put(r, 2, x.name, st.name); x.vals.forEach((v, j) => sh.put(r, 3 + j, v, st.num)); r++; });
+  r += 2; sh.put(r, 2, 'Teacher signature: ........................................', st.sig, Math.max(1, last - 1)); r++; sh.put(r, 2, 'Printed on ' + m.printed, st.sig, Math.max(1, last - 1));
+  sh.cw[1] = 6; sh.cw[2] = 38; for (let j = 0; j < n; j++) sh.cw[3 + j] = 14;
+  sh.o = { fitW: true, printTitles: '$6:$7' };
+  return packXlsx(sh, S, last, null);
+}
+async function exportMarks(kind) {
+  const m = marksSheetModel(); if (!m) return;
+  if (!m.subjects.length) { await say('There is no lesson to put on the sheet: you have no subject with a maximum for ' + m.partLabel + ' in ' + m.cls.name + '. Change “Assessment you are entering” or ask the administrator to assign your lessons.'); return; }
+  if (!m.rows.length) { await say('This class has no learners yet.'); return; }
+  const base = 'Quotation-sheet_' + tag() + '_' + ui.part;
+  if (kind === 'pdf') { const doc = new PdfDoc(); drawMarksPDF(doc, m); download(base + '.pdf', doc.build(m.title + ' ' + m.cls.name), 'application/pdf'); }
+  else download(base + '.xlsx', marksWorkbook(m), MIME_XLSX);
+}
+
 /* ---------- CSV: same layout as the printed class list ---------- */
 function csvResults() {
   const cls = curClass(); if (!cls) return;
@@ -1548,7 +1721,8 @@ function csvResults() {
 
 /* ---------- buttons ---------- */
 let _printed = false;
-window.addEventListener('beforeprint', () => { _printed = true; });
+function setStamp() { const d = new Date(), el = $('printStamp'); if (el) el.textContent = 'Printed on ' + d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); }
+window.addEventListener('beforeprint', () => { _printed = true; setStamp(); });
 async function doPrint() {
   _printed = false; try { window.print(); } catch (_) {}
   await new Promise(r => setTimeout(r, 700));
@@ -1589,6 +1763,8 @@ document.addEventListener('click', async e => {
     case 'csv': csvResults(); break;
     case 'pdfResults': await exportResults('pdf'); break;
     case 'xlsxResults': await exportResults('xlsx'); break;
+    case 'pdfMarks': await exportMarks('pdf'); break;
+    case 'xlsxMarks': await exportMarks('xlsx'); break;
     case 'pdfCards': await exportCards('pdf'); break;
     case 'xlsxCards': await exportCards('xlsx'); break;
     case 'backup': backup(); break;
@@ -1625,6 +1801,26 @@ document.addEventListener('click', async e => {
       const have = new Set(studentsOf(c.id).map(s => s.name.toLowerCase())), dup = [];
       names.forEach(n => { if (have.has(n.toLowerCase())) dup.push(n); else { have.add(n.toLowerCase()); y.students.push({ id: uid(), classId: c.id, name: n, idno: '' }); } });
       save(); render(); if (dup.length) say('Not added because they are already in this class:\n' + dup.join('\n')); break; }
+    case 'arrOpen': { const c = curClass(); if (!c) return; ui.arr = { cid: c.id, ids: orderStudents(studentsOf(c.id), 'custom', c.id).map(x => x.id) }; render(); break; }
+    case 'arrMove': { const a = ui.arr, i = +b.dataset.i, j = i + (+b.dataset.d); if (!a || j < 0 || j >= a.ids.length) return; [a.ids[i], a.ids[j]] = [a.ids[j], a.ids[i]]; render(); break; }
+    case 'arrAuto': { const a = ui.arr; if (!a) return; const m = b.dataset.m, byId = new Map(y.students.map(x => [x.id, x])); a.ids = orderStudents(a.ids.map(i => byId.get(i)).filter(Boolean), m, a.cid).map(x => x.id); render(); break; }
+    case 'arrCancel': ui.arr = null; render(); break;
+    case 'arrSave': {
+      const a = ui.arr; if (!a) return;
+      if (CLOUD.on && !isAdmin()) { try { localStorage.setItem(personalKey(a.cid), JSON.stringify(a.ids)); } catch (e) { await say('This browser does not allow saving your order.'); return; } }
+      else { DB.settings.order = DB.settings.order || {}; DB.settings.order[a.cid] = a.ids.slice(); save(); }
+      ui.mkSort = 'custom'; ui.rcSort = 'custom'; ui.arr = null; render(); break; }
+    case 'delAllStudents': {
+      const c = curClass(); if (!c) return; const k = y.students.filter(x => x.classId === c.id); if (!k.length) return;
+      const nMarks = k.reduce((a, x) => a + Object.values(y.marks[x.id] || {}).reduce((b2, sj) => b2 + Object.values(sj).filter(e => e && PARTS.some(p2 => num(e[p2]) !== null)).length, 0), 0);
+      if (!await ask('Remove ALL ' + k.length + ' learner' + (k.length === 1 ? '' : 's') + ' of ' + c.name + ' (' + DB.current.year + ') together with ' + nMarks + ' saved mark entr' + (nMarks === 1 ? 'y' : 'ies') + ' and their comments' + (CLOUD.on ? ', online, for everybody' : '') + '?\n\nThe class and its subjects stay. A backup file will be downloaded first so you can restore it if this was a mistake.', { ok: 'Download backup and continue', danger: true })) return;
+      backup();
+      const typed = await askText('To confirm, type the name of the class (' + c.name + '):', '');
+      if (typed === null || typed === undefined) return;
+      if (String(typed).trim().toLowerCase() !== c.name.trim().toLowerCase()) { await say('The name did not match, so nothing was removed.'); return; }
+      k.forEach(x => { delete y.marks[x.id]; delete y.comments[x.id]; }); y.students = y.students.filter(x => x.classId !== c.id);
+      if (DB.settings.order) delete DB.settings.order[c.id];
+      ui.arr = null; save(); render(); await say('All learners of ' + c.name + ' were removed. You can add new ones with “Add these learners”.'); break; }
     case 'delStudent': {
       const s = y.students.find(s => s.id === id);
       if (!await ask('Remove ' + s.name + ' and all their marks for ' + DB.current.year + '?')) return;
@@ -1751,7 +1947,7 @@ function entriesFromText(text) {
   const cls = curClass(), studs = studentsOf(cls.id), subs = visSubjects(cls), notes = [], bad = [], entries = [];
   const byName = new Map(studs.map(st => [nn(st.name), st]));
   const q = (ui.q.marks || '').trim().toLowerCase();
-  const order = (ui.mkSort === 'namez' ? studs.slice().reverse() : studs).filter(st => !q || (st.name + ' ' + (st.idno || '')).toLowerCase().includes(q));
+  const order = orderStudents(studs, ui.mkSort, cls.id).filter(st => !q || (st.name + ' ' + (st.idno || '')).toLowerCase().includes(q));
   const rows = parseGrid(text), first = rows[0] || [];
   const matched = first.map(h => { const x = nn(h); return x.length < 2 ? -1 : subs.findIndex(sj => nn(sj.name) === x || (x.length >= 3 && nn(sj.name).startsWith(x))); });
   if (rows.length > 1 && matched.some(i => i >= 0) && !first.some(isMarkText)) {
@@ -1853,6 +2049,18 @@ function markChange(el) {
   }
   save(); updateRow(st);
 }
+
+/* sideways scroll buttons for wide tables (for desktops without a touchpad) */
+function addScrollers() {
+  document.querySelectorAll('#view .tablewrap, #view .proc, #view .cards.yr').forEach(el => {
+    const prev = el.previousElementSibling;
+    if (!(prev && prev.classList.contains('hscroll'))) { const d = document.createElement('div'); d.className = 'hscroll noprint'; d.innerHTML = '<button type="button" class="ghost" data-hs="-1" title="Scroll left" aria-label="Scroll left">◀</button><button type="button" class="ghost" data-hs="1" title="Scroll right" aria-label="Scroll right">▶</button><span>Table is wider than the screen: use these buttons or the blue bar below it.</span>'; el.parentNode.insertBefore(d, el); }
+  });
+  updScrollers();
+}
+function updScrollers() { document.querySelectorAll('#view .hscroll').forEach(h => { const t = h.nextElementSibling; h.hidden = !(t && t.scrollWidth > t.clientWidth + 4); }); }
+window.addEventListener('resize', updScrollers);
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-hs]'); if (!b) return; const t = b.parentNode.nextElementSibling; if (t) t.scrollBy({ left: (+b.dataset.hs) * Math.max(120, t.clientWidth * 0.8), behavior: 'smooth' }); });
 function applyLiveFilter() {
   const q = (ui.q[ui.tab] || '').trim().toLowerCase();
   const els = document.querySelectorAll('#view [data-name]');
