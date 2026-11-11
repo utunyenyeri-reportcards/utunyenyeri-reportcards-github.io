@@ -450,7 +450,7 @@ const PARTS = ['cat', 'mid', 'exam'];
 const PART_LABEL = { cat: 'CAT', mid: 'Midterm', exam: 'End-of-term exam', term: 'Full term', year: 'Whole year' };
 
 function num(v) {
-  if (v === '' || v === null || v === undefined) return null;
+  if (v === '' || v === null || v === undefined || (typeof v === 'string' && v.trim() === '')) return null;
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
 }
@@ -490,30 +490,43 @@ function termSubject(m, subj, term, scope) {
     const v = num(t[p]);
     if (v !== null) { score += v; max += Number(sm[p]) || 0; n++; }
   }
+  if (!parts.length) return { score: null, max: 0, pct: null, has: false, complete: true };
   if (!n || max <= 0) return { score: null, max: 0, pct: null, has: false, complete: false };
-  return { score, max, pct: score / max * 100, has: true, complete: n === parts.length };
+  const complete = n === parts.length;
+  // A full-term percentage is not a final average until every applicable assessment is entered.
+  return { score, max, pct: complete ? score / max * 100 : null, has: true, complete };
 }
-// One subject for any scope. Year scope: marks gained and maximum marks are ADDED over the terms that have marks,
-// and the percentage is gained / maximum, so the annual % always agrees with the annual marks shown.
+// Annual marks and maxima are accumulated across applicable terms. The annual percentage stays blank
+// until every applicable assessment in every applicable term has been entered.
 function subjectResult(m, subj, scope, term) {
   if (scope !== 'year') return termSubject(m, subj, term, scope);
   const terms = [1, 2, 3].map(t => termSubject(m, subj, t, 'term'));
+  const active = terms.filter((x, i) => PARTS.some(p => Number(smax(subj, i + 1)[p]) > 0));
   const have = terms.filter(x => x.has);
-  if (!have.length) return { score: null, max: 0, pct: null, has: false, complete: false, terms };
+  const complete = active.length > 0 && active.every(x => x.has && x.complete);
+  if (!have.length) return { score: null, max: 0, pct: null, has: false, complete: active.length === 0, terms };
   const score = have.reduce((a, x) => a + x.score, 0), max = have.reduce((a, x) => a + x.max, 0);
-  return { score, max, pct: score / max * 100, has: true, complete: have.length === 3 && have.every(x => x.complete), terms };
+  return { score, max, pct: complete && max > 0 ? score / max * 100 : null, has: true, complete, terms };
 }
 function studentSummary(ms, subjects, scope, term, settings) {
   const rows = subjects.map(s => Object.assign({ subj: s }, subjectResult(ms && ms[s.id], s, scope, term)));
   const have = rows.filter(r => r.has);
   const total = have.reduce((a, r) => a + r.score, 0);
   const totalMax = have.reduce((a, r) => a + r.max, 0);
-  const avg = totalMax > 0 ? total / totalMax * 100 : null;
-  const passed = have.filter(r => r.pct + 1e-9 >= settings.passPct).length;
+  const applicable = rows.filter(r => {
+    if (scope === 'year') return [1, 2, 3].some(t => PARTS.some(p => Number(smax(r.subj, t)[p]) > 0));
+    if (scope === 'term') return PARTS.some(p => Number(smax(r.subj, term)[p]) > 0);
+    return Number(smax(r.subj, term)[scope]) > 0;
+  });
+  const complete = applicable.length > 0 && applicable.every(r => r.has && r.complete);
+  // Never present a partial full-term or annual calculation as the learner's final average.
+  const avg = complete && totalMax > 0 ? total / totalMax * 100 : null;
+  const completedRows = have.filter(r => r.complete && r.pct !== null);
+  const passed = completedRows.filter(r => r.pct + 1e-9 >= settings.passPct).length;
   return {
     rows, total, totalMax, avg, counted: have.length, passed,
-    success: have.length ? passed / have.length * 100 : null,
-    complete: have.length === subjects.length && subjects.length > 0 && have.every(r => r.complete),
+    success: complete && completedRows.length ? passed / completedRows.length * 100 : null,
+    complete,
     grade: avg === null ? null : gradeFor(avg, settings.bands)
   };
 }
@@ -533,7 +546,7 @@ function classResults(students, marks, subjects, scope, term, settings) {
     mean: ranked.length ? ranked.reduce((a, x) => a + x.sum.avg, 0) / ranked.length : null
   };
   const subjStats = subjects.map((s, i) => {
-    const vals = list.map(x => x.sum.rows[i]).filter(r => r.has);
+    const vals = list.map(x => x.sum.rows[i]).filter(r => r.has && r.complete && r.pct !== null);
     const p = vals.filter(r => r.pct + 1e-9 >= settings.passPct).length;
     return { subj: s, n: vals.length, mean: vals.length ? vals.reduce((a, r) => a + r.pct, 0) / vals.length : null,
              passRate: vals.length ? p / vals.length * 100 : null };
@@ -734,7 +747,7 @@ function resultsModel() {
   const grand = r1(cr.list.reduce((a, x) => a + (x.sum.avg === null ? 0 : x.sum.total), 0));
   return {
     cls, scope, term, cr, st, period, avgLabel,
-    note: st.incomplete ? '* Incomplete: marks are missing for ' + st.incomplete + ' learner' + (st.incomplete === 1 ? '' : 's') + ', so their averages only count the marks entered. Positions are shown once every learner’s marks are complete.' : '',
+    note: st.incomplete ? '* Incomplete: marks are missing for ' + st.incomplete + ' learner' + (st.incomplete === 1 ? '' : 's') + '. Final averages, pass/fail and success-rate figures are shown only after all applicable marks are entered. Positions are shown once every learner’s marks are complete.' : '',
     left: [sc.name.toUpperCase(), (sc.address || '').toUpperCase(), sc.phone || ''],
     right: ['School Year: ' + DB.current.year, period, 'Class: ' + cls.name, 'Avg ' + avgLabel + ': ' + ff(st.mean) + (st.mean === null ? '' : '%')],
     subjects: subs.map(s => s.name.toUpperCase()), maxima: subs.map(s => r1(maxOf(s))), maxTotal: r1(subs.reduce((a, s) => a + maxOf(s), 0)),
@@ -768,7 +781,7 @@ function viewResults() {
    ${m.note ? `<div class="logoprompt">⚠ ${esc(m.note)}</div>` : ''}
    <div class="bars"><h3>Average by subject <small>the line marks the ${pass}% pass mark</small></h3>${bars}</div>
    ${incomplete ? '<p class="muted">* A star on screen means some marks for that subject are not entered yet, so the figure only counts the marks that exist (stars do not print).</p>' : ''}
-   <p class="muted">Ranking: learners whose averages are exactly equal share a position (the comparison uses the real average, not the rounded figure). Positions are shown only when every learner’s marks are complete. Subject success rates include only learners with marks entered for that subject; the Total success rate includes only learners with an overall average. Both use the ${pass}% pass mark. The sheet below is what prints. “Find” only narrows what you see on screen; the printed list always shows the whole class (Sort does change the printed order).</p></div>
+   <p class="muted">Ranking: learners whose averages are exactly equal share a position (the comparison uses the real average, not the rounded figure). Positions are shown only when every learner’s marks are complete. Subject success rates include learners with marks entered for that subject; while marks are incomplete, these figures are provisional. The Total success rate also remains provisional until every learner has a complete average. Both use the ${pass}% pass mark. The sheet below is what prints. “Find” only narrows what you see on screen; the printed list always shows the whole class (Sort does change the printed order).</p></div>
   <div class="proc" style="${procVars}"><div class="hdr"><div>${m.left.map(esc).join('<br>')}</div>
    <div class="r">${m.right.map(esc).join('<br>')}</div></div>
    <table><colgroup><col class="c-rank"><col class="c-name">${m.subjects.map(() => '<col>').join('')}<col class="c-tot"><col class="c-avg"></colgroup><thead><tr><th colspan="2" class="nm" style="vertical-align:bottom">Subjects</th>${m.subjects.map(s => `<th class="rot"><span>${esc(s)}</span></th>`).join('')}<th class="rot"><span>Total</span></th><th class="rot"><span>Avg</span></th></tr>
