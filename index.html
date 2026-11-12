@@ -314,6 +314,15 @@ input.mk:focus{background:#fffbe6}
 }
 /* online login + users */
 body.locked{overflow:hidden}
+
+/* Subtle animated stars on the sign-in screen */
+.auth-ov{isolation:isolate}
+.auth-stars{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.auth-stars span{position:absolute;left:var(--sx);top:var(--sy);font-size:var(--ss);color:#fff4a8;opacity:.5;text-shadow:0 0 9px rgba(255,230,120,.85);animation:star-drift 9s ease-in-out infinite alternate;animation-delay:var(--sd)}
+.auth-card{position:relative;z-index:1;animation:auth-card-in .65s cubic-bezier(.2,.8,.2,1) both}
+@keyframes star-drift{0%{transform:translate3d(-10px,18px,0) rotate(0deg);opacity:.18}50%{opacity:.8}100%{transform:translate3d(18px,-22px,0) rotate(90deg);opacity:.35}}
+@keyframes auth-card-in{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(prefers-reduced-motion:reduce){.auth-stars span,.auth-card{animation:none!important}}
 .auth-ov{position:fixed;inset:0;z-index:3000;display:grid;place-items:center;padding:16px;overflow:auto;background:radial-gradient(900px 420px at 90% -5%,#1b6fc2 0,transparent 60%),radial-gradient(700px 380px at -5% 100%,#16a06a55 0,transparent 55%),#0f2747;font-family:"Nunito","Segoe UI",system-ui,sans-serif}
 .auth-card{background:#fff;border-radius:22px;width:min(440px,100%);padding:0 26px 24px;box-shadow:0 24px 70px rgba(0,0,0,.45);color:#16233b;overflow:hidden}
 .auth-ribbon{height:8px;margin:0 -26px 18px;background:linear-gradient(90deg,#00a1de 0 34%,#fad201 34% 67%,#1f7a4d 67% 100%)}
@@ -336,6 +345,14 @@ label.chk{display:inline-flex;gap:6px;align-items:center;font-weight:600;font-si
 nav#tabs button[data-tab="users"]{--c:#00a1de}
 .subp{border-left:4px solid #16a06a}.subl{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}.subchip{padding:3px 10px;border-radius:99px;background:#eef1f5;color:#445;font-size:.85rem}.subchip.ok{background:#dff5e8;color:#0b6b3f;font-weight:600}
 @media print{#auth,#acct{display:none!important}}
+
+
+/* Administrator drag-and-drop ordering */
+.drag-sort-item{transition:background-color .16s ease,box-shadow .16s ease,transform .16s ease}
+.drag-sort-item[draggable="true"]{cursor:grab}
+.drag-sort-item.dragging{opacity:.48;background:#e4f0ff;box-shadow:0 5px 18px rgba(20,80,140,.18)}
+.drag-grip{display:inline-flex;align-items:center;justify-content:center;min-width:26px;min-height:28px;margin-right:5px;border-radius:7px;color:#54708f;background:#edf3fa;font-size:20px;cursor:grab;user-select:none}
+.drag-grip:hover{background:#dcecff;color:#1478cf}
 
 /* print: no browser header/footer (page margin 0 top and bottom, the same space is kept inside the page); only our date and time */
 #printStamp{display:none}
@@ -1062,7 +1079,12 @@ function viewCards() {
 
 function viewClasses() {
   const y = Y(), cls = curClass(), term = DB.current.term;
-  const chips = y.classes.map(c => `<div class="row" style="margin:0 0 6px"><b style="min-width:120px">${esc(c.name)}</b><span class="muted">${y.students.filter(s => s.classId === c.id).length} learners</span><button class="small ghost" data-act="renameClass" data-id="${c.id}">Rename</button><button class="small danger" data-act="delClass" data-id="${c.id}">Delete</button></div>`).join('') || '<p class="muted">No classes yet. Add your first one below, for example P1 A, P1 B, P2 A.</p>';
+  const classOrder = (DB.settings.classOrder || {})[DB.current.year] || [];
+  const orderedClasses = y.classes.slice().sort((a, b) => {
+    const ai = classOrder.indexOf(a.id), bi = classOrder.indexOf(b.id);
+    return (ai < 0 ? 1e9 : ai) - (bi < 0 ? 1e9 : bi) || y.classes.indexOf(a) - y.classes.indexOf(b);
+  });
+  const chips = orderedClasses.map(c => `<div class="row drag-sort-item" draggable="true" data-sort-kind="classes" data-sort-id="${c.id}" style="margin:0 0 6px"><span class="drag-grip" title="Drag to reorder" aria-label="Drag to reorder">⠿</span><b style="min-width:120px">${esc(c.name)}</b><span class="muted">${y.students.filter(s => s.classId === c.id).length} learners</span><button class="small ghost" data-act="renameClass" data-id="${c.id}">Rename</button><button class="small danger" data-act="delClass" data-id="${c.id}">Delete</button></div>`).join('') || '<p class="muted">No classes yet. Add your first one below, for example P1 A, P1 B, P2 A.</p>';
   let out = `<div class="panel"><h2>Classes for ${esc(DB.current.year)}</h2>${chips}
    <div class="row"><input id="newClass" placeholder="New class name, e.g. P1 A"><select id="newLevel"><option value="auto">Subjects: choose by class number (P1–P3 lower, P4–P6 upper)</option><option value="lower">${esc(TEMPLATES.lower.label)}</option><option value="upper">${esc(TEMPLATES.upper.label)}</option><option value="blank">Empty (I will add the subjects myself)</option></select><button data-act="addClass">Add class</button></div>
    <div class="muted">Classes belong to the academic year, so you can change them every year without touching past years. A new class starts with the school's standard subjects and maximum marks, which you can change below.</div></div>`;
@@ -1083,8 +1105,8 @@ function viewClasses() {
   const studs = orderStudents(studentsOf(cls.id), 'custom', cls.id);
   out += arrangePanel(cls) + `<div class="panel"><h2>Learners of ${esc(cls.name)} (${studs.length})</h2>
    <div class="row"><textarea id="bulkNames" rows="4" style="min-width:300px" placeholder="Paste or type names, one per line"></textarea><button data-act="addLearners">Add these learners</button></div>
-   ${studs.length ? `<div class="row"><button class="ghost" data-act="arrOpen">↕ Arrange order…</button><button class="small danger" data-act="delAllStudents">Remove ALL learners from this class</button><span class="muted">The list below shows the custom order (A–Z until you arrange it).</span></div>` : ''}
-   <div class="tablewrap"><table><thead><tr><th>#</th><th class="l">Name</th><th>ID no. (optional)</th><th>Date of birth</th><th>Place of birth</th><th>Class</th><th></th></tr></thead><tbody>${studs.map((s, i) => `<tr><td>${i + 1}</td><td class="l"><input data-f="stname" data-id="${s.id}" value="${esc(s.name)}" style="width:100%"></td><td><input data-f="stid" data-id="${s.id}" value="${esc(s.idno || '')}"></td><td><input type="date" data-f="stdob" data-id="${s.id}" value="${esc(s.dob || '')}"></td><td><input data-f="stpob" data-id="${s.id}" value="${esc(s.pob || '')}"></td><td><select data-f="stclass" data-id="${s.id}">${y.classes.map(c => `<option value="${c.id}" ${c.id === s.classId ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></td><td><button class="small danger" data-act="delStudent" data-id="${s.id}">Remove</button></td></tr>`).join('')}</tbody></table></div></div>`;
+   ${studs.length ? `<div class="row"><button class="ghost" data-act="arrOpen">↕ Arrange order…</button><button class="small danger" data-act="delAllStudents">Remove ALL learners from this class</button><span class="muted">Drag the ⠿ handle beside a class or learner to place it exactly where you want. Your order is saved automatically.</span></div>` : ''}
+   <div class="tablewrap"><table><thead><tr><th>#</th><th class="l">Name</th><th>ID no. (optional)</th><th>Date of birth</th><th>Place of birth</th><th>Class</th><th></th></tr></thead><tbody>${studs.map((s, i) => `<tr class="drag-sort-item" draggable="true" data-sort-kind="learners" data-sort-id="${s.id}"><td><span class="drag-grip" title="Drag to reorder" aria-label="Drag to reorder">⠿</span> ${i + 1}</td><td class="l"><input data-f="stname" data-id="${s.id}" value="${esc(s.name)}" style="width:100%"></td><td><input data-f="stid" data-id="${s.id}" value="${esc(s.idno || '')}"></td><td><input type="date" data-f="stdob" data-id="${s.id}" value="${esc(s.dob || '')}"></td><td><input data-f="stpob" data-id="${s.id}" value="${esc(s.pob || '')}"></td><td><select data-f="stclass" data-id="${s.id}">${y.classes.map(c => `<option value="${c.id}" ${c.id === s.classId ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></td><td><button class="small danger" data-act="delStudent" data-id="${s.id}">Remove</button></td></tr>`).join('')}</tbody></table></div></div>`;
   return out;
 }
 
@@ -1827,6 +1849,51 @@ async function exportResults(kind) {
 
 function backup() { DB.lastBackup = new Date().toISOString(); save(); download('report-card-backup-' + stamp() + '.json', JSON.stringify(DB, null, 1), 'application/json'); renderBanner(); if (ui.tab === 'settings') render(); }
 
+
+// Manual drag-and-drop ordering for administrator class and learner lists.
+let activeSortItem = null;
+document.addEventListener('dragstart', e => {
+  const item = e.target.closest && e.target.closest('[data-sort-kind][data-sort-id]');
+  if (!item || !isAdmin()) { e.preventDefault(); return; }
+  activeSortItem = item;
+  item.classList.add('dragging');
+  if (e.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', item.dataset.sortId); }
+});
+document.addEventListener('dragover', e => {
+  if (!activeSortItem) return;
+  const target = e.target.closest && e.target.closest('[data-sort-kind][data-sort-id]');
+  if (!target || target === activeSortItem || target.dataset.sortKind !== activeSortItem.dataset.sortKind) return;
+  e.preventDefault();
+  const r = target.getBoundingClientRect();
+  const after = activeSortItem.dataset.sortKind === 'learners'
+    ? e.clientY > r.top + r.height / 2 : e.clientY > r.top + r.height / 2;
+  target.parentNode.insertBefore(activeSortItem, after ? target.nextSibling : target);
+});
+document.addEventListener('drop', e => {
+  if (!activeSortItem) return;
+  e.preventDefault();
+  const kind = activeSortItem.dataset.sortKind, id = activeSortItem.dataset.sortId;
+  if (kind === 'classes') {
+    const ids = Array.from(activeSortItem.parentNode.querySelectorAll('[data-sort-kind="classes"]')).map(x => x.dataset.sortId);
+    DB.settings.classOrder = DB.settings.classOrder || {};
+    DB.settings.classOrder[DB.current.year] = ids;
+  } else {
+    const cls = curClass();
+    if (cls) {
+      const ids = Array.from(activeSortItem.parentNode.querySelectorAll('[data-sort-kind="learners"]')).map(x => x.dataset.sortId);
+      DB.settings.order = DB.settings.order || {};
+      DB.settings.order[cls.id] = ids;
+      ui.mkSort = 'custom'; ui.rcSort = 'custom';
+    }
+  }
+  activeSortItem.classList.remove('dragging'); activeSortItem = null;
+  save(); render();
+});
+document.addEventListener('dragend', () => {
+  if (activeSortItem) activeSortItem.classList.remove('dragging');
+  activeSortItem = null;
+});
+
 document.addEventListener('click', async e => {
   const t = e.target.closest('[data-tab]');
   if (t) { e.preventDefault(); ui.tab = t.dataset.tab; render(); return; }
@@ -2454,7 +2521,7 @@ function authShow(mode, msg, bad) {
   else if (mode === 'pending') body = head('Waiting for approval', 'Your account is created. The administrator must approve it before you can see any class. Please ask the administrator, then press “Check again”.') + note + `<div class="auth-row"><button data-auth="again">Check again</button><button class="ghost" data-auth="signout">Sign out</button></div>`;
   else if (mode === 'error') body = head('Something went wrong') + note + `<div class="auth-row"><button data-auth="again">Try again</button><button class="ghost" data-auth="signout">Sign out</button></div>`;
   else body = head('One moment…') + `<p class="muted">${e(msg || 'Loading…')}</p>`;
-  el.innerHTML = `<div class="auth-card">${body}</div>`;
+  el.innerHTML = `<div class="auth-stars" aria-hidden="true">${Array.from({length:24}, (_, i) => `<span style="--sx:${(i*37)%100}%;--sy:${(i*61)%100}%;--sd:${(i%7)*-.8}s;--ss:${6+(i%4)*3}px">✦</span>`).join('')}</div><div class="auth-card">${body}</div>`;
   const f = el.querySelector('input'); if (f) setTimeout(() => { const ac = document.activeElement; if (!ac || ac === document.body || !el.contains(ac)) f.focus(); }, 30);
 }
 function authHide() { const el = $('auth'); if (el) el.remove(); document.body.classList.remove('locked'); }
