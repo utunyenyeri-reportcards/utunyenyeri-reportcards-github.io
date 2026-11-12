@@ -709,12 +709,12 @@ function viewMarks() {
   studs.forEach((st, r) => {
     body += `<tr data-row="${st.id}" data-name="${esc((st.name + ' ' + (st.idno || '')).toLowerCase())}"><td>${r + 1}</td><td class="l">${esc(st.name)}</td>` + vs.map((s, c) => {
       const v = (((Y().marks[st.id] || {})[s.id] || {})[term] || {})[part];
-      return `<td><input class="mk" inputmode="decimal" data-r="${r}" data-c="${c}" data-st="${st.id}" data-sj="${s.id}" ${+smax(s, term)[part] <= 0 ? 'disabled title="Not used for this subject (maximum is 0)"' : !canWrite(cls.id, s.id) ? 'disabled title="You are not assigned to this subject"' : subLocked(cls.id, s.id, term) ? 'disabled title="Submitted – locked. Ask the administrator for permission to change it."' : ''} value="${v === undefined || v === null ? '' : esc(v)}"></td>`;
+      return `<td><input class="mk" inputmode="decimal" data-r="${r}" data-c="${c}" data-st="${st.id}" data-sj="${s.id}" ${+smax(s, term)[part] <= 0 ? 'disabled title="Not used for this subject (maximum is 0)"' : !canWrite(cls.id, s.id) ? 'disabled title="You are not assigned to this subject"' : subLocked(cls.id, s.id, term, part) ? 'disabled title="' + PART_LABEL[part] + ' submitted – locked. Ask the administrator for permission to change it."' : ''} value="${v === undefined || v === null ? '' : esc(v)}"></td>`;
     }).join('') + `<td id="tot-${st.id}"></td><td id="pct-${st.id}"></td></tr>`;
   });
   setTimeout(() => studs.forEach(st => updateRow(st.id)), 0);
   const mine = CLOUD.on && !isAdmin() ? `<p class="muted"><b>Your subjects in ${esc(cls.name)}:</b> ${vs.map(s => esc(s.name)).join(', ')}. Other subjects of this class are not shown to you.</p>` : '';
-  return submitPanel(cls, vs, term, studs) + arrangePanel(cls) + `<div class="panel"><h2>Enter marks – ${esc(cls.name)}, Term ${term}, ${esc(DB.current.year)}</h2>${mine}
+  return submitPanel(cls, vs, term, studs, part) + arrangePanel(cls) + `<div class="panel"><h2>Enter marks – ${esc(cls.name)}, Term ${term}, ${esc(DB.current.year)}</h2>${mine}
   <div class="row"><label>Assessment you are entering&nbsp;<select id="selPart" data-f="part">${opt('mid')}${opt('cat')}${opt('exam')}</select></label>
   <label>Sort by<select data-f="mkSort">${optList(ui.mkSort, SORT_OPTS)}</select></label><button class="ghost" data-act="arrOpen" title="Put the learners in the order you want">↕ Arrange order…</button>${findBox()}
   <button class="ghost" data-act="pasteMarks">Paste marks from spreadsheet</button>
@@ -723,28 +723,36 @@ function viewMarks() {
   <div class="tablewrap"><table class="mktab"><thead><tr><th>#</th><th class="l">Learner</th>${subjHeaderCells(vs, part, term)}<th>Total</th><th>%</th></tr></thead><tbody>${body}</tbody></table></div></div>`;
 }
 /* ---------- submitting marks (teacher) ---------- */
-function missingMarks(cls, subjects, studs, term) {
+function missingMarks(subjects, studs, term, part) {
   let n = 0;
-  subjects.forEach(s => { const mx = smax(s, term); studs.forEach(st => PARTS.forEach(pt => { if (+mx[pt] > 0) { const v = (((Y().marks[st.id] || {})[s.id] || {})[term] || {})[pt]; if (v === undefined || v === null) n++; } })); });
+  subjects.forEach(s => { studs.forEach(st => { const v = (((Y().marks[st.id] || {})[s.id] || {})[term] || {})[part]; if (v === undefined || v === null) n++; }); });
   return n;
 }
-function submitPanel(cls, vs, term, studs) {
+const usedIn = (s, term, part) => +smax(s, term)[part] > 0;
+function submitPanel(cls, vs, term, studs, part) {
   if (!CLOUD.on || isAdmin() || !CLOUD.subsOk) return '';
-  const done = vs.filter(s => subFind(cls.id, s.id, term)), pend = vs.filter(s => !subFind(cls.id, s.id, term));
+  const PL = PART_LABEL[part], sh = { cat: 'CAT', mid: 'Midterm', exam: 'Exam' };
   const when = x => x && x.submitted_at ? new Date(x.submitted_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '';
-  const chips = vs.map(s => { const x = subFind(cls.id, s.id, term); return x ? `<span class="subchip ok">✔ ${esc(s.name)} – submitted ${esc(when(x))}</span>` : `<span class="subchip">${esc(s.name)} – not submitted yet</span>`; }).join('');
-  const lockNote = done.length ? `<p class="muted">🔒 Submitted subjects are locked. To change them, ask the administrator for permission (the administrator can unlock them).</p>` : '';
-  const btn = pend.length ? `<div class="row"><button data-act="submitMarks">✔ Submit Term ${term} marks${pend.length < vs.length ? ' (' + pend.length + ' remaining subject' + (pend.length === 1 ? '' : 's') + ')' : ''}</button><span class="muted">Press Submit when your marks are complete and correct. After you submit, you cannot enter or change them again unless the administrator gives you permission.</span></div>` : `<p><b>✔ All your Term ${term} marks for ${esc(cls.name)} are submitted.</b></p>`;
-  return `<div class="panel subp"><h3 style="margin-top:0">Submit your marks – ${esc(cls.name)}, Term ${term}</h3><div class="subl">${chips}</div>${btn}${lockNote}</div>`;
+  const act = vs.filter(s => usedIn(s, term, part)), pend = act.filter(s => !subFind(cls.id, s.id, term, part));
+  const chips = vs.map(s => {
+    const x = subFind(cls.id, s.id, term, part), others = PARTS.map(k => sh[k] + ' ' + (subFind(cls.id, s.id, term, k) ? '✔' : '–')).join(' · ');
+    return `<span class="subchip${x ? ' ok' : ''}" title="${x ? esc(PL + ' submitted ' + when(x)) : ''}">${x ? '✔ ' : ''}${esc(s.name)}: ${esc(others)}</span>`; }).join('');
+  const anyLocked = act.some(s => subFind(cls.id, s.id, term, part));
+  const lockNote = anyLocked ? `<p class="muted">🔒 Submitted marks are locked. To change them, ask the administrator for permission (the administrator can unlock them).</p>` : '';
+  const btn = !act.length ? `<p class="muted">${esc(PL)} is not used for your subjects in Term ${term}.</p>`
+    : pend.length ? `<div class="row"><button data-act="submitMarks">✔ Submit the ${esc(PL)} for Term ${term}${pend.length < act.length ? ' (' + pend.length + ' remaining subject' + (pend.length === 1 ? '' : 's') + ')' : ''}</button><span class="muted">Choose the assessment below (CAT, Midterm or Exam) and press Submit when its marks are complete and correct. After you submit, you cannot enter or change them again unless the administrator gives you permission.</span></div>`
+    : `<p><b>✔ Your ${esc(PL)} marks for ${esc(cls.name)}, Term ${term} are submitted.</b> <span class="muted">Choose another assessment below to submit it.</span></p>`;
+  return `<div class="panel subp"><h3 style="margin-top:0">Submit your marks – ${esc(cls.name)}, Term ${term} · ${esc(PL)}</h3><div class="subl">${chips}</div>${btn}${lockNote}</div>`;
 }
 async function submitMarks() {
   const cls = curClass(); if (!cls || !CLOUD.on || isAdmin()) return;
-  const term = DB.current.term, pend = visSubjects(cls).filter(s => !subFind(cls.id, s.id, term)); if (!pend.length) return;
-  const miss = missingMarks(cls, pend, studentsOf(cls.id), term);
+  const term = DB.current.term, part = ui.part, PL = PART_LABEL[part];
+  const pend = visSubjects(cls).filter(s => usedIn(s, term, part) && !subFind(cls.id, s.id, term, part)); if (!pend.length) return;
+  const miss = missingMarks(pend, studentsOf(cls.id), term, part);
   const names = pend.map(s => s.name).join(', ');
-  let msg = 'Submit your marks for ' + cls.name + ', Term ' + term + '?\n\nSubjects: ' + names + '.';
-  if (miss) msg += '\n\n⚠ ' + miss + ' mark' + (miss === 1 ? ' is' : 's are') + ' still empty. If you submit now, you will not be able to fill ' + (miss === 1 ? 'it' : 'them') + ' in later.';
-  msg += '\n\nAfter submitting, you cannot enter or change these marks unless the administrator gives you permission.';
+  let msg = 'Submit the ' + PL + ' for ' + cls.name + ', Term ' + term + '?\n\nSubjects: ' + names + '.';
+  if (miss) msg += '\n\n⚠ ' + miss + ' ' + PL + ' mark' + (miss === 1 ? ' is' : 's are') + ' still empty. If you submit now, you will not be able to fill ' + (miss === 1 ? 'it' : 'them') + ' in later.';
+  msg += '\n\nAfter submitting, you cannot enter or change these ' + PL + ' marks unless the administrator gives you permission. Your other assessments stay open.';
   if (!await ask(msg, { ok: 'Yes, submit', cancel: 'Not yet', danger: false })) return;
   clearTimeout(CLOUD.timer);
   for (let i = 0; i < 100 && CLOUD.busy; i++) await new Promise(r => setTimeout(r, 100));
@@ -752,20 +760,20 @@ async function submitMarks() {
   if (CLOUD.dirty || CLOUD.err) { await say('Your latest marks are not saved online yet, so they cannot be submitted. Wait until the top bar says “Saved”, then press Submit again.'); return; }
   let fail = null;
   for (const s of pend) {
-    const r = await CLOUD.sb.from('submissions').insert({ class_id: cls.id, subject_id: s.id, term, submitted_by: CLOUD.user.id });
+    const r = await CLOUD.sb.from('submissions').insert({ class_id: cls.id, subject_id: s.id, term, part, submitted_by: CLOUD.user.id });
     if (r.error && r.error.code !== '23505') { fail = r.error; break; }
   }
   await cloudReload(true);
   if (fail) { await say('Your marks could not be submitted: ' + friendly(fail)); return; }
-  const ok = pend.every(s => subFind(cls.id, s.id, term));
-  await say(ok ? '✔ Submitted. Your marks for ' + cls.name + ', Term ' + term + ' (' + names + ') were received and are now locked. The administrator can see that you submitted them.' : 'The submission could not be confirmed. Please press “Refresh” or reload the page and check the status.');
+  const ok = pend.every(s => subFind(cls.id, s.id, term, part));
+  await say(ok ? '✔ Submitted. Your ' + PL + ' marks for ' + cls.name + ', Term ' + term + ' (' + names + ') were received and are now locked. The administrator can see that you submitted them.' : 'The submission could not be confirmed. Please reload the page and check the status.');
 }
-async function unlockSub(cid, sid, term) {
-  const cls = Y().classes.find(c => c.id === cid), s = cls && cls.subjects.find(x => x.id === sid), x = subFind(cid, sid, term);
+async function unlockSub(cid, sid, term, part) {
+  const cls = Y().classes.find(c => c.id === cid), s = cls && cls.subjects.find(x => x.id === sid), x = subFind(cid, sid, term, part);
   if (!cls || !s || !x) return;
   const p = CLOUD.profiles.find(q => q.id === x.submitted_by), who = p ? (p.full_name || p.email) : 'the teacher';
-  if (!await ask('Give ' + who + ' permission to change ' + s.name + ' marks of ' + cls.name + ', Term ' + term + ' again?\n\nThe marks become editable until the teacher submits again.', { ok: 'Yes, unlock', cancel: 'Cancel', danger: false })) return;
-  const r = await CLOUD.sb.from('submissions').delete().eq('class_id', cid).eq('subject_id', sid).eq('term', term).select();
+  if (!await ask('Give ' + who + ' permission to change the ' + PART_LABEL[part] + ' marks of ' + s.name + ' in ' + cls.name + ', Term ' + term + ' again?\n\nThese marks become editable until the teacher submits them again.', { ok: 'Yes, unlock', cancel: 'Cancel', danger: false })) return;
+  const r = await CLOUD.sb.from('submissions').delete().eq('class_id', cid).eq('subject_id', sid).eq('term', term).eq('part', part).select();
   if (r.error) { await say('Could not unlock: ' + friendly(r.error)); return; }
   if (!r.data || !r.data.length) { await say('Nothing was unlocked. Please refresh and try again.'); return; }
   await cloudReload(true); render();
@@ -2001,7 +2009,7 @@ function buildPlan(entries) {
     if (raw === '') return;
     const label = e.st.name + ' – ' + e.sj.name, mx = +smax(e.sj, term)[part] || 0, t = raw.replace(',', '.');
     if (!canWrite(curClass().id, e.sj.id)) { plan.bad.push(label + ': you are not assigned to this subject'); return; }
-    if (subLocked(curClass().id, e.sj.id, DB.current.term)) { plan.bad.push(label + ': ' + e.sj.name + ' was submitted and is locked'); return; }
+    if (subLocked(curClass().id, e.sj.id, DB.current.term, ui.part)) { plan.bad.push(label + ': ' + e.sj.name + ' ' + PART_LABEL[ui.part] + ' was submitted and is locked'); return; }
     if (!isMarkText(raw)) { plan.bad.push(label + ': “' + raw + '” is not a valid mark'); return; }
     if (mx <= 0) { plan.bad.push(label + ': ' + PART_LABEL[part] + ' is not used for this subject'); return; }
     const v = Number(t);
@@ -2105,7 +2113,7 @@ document.addEventListener('paste', async e => {
 function markChange(el) {
   const cls = curClass(), s = cls.subjects.find(s => s.id === el.dataset.sj), st = el.dataset.st, term = DB.current.term, part = ui.part;
   if (!canWrite(cls.id, s.id)) { say('You are not assigned to ' + s.name + ' in this class.'); render(); return; }
-  if (subLocked(cls.id, s.id, term)) { say(s.name + ' marks for Term ' + term + ' were submitted and are locked. Ask the administrator for permission to change them.'); render(); return; }
+  if (subLocked(cls.id, s.id, term, part)) { say(s.name + ' ' + PART_LABEL[part] + ' marks for Term ' + term + ' were submitted and are locked. Ask the administrator for permission to change them.'); render(); return; }
   const m = Y().marks;
   const old = (((m[st] || {})[s.id] || {})[term] || {})[part];
   const raw = el.value.trim().replace(',', '.');
@@ -2218,8 +2226,8 @@ CLOUD.cfg = cloudCfg(); CLOUD.on = !!(CLOUD.cfg.url && CLOUD.cfg.key); CLOUD.cfg
 const isAdmin = () => !CLOUD.on || !!(CLOUD.profile && CLOUD.profile.role === 'admin');
 const seesAll = cid => isAdmin() || CLOUD.assign.some(a => a.class_id === cid && a.subject_id === '*');
 const visSubjects = cls => !CLOUD.on || isAdmin() ? cls.subjects : cls.subjects.filter(s => canWrite(cls.id, s.id));
-const subFind = (cid, sid, t) => CLOUD.subs.find(x => x.class_id === cid && x.subject_id === sid && +x.term === +t);
-const subLocked = (cid, sid, t) => CLOUD.on && !isAdmin() && !!subFind(cid, sid, t);
+const subFind = (cid, sid, t, part) => CLOUD.subs.find(x => x.class_id === cid && x.subject_id === sid && +x.term === +t && x.part === part);
+const subLocked = (cid, sid, t, part) => CLOUD.on && !isAdmin() && !!subFind(cid, sid, t, part);
 const canWrite = (cid, sid) => isAdmin() || CLOUD.assign.some(a => a.class_id === cid && (a.subject_id === '*' || a.subject_id === sid));
 const uiKey = () => 'rcm_ui_' + (CLOUD.user ? CLOUD.user.id : 'x');
 function friendly(e) {
@@ -2559,10 +2567,10 @@ function subsAdminHtml(y) {
   if (!CLOUD.subsOk) return '<div class="logoprompt">⚠ Submissions are not switched on in the online database yet. Open the Supabase SQL Editor and run the latest <b>supabase-setup.sql</b> once.</div>';
   const when = x => x.submitted_at ? new Date(x.submitted_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '';
   const rows = [];
-  y.classes.forEach(c => c.subjects.forEach(s => [1, 2, 3].forEach(t => { const x = subFind(c.id, s.id, t); if (!x) return; const p = CLOUD.profiles.find(q => q.id === x.submitted_by);
-    rows.push(`<tr><td>${esc(c.name)}</td><td>${esc(s.name)}</td><td>Term ${t}</td><td>${esc(p ? (p.full_name || p.email) : '—')}</td><td>${esc(when(x))}</td><td><button class="small" data-act="unlockSub" data-c="${c.id}" data-s="${s.id}" data-t="${t}">🔓 Unlock</button></td></tr>`); })));
-  return `<h3>Submitted marks</h3><p class="muted">When a teacher presses “Submit”, those marks are locked for the teacher. Press “Unlock” to give the teacher permission to change them again. (Administrators can always edit marks.)</p>` +
-    (rows.length ? `<div class="tablewrap"><table><thead><tr><th>Class</th><th>Subject</th><th>Term</th><th>Submitted by</th><th>When</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table></div>` : '<p class="muted">No marks have been submitted yet in ' + esc(DB.current.year) + '.</p>');
+  y.classes.forEach(c => c.subjects.forEach(s => [1, 2, 3].forEach(t => PARTS.forEach(k => { const x = subFind(c.id, s.id, t, k); if (!x) return; const p = CLOUD.profiles.find(q => q.id === x.submitted_by);
+    rows.push(`<tr><td>${esc(c.name)}</td><td>${esc(s.name)}</td><td>Term ${t}</td><td>${esc(PART_LABEL[k])}</td><td>${esc(p ? (p.full_name || p.email) : '—')}</td><td>${esc(when(x))}</td><td><button class="small" data-act="unlockSub" data-c="${c.id}" data-s="${s.id}" data-t="${t}" data-p="${k}">🔓 Unlock</button></td></tr>`); }))));
+  return `<h3>Submitted marks</h3><p class="muted">When a teacher presses “Submit” for an assessment (CAT, Midterm or Exam), those marks are locked for the teacher; the other assessments stay open. Press “Unlock” to give the teacher permission to change them again. (Administrators can always edit marks.)</p>` +
+    (rows.length ? `<div class="tablewrap"><table><thead><tr><th>Class</th><th>Subject</th><th>Term</th><th>Assessment</th><th>Submitted by</th><th>When</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table></div>` : '<p class="muted">No marks have been submitted yet in ' + esc(DB.current.year) + '.</p>');
 }
 async function uSetProfile(id, patch) {
   const r = await CLOUD.sb.from('profiles').update(patch).eq('id', id);
@@ -2591,7 +2599,7 @@ async function cloudAct(act, b) {
   switch (act) {
     case 'signOut': await cloudSignOut(); return true;
     case 'submitMarks': await submitMarks(); return true;
-    case 'unlockSub': await unlockSub(b.dataset.c, b.dataset.s, +b.dataset.t); return true;
+    case 'unlockSub': await unlockSub(b.dataset.c, b.dataset.s, +b.dataset.t, b.dataset.p); return true;
     case 'changePw': authShow('change'); return true;
     case 'uApprove': await uSetProfile(b.dataset.id, { active: true, role: 'teacher' }); return true;
     case 'uApproveAdmin': if (await ask('An administrator can change everything, including other people’s access. Approve this person as administrator?', { ok: 'Approve as administrator', danger: false })) await uSetProfile(b.dataset.id, { active: true, role: 'admin' }); return true;
