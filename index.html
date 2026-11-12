@@ -433,6 +433,13 @@ input[style*="width"],textarea[style*="min-width"],select[style*="width"]{width:
 #hbar input[type=range]{flex:1;height:28px;margin:0;accent-color:#fad201;cursor:pointer}
 body.hbar-on main{padding-bottom:64px}
 @media print{#hbar{display:none!important}}
+
+/* Assessment status control */
+.mark-cell{display:flex;align-items:center;justify-content:center;gap:2px;min-width:76px}
+.mark-cell input.mk{width:48px;min-width:42px;text-align:center}
+.mark-cell .mk-more{padding:2px 5px;min-width:22px;line-height:1.2;font-size:16px;border:0;background:transparent;color:#64748b;box-shadow:none}
+.mark-cell .mk-more:hover{background:#e8eef7;color:#1d4ed8}
+.mark-cell .mk-status{display:block;font-size:9px;line-height:1.1;font-weight:700;color:#9a3412;white-space:nowrap}
 </style>
 <script id="cloud-config" type="application/json">{"url":"https://jlktazcoqmoboservzxb.supabase.co","key":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impsa3RhemNvcW1vYm9zZXJ2enhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQxODg4NDksImV4cCI6MjEwOTc2NDg0OX0.umWwGm50vMre8Y1mvsvINOUTlQoc4yvOcSHLglepSFA"}</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" async onerror="window.__sbFail=1"></script>
@@ -510,20 +517,26 @@ function smax(subj, term) {
   return o ? Object.assign(base, o) : base;
 }
 // One subject, one term. scope: 'cat' | 'mid' | 'exam' | 'term'
+function assessmentStatus(entry, part) {
+  const v = entry && entry.status && entry.status[part];
+  return v === 'missed' || v === 'transferred' ? v : '';
+}
+function statusLabel(v) { return v === 'missed' ? 'MISSED' : v === 'transferred' ? 'TRANSFERRED' : ''; }
 function termSubject(m, subj, term, scope) {
   const t = (m && m[term]) || {};
   const sm = smax(subj, term);
   const parts = (scope === 'term' ? PARTS : [scope]).filter(p => Number(sm[p]) > 0);
-  let score = 0, max = 0, n = 0;
+  let score = 0, max = 0, resolved = 0, numeric = 0;
   for (const p of parts) {
     const v = num(t[p]);
-    if (v !== null) { score += v; max += Number(sm[p]) || 0; n++; }
+    if (v !== null) { score += v; max += Number(sm[p]) || 0; numeric++; resolved++; }
+    else if (assessmentStatus(t, p)) { resolved++; }
   }
   if (!parts.length) return { score: null, max: 0, pct: null, has: false, complete: true };
-  if (!n || max <= 0) return { score: null, max: 0, pct: null, has: false, complete: false };
-  const complete = n === parts.length;
-  // A full-term percentage is not a final average until every applicable assessment is entered.
-  return { score, max, pct: complete ? score / max * 100 : null, has: true, complete };
+  const complete = resolved === parts.length;
+  const has = resolved > 0;
+  // An explicit absence/transfer is resolved, but is never converted into a zero mark or included in the denominator.
+  return { score: has ? score : null, max, pct: complete && max > 0 ? score / max * 100 : null, has, complete, numeric };
 }
 // Annual marks and maxima are accumulated across applicable terms. The annual percentage stays blank
 // until every applicable assessment in every applicable term has been entered.
@@ -738,8 +751,9 @@ function viewMarks() {
   let body = '';
   studs.forEach((st, r) => {
     body += `<tr data-row="${st.id}" data-name="${esc((st.name + ' ' + (st.idno || '')).toLowerCase())}"><td>${r + 1}</td><td class="l">${esc(st.name)}</td>` + vs.map((s, c) => {
-      const v = (((Y().marks[st.id] || {})[s.id] || {})[term] || {})[part];
-      return `<td><input class="mk" inputmode="decimal" data-r="${r}" data-c="${c}" data-st="${st.id}" data-sj="${s.id}" ${+smax(s, term)[part] <= 0 ? 'disabled title="Not used for this subject (maximum is 0)"' : !canWrite(cls.id, s.id) ? 'disabled title="You are not assigned to this subject"' : subLocked(cls.id, s.id, term, part) ? 'disabled title="' + PART_LABEL[part] + ' submitted – locked. Ask the administrator for permission to change it."' : ''} value="${v === undefined || v === null ? '' : esc(v)}"></td>`;
+      const ent = (((Y().marks[st.id] || {})[s.id] || {})[term] || {}), v = ent[part], status = assessmentStatus(ent, part);
+      const disabled = +smax(s, term)[part] <= 0 ? 'disabled title="Not used for this subject (maximum is 0)"' : !canWrite(cls.id, s.id) ? 'disabled title="You are not assigned to this subject"' : subLocked(cls.id, s.id, term, part) ? 'disabled title="' + PART_LABEL[part] + ' submitted – locked. Ask the administrator for permission to change it."' : '';
+      return `<td><div class="mark-cell"><input class="mk" inputmode="decimal" data-r="${r}" data-c="${c}" data-st="${st.id}" data-sj="${s.id}" ${disabled} value="${v === undefined || v === null ? '' : esc(v)}"><button type="button" class="mk-more" data-act="markStatus" data-st="${st.id}" data-sj="${s.id}" data-part="${part}" title="Set assessment status" aria-label="Set assessment status" ${disabled}>⋯</button></div>${status ? `<small class="mk-status">${statusLabel(status)}</small>` : ''}</td>`;
     }).join('') + `<td id="tot-${st.id}"></td><td id="pct-${st.id}"></td></tr>`;
   });
   setTimeout(() => studs.forEach(st => updateRow(st.id)), 0);
@@ -749,13 +763,13 @@ function viewMarks() {
   <label>Sort by<select data-f="mkSort">${optList(ui.mkSort, SORT_OPTS)}</select></label><button class="ghost" data-act="arrOpen" title="Put the learners in the order you want">↕ Arrange order…</button>${findBox()}
   <button class="ghost" data-act="pasteMarks">Paste marks from spreadsheet</button>
   <button class="b-pdf" data-act="pdfMarks" title="Quotation sheet of the marks shown here">⬇ Marks sheet (PDF)</button><button class="b-xls" data-act="xlsxMarks" title="Quotation sheet of the marks shown here">⬇ Marks sheet (Excel)</button>
-  <span class="muted">Type a mark and press Enter (moves down) or Tab (moves right). Leave blank if the child has no mark yet; type 0 for a real zero. Marks above the maximum are refused. Everything saves automatically. <b>To enter many at once:</b> copy a block of marks in Excel, click the first cell here and press Ctrl+V, or use “Paste marks from spreadsheet”.</span></div>
+  <span class="muted">Type a mark and press Enter (moves down) or Tab (moves right). Leave blank if the child has no mark yet; type 0 for a real zero. Use ⋯ to record “Missed” or “Sent to other school” without entering zero. Marks above the maximum are refused. Everything saves automatically. <b>To enter many at once:</b> copy a block of marks in Excel, click the first cell here and press Ctrl+V, or use “Paste marks from spreadsheet”.</span></div>
   <div class="tablewrap"><table class="mktab"><thead><tr><th>#</th><th class="l">Learner</th>${subjHeaderCells(vs, part, term)}<th>Total</th><th>%</th></tr></thead><tbody>${body}</tbody></table></div></div>`;
 }
 /* ---------- submitting marks (teacher) ---------- */
 function missingMarks(subjects, studs, term, part) {
   let n = 0;
-  subjects.forEach(s => { studs.forEach(st => { const v = (((Y().marks[st.id] || {})[s.id] || {})[term] || {})[part]; if (v === undefined || v === null) n++; }); });
+  subjects.forEach(s => { studs.forEach(st => { const en = (((Y().marks[st.id] || {})[s.id] || {})[term] || {}), v = en[part]; if ((v === undefined || v === null) && !assessmentStatus(en, part)) n++; }); });
   return n;
 }
 const usedIn = (s, term, part) => +smax(s, term)[part] > 0;
@@ -827,6 +841,7 @@ const cT = (t, span) => ({ t: String(t == null ? '' : t), span: span || 1 });
 const cNum = (v, span) => (v === null || v === undefined || v === '' || Number.isNaN(+v)) ? cT('', span) : { t: String(r1(+v)), n: r1(+v), span: span || 1 };
 const cPct = (v, span) => (v === null || v === undefined) ? cT('', span) : { t: ff(v) + '%', n: r1(v), pct: true, span: span || 1 };
 const cMark = (v, mx) => +mx > 0 ? cNum(v) : cT('—');
+const cMarkStatus = (entry, part, mx) => { const v = num(entry && entry[part]); if (v !== null) return cMark(v, mx); const label = statusLabel(assessmentStatus(entry, part)); return label ? cT(label) : cT(''); };
 
 function resultsModel() {
   const cls = curClass(), scope = ui.resScope, term = DB.current.term, sc = DB.school, subs = visSubjects(cls);
@@ -918,7 +933,7 @@ function cardModel(x, cls, scope, term, ctx) {
       if (vc !== null && +mx.cat > 0) { cat += vc; catE += +mx.cat; }
       if (ve !== null && +mx.exam > 0) { ex += ve; exE = true; }
       mxMid += +mx.mid || 0; mxCat += +mx.cat || 0; mxEx += +mx.exam || 0;
-      return [cT(nm(r)), +mx.mid === +mx.cat ? cNum(mx.mid) : cT(r1(mx.mid) + ' / ' + r1(mx.cat)), cMark(vm, mx.mid), cMark(vc, mx.cat), cNum(mx.exam), cMark(ve, mx.exam), r.has ? cNum(r.max) : cT(''), r.has ? cNum(r.score) : cT('')];
+      return [cT(nm(r)), +mx.mid === +mx.cat ? cNum(mx.mid) : cT(r1(mx.mid) + ' / ' + r1(mx.cat)), cMarkStatus(m, 'mid', mx.mid), cMarkStatus(m, 'cat', mx.cat), cNum(mx.exam), cMarkStatus(m, 'exam', mx.exam), r.has ? cNum(r.max) : cT(''), r.has ? cNum(r.score) : cT('')];
     });
     cols = [['SUBJECTS', 30, 'l'], ['MAX', 10], ['MID', 10], ['CAT', 10], ['MAX EXAM', 13], ['EXAM', 10], ['FULL MARKS', 15], ['MARKS GAINED', 17]];
     bold = 7;
@@ -943,7 +958,7 @@ function cardModel(x, cls, scope, term, ctx) {
         if (ve !== null && +mx.exam > 0) { p.ex += ve; p.exE = true; }
         p.mxEx += +mx.exam || 0;
         if (T.has) { am += T.max; ag += T.score; }
-        cells.push(cMark(vm, mx.mid), cMark(vc, mx.cat), cNum(mx.exam), cMark(ve, mx.exam), T.has ? cNum(T.max) : cT(''), T.has ? cNum(T.score) : cT(''));
+        cells.push(cMarkStatus(m, 'mid', mx.mid), cMarkStatus(m, 'cat', mx.cat), cNum(mx.exam), cMarkStatus(m, 'exam', mx.exam), T.has ? cNum(T.max) : cT(''), T.has ? cNum(T.score) : cT(''));
       });
       aM += am; aG += ag;
       cells.push(r.has ? cNum(am) : cT(''), r.has ? cNum(ag) : cT(''), r.has ? cStar(cPct(r.pct), !r.complete) : cT(''));
@@ -966,7 +981,7 @@ function cardModel(x, cls, scope, term, ctx) {
   } else {
     const mxAll = cls.subjects.reduce((a, sj) => a + (+smax(sj, term)[scope] || 0), 0);
     cols = [['SUBJECTS', 46, 'l'], ['MAX', 16], ['MARKS GAINED', 20], ['PERCENT', 18]]; bold = 2;
-    rows = s.rows.map(r => [cT(nm(r)), cNum(+smax(r.subj, term)[scope] || 0), r.has ? cNum(r.score) : cT(''), r.has ? cPct(r.pct) : cT('')]);
+    rows = s.rows.map(r => { const m = (marks[r.subj.id] || {})[term] || {}; return [cT(nm(r)), cNum(+smax(r.subj, term)[scope] || 0), cMarkStatus(m, scope, smax(r.subj, term)[scope]), r.has ? cPct(r.pct) : cT('')]; });
     sums = [
       [cT('Total'), cNum(mxAll), s.counted ? cNum(s.total) : cT(''), cT('')],
       [cT('Average', 2), cStar(cPct(s.avg, 2), !s.complete)],
@@ -1149,23 +1164,23 @@ const stamp = () => new Date().toISOString().slice(0, 10);
 /* ---------- on-page dialogs (many browsers and viewers silently block alert/confirm/prompt) ---------- */
 function dialog(o) {
   return new Promise(resolve => {
-    const prev = document.activeElement, input = !!o.input;
+    const prev = document.activeElement, input = !!o.input, select = !!o.select;
     const ov = document.createElement('div'); ov.className = 'dlg-ov noprint';
-    ov.innerHTML = '<div class="dlg' + (o.wide ? ' wide' : '') + '" role="dialog" aria-modal="true"><div class="dlg-msg"></div>' + (input ? (o.area ? '<textarea class="dlg-in" rows="10" spellcheck="false"></textarea>' : '<input class="dlg-in" type="text">') : '') + '<div class="dlg-btns">' + (o.cancel ? '<button type="button" class="ghost" data-r="cancel"></button>' : '') + '<button type="button" data-r="ok"></button></div></div>';
+    ov.innerHTML = '<div class="dlg' + (o.wide ? ' wide' : '') + '" role="dialog" aria-modal="true"><div class="dlg-msg"></div>' + (input ? (o.area ? '<textarea class="dlg-in" rows="10" spellcheck="false"></textarea>' : '<input class="dlg-in" type="text">') : select ? '<select class="dlg-in"></select>' : '') + '<div class="dlg-btns">' + (o.cancel ? '<button type="button" class="ghost" data-r="cancel"></button>' : '') + '<button type="button" data-r="ok"></button></div></div>';
     ov.querySelector('.dlg-msg').textContent = o.message;
     const okb = ov.querySelector('[data-r="ok"]'), cb = ov.querySelector('[data-r="cancel"]'), inp = ov.querySelector('.dlg-in');
-    okb.textContent = o.ok || 'OK'; if (cb) cb.textContent = o.cancel; if (o.danger) okb.classList.add('dgr'); if (inp) inp.value = o.def || '';
+    okb.textContent = o.ok || 'OK'; if (cb) cb.textContent = o.cancel; if (o.danger) okb.classList.add('dgr'); if (inp) { if (select) { inp.innerHTML = (o.options || []).map(x => '<option value="' + esc(x[0]) + '">' + esc(x[1]) + '</option>').join(''); inp.value = o.def || ''; } else inp.value = o.def || ''; }
     const done = v => { ov.remove(); try { if (prev && prev.focus) prev.focus(); } catch (_) {} resolve(v); };
-    const no = () => done(input ? null : false), yes = () => done(input ? inp.value : true);
+    const no = () => done(input || select ? null : false), yes = () => done(input || select ? inp.value : true);
     ov.addEventListener('click', e => { e.stopPropagation(); const r = e.target.closest('[data-r]'); if (r) (r.dataset.r === 'ok' ? yes : no)(); });
     ov.addEventListener('keydown', e => {
       e.stopPropagation();
       if (e.key === 'Escape') { e.preventDefault(); no(); }
       else if (e.key === 'Enter' && e.target === inp && !o.area) { e.preventDefault(); yes(); }
-      else if (e.key === 'Tab') { const f = Array.from(ov.querySelectorAll('input,button,textarea')), i = f.indexOf(document.activeElement); e.preventDefault(); f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus(); }
+      else if (e.key === 'Tab') { const f = Array.from(ov.querySelectorAll('input,select,button,textarea')), i = f.indexOf(document.activeElement); e.preventDefault(); f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus(); }
     });
     document.body.appendChild(ov);
-    (inp || (o.danger && cb) || okb).focus(); if (inp) inp.select();
+    (inp || (o.danger && cb) || okb).focus(); if (inp && input) inp.select();
   });
 }
 const isRisky = m => /^(Delete|Remove|This will REPLACE|Replace)/.test(m);
@@ -1748,7 +1763,7 @@ function marksSheetModel() {
   return {
     title: 'QUOTATION SHEET ' + DB.current.year, school: DB.school.name || '', cls, term, part, partLabel: PART_LABEL[part], teacher: who,
     subjects: subs.map(x => x.name.toUpperCase()), maxima: subs.map(x => +smax(x, term)[part]),
-    rows: studs.map((st, i) => ({ no: i + 1, name: st.name.toUpperCase(), vals: subs.map(x => num((((Y().marks[st.id] || {})[x.id] || {})[term] || {})[part])) })),
+    rows: studs.map((st, i) => ({ no: i + 1, name: st.name.toUpperCase(), vals: subs.map(x => { const e = (((Y().marks[st.id] || {})[x.id] || {})[term] || {}); return num(e[part]) !== null ? num(e[part]) : (statusLabel(assessmentStatus(e, part)) || null); }) })),
     printed: d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
   };
 }
@@ -1911,6 +1926,22 @@ document.addEventListener('click', async e => {
     case 'newYear': await newYear(); break;
     case 'renameYear': await renameYear(); break;
     case 'deleteYear': await deleteYear(); break;
+    case 'markStatus': {
+      const cls = curClass(), sid = b.dataset.st, sjid = b.dataset.sj, part = b.dataset.part, term = DB.current.term;
+      const subj = cls && cls.subjects.find(x => x.id === sjid), learner = Y().students.find(x => x.id === sid);
+      if (!subj || !learner || !['mid','cat','exam'].includes(part)) break;
+      if (!canWrite(cls.id, sjid)) { await say('You are not assigned to this subject.'); break; }
+      if (subLocked(cls.id, sjid, term, part)) { await say('This assessment has been submitted and is locked. Ask the administrator to unlock it.'); break; }
+      const ent = ((((Y().marks[sid] || {})[sjid] || {})[term]) || {}), current = assessmentStatus(ent, part);
+      const chosen = await dialog({ message: 'Assessment status for ' + learner.name + ' – ' + subj.name + ' – ' + PART_LABEL[part] + ', Term ' + term + '.\n\nChoose “Missed” if the learner was absent. Choose “Sent to other school” if the learner had transferred before this assessment. These options are not zero marks; they are excluded from the mark and maximum. This choice applies to this subject and assessment only. Choosing a status replaces any numeric mark in this cell.', select: true, options: [['','Normal mark / clear status'],['missed','Missed (absent)'],['transferred','Sent to other school']], def: current, ok: 'Save status', cancel: 'Cancel' });
+      if (chosen === null) break;
+      const markMap = Y().marks;
+      const e0 = (((markMap[sid] = markMap[sid] || {})[sjid] = markMap[sid][sjid] || {})[term] = markMap[sid][sjid][term] || {});
+      e0.status = e0.status || {};
+      if (chosen) { delete e0[part]; e0.status[part] = chosen; }
+      else { delete e0.status[part]; if (!Object.keys(e0.status).length) delete e0.status; }
+      save(); render(); break;
+    }
     case 'pasteMarks': await pasteMarksDialog(); break;
     case 'startYear': await newYear(String(new Date().getFullYear())); break;
     case 'hideYear': ui.yearBannerHidden = true; renderBanner(); break;
@@ -2151,7 +2182,7 @@ async function confirmAndApply(entries, notes, preBad) {
   const yes = await dialog({ message: msg, ok: 'Enter these marks', cancel: 'Cancel', danger: !!plan.overwrite });
   if (!yes) return false;
   const m = Y().marks, term2 = DB.current.term;
-  plan.ok.forEach(x => { (((m[x.st.id] = m[x.st.id] || {})[x.sj.id] = m[x.st.id][x.sj.id] || {})[term2] = m[x.st.id][x.sj.id][term2] || {})[part] = x.v; });
+  plan.ok.forEach(x => { const en = (((m[x.st.id] = m[x.st.id] || {})[x.sj.id] = m[x.st.id][x.sj.id] || {})[term2] = m[x.st.id][x.sj.id][term2] || {}); en[part] = x.v; if (en.status) { delete en.status[part]; if (!Object.keys(en.status).length) delete en.status; } });
   save(); render();
   return true;
 }
@@ -2202,7 +2233,7 @@ function markChange(el) {
       el.value = old === undefined ? '' : old; setTimeout(() => el.classList.remove('bad'), 800); el.focus(); el.select(); return;
     }
     ((m[st] = m[st] || {})[s.id] = m[st][s.id] || {})[term] = m[st][s.id][term] || {};
-    m[st][s.id][term][part] = v; el.value = v;
+    m[st][s.id][term][part] = v; if (m[st][s.id][term].status) { delete m[st][s.id][term].status[part]; if (!Object.keys(m[st][s.id][term].status).length) delete m[st][s.id][term].status; } el.value = v;
   }
   save(); updateRow(st);
 }
@@ -2336,9 +2367,10 @@ function snapshot() {
         const byT = Yd.marks[sid][sj];
         Object.keys(byT).forEach(t => {
           const e = byT[t] || {}, mid = num(e.mid), cat = num(e.cat), exam = num(e.exam);
-          if (mid === null && cat === null && exam === null) return;
+          const status = e.status && Object.keys(e.status).length ? e.status : {};
+          if (mid === null && cat === null && exam === null && !Object.keys(status).length) return;
           if (![1, 2, 3].includes(+t)) return;
-          add('marks', { student_id: sid, subject_id: sj, term: +t, mid, cat, exam });
+          add('marks', { student_id: sid, subject_id: sj, term: +t, mid, cat, exam, status });
         });
       });
     });
@@ -2364,7 +2396,7 @@ function cloudBuild(rows) {
   rows.students.forEach(s => { const yr = cy[s.class_id]; if (!yr) return; sy[s.id] = yr; years[yr].students.push({ id: s.id, classId: s.class_id, name: s.name, idno: s.idno || '', dob: s.dob || '', pob: s.pob || '' }); });
   rows.marks.forEach(m => {
     const yr = sy[m.student_id]; if (!yr) return;
-    const e = {}; ['mid', 'cat', 'exam'].forEach(p => { if (m[p] !== null && m[p] !== undefined) e[p] = Number(m[p]); });
+    const e = {}; ['mid', 'cat', 'exam'].forEach(p => { if (m[p] !== null && m[p] !== undefined) e[p] = Number(m[p]); }); if (m.status && typeof m.status === 'object') e.status = m.status;
     const mk = years[yr].marks; ((mk[m.student_id] = mk[m.student_id] || {})[m.subject_id] = mk[m.student_id][m.subject_id] || {})[m.term] = e;
   });
   rows.comments.forEach(c => { const yr = sy[c.student_id]; if (!yr) return; const cm = years[yr].comments; (cm[c.student_id] = cm[c.student_id] || {})[c.key] = { teacher: c.teacher || '', conduct: c.conduct || '' }; });
