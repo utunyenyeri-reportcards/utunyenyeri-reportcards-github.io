@@ -652,6 +652,17 @@ if (!DB.years[DB.current.year]) DB.current.year = Object.keys(DB.years).sort().p
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
 
 const Y = () => DB.years[DB.current.year];
+// One ordering source for the class selector, class manager and cloud sort values.
+function orderedClasses(year = DB.current.year) {
+  const yd = DB.years[year]; if (!yd) return [];
+  const ids = (DB.settings.classOrder || {})[year] || [];
+  const pos = new Map(ids.map((id, i) => [id, i]));
+  return yd.classes.slice().sort((a, b) => {
+    const ai = pos.has(a.id) ? pos.get(a.id) : Number.MAX_SAFE_INTEGER;
+    const bi = pos.has(b.id) ? pos.get(b.id) : Number.MAX_SAFE_INTEGER;
+    return ai - bi || yd.classes.indexOf(a) - yd.classes.indexOf(b);
+  });
+}
 const curClass = () => Y().classes.find(c => c.id === DB.current.classId) || null;
 const studentsOf = cid => Y().students.filter(s => s.classId === cid).sort((a, b) => a.name.localeCompare(b.name));
 const personalKey = cid => 'rcm_order_' + (CLOUD.user ? CLOUD.user.id : 'local') + '_' + cid;
@@ -668,7 +679,7 @@ function orderStudents(list, mode, cid) {
   return l.sort(nm);
 }
 const SORT_OPTS = [['custom', 'Custom order (arranged by hand)'], ['name', 'Name A–Z'], ['namez', 'Name Z–A'], ['idno', 'ID number']];
-function fixClass() { if (!curClass()) DB.current.classId = Y().classes.length ? Y().classes[0].id : null; }
+function fixClass() { if (!curClass()) DB.current.classId = orderedClasses()[0]?.id || null; }
 fixClass();
 
 /* ---------- header ---------- */
@@ -678,7 +689,7 @@ function renderHeader() {
   document.title = DB.school.name + ' – Report Cards';
   $('selYear').innerHTML = Object.keys(DB.years).sort().reverse().map(y => `<option ${y === DB.current.year ? 'selected' : ''}>${esc(y)}</option>`).join('');
   $('selTerm').value = String(DB.current.term);
-  const cl = Y().classes;
+  const cl = orderedClasses();
   $('selClass').innerHTML = cl.length ? cl.map(c => `<option value="${c.id}" ${c.id === DB.current.classId ? 'selected' : ''}>${esc(c.name)}</option>`).join('') : '<option value="">(no classes yet)</option>';
   document.querySelectorAll('#tabs button').forEach(b => { b.classList.toggle('on', b.dataset.tab === ui.tab); const t = b.dataset.tab; b.style.display = (t === 'users' ? (CLOUD.on && isAdmin()) : (isAdmin() || (t !== 'classes' && t !== 'settings'))) ? '' : 'none'; });
   document.querySelectorAll('[data-act="newYear"],[data-act="renameYear"],[data-act="deleteYear"]').forEach(b => { b.style.display = isAdmin() ? '' : 'none'; });
@@ -1079,12 +1090,8 @@ function viewCards() {
 
 function viewClasses() {
   const y = Y(), cls = curClass(), term = DB.current.term;
-  const classOrder = (DB.settings.classOrder || {})[DB.current.year] || [];
-  const orderedClasses = y.classes.slice().sort((a, b) => {
-    const ai = classOrder.indexOf(a.id), bi = classOrder.indexOf(b.id);
-    return (ai < 0 ? 1e9 : ai) - (bi < 0 ? 1e9 : bi) || y.classes.indexOf(a) - y.classes.indexOf(b);
-  });
-  const chips = orderedClasses.map(c => `<div class="row drag-sort-item" draggable="true" data-sort-kind="classes" data-sort-id="${c.id}" style="margin:0 0 6px"><span class="drag-grip" title="Drag to reorder" aria-label="Drag to reorder">⠿</span><b style="min-width:120px">${esc(c.name)}</b><span class="muted">${y.students.filter(s => s.classId === c.id).length} learners</span><button class="small ghost" data-act="renameClass" data-id="${c.id}">Rename</button><button class="small danger" data-act="delClass" data-id="${c.id}">Delete</button></div>`).join('') || '<p class="muted">No classes yet. Add your first one below, for example P1 A, P1 B, P2 A.</p>';
+  const classesInOrder = orderedClasses(DB.current.year);
+  const chips = classesInOrder.map(c => `<div class="row drag-sort-item" draggable="true" data-sort-kind="classes" data-sort-id="${c.id}" style="margin:0 0 6px"><span class="drag-grip" title="Drag to reorder" aria-label="Drag to reorder">⠿</span><b style="min-width:120px">${esc(c.name)}</b><span class="muted">${y.students.filter(s => s.classId === c.id).length} learners</span><button class="small ghost" data-act="renameClass" data-id="${c.id}">Rename</button><button class="small danger" data-act="delClass" data-id="${c.id}">Delete</button></div>`).join('') || '<p class="muted">No classes yet. Add your first one below, for example P1 A, P1 B, P2 A.</p>';
   let out = `<div class="panel"><h2>Classes for ${esc(DB.current.year)}</h2>${chips}
    <div class="row"><input id="newClass" placeholder="New class name, e.g. P1 A"><select id="newLevel"><option value="auto">Subjects: choose by class number (P1–P3 lower, P4–P6 upper)</option><option value="lower">${esc(TEMPLATES.lower.label)}</option><option value="upper">${esc(TEMPLATES.upper.label)}</option><option value="blank">Empty (I will add the subjects myself)</option></select><button data-act="addClass">Add class</button></div>
    <div class="muted">Classes belong to the academic year, so you can change them every year without touching past years. A new class starts with the school's standard subjects and maximum marks, which you can change below.</div></div>`;
@@ -2320,7 +2327,7 @@ function snapshot() {
   Object.keys(DB.years).forEach(yr => {
     const Yd = DB.years[yr]; if (adm) add('academic_years', { year: yr });
     const subj = {}, stClass = {};
-    Yd.classes.forEach((c, i) => { subj[c.id] = new Set(c.subjects.map(s => s.id)); if (adm) add('classes', { id: c.id, year: yr, name: c.name, subjects: c.subjects, sort: i }); });
+    orderedClasses(yr).forEach((c, i) => { subj[c.id] = new Set(c.subjects.map(s => s.id)); if (adm) add('classes', { id: c.id, year: yr, name: c.name, subjects: c.subjects, sort: i }); });
     Yd.students.forEach(s => { if (!subj[s.classId]) return; stClass[s.id] = s.classId; if (adm) add('students', { id: s.id, class_id: s.classId, name: s.name, idno: s.idno || '', dob: s.dob || '', pob: s.pob || '' }); });
     Object.keys(Yd.marks).forEach(sid => {
       if (!stClass[sid]) return;
@@ -2390,7 +2397,7 @@ async function loadRows() {
     adm ? fetchAll('profiles', ['created_at', 'id']) : Promise.resolve([])
   ]);
   let subs = []; CLOUD.subsOk = true;
-  try { subs = await fetchAll('submissions', ['class_id', 'subject_id', 'term']); }
+  try { subs = await fetchAll('submissions', ['class_id', 'subject_id', 'term', 'part']); }
   catch (e) { if (e && (e.code === '42P01' || e.code === 'PGRST205' || /submissions/.test(String(e.message || '')) && /not find|does not exist|schema cache/i.test(String(e.message || '')))) CLOUD.subsOk = false; else throw e; }
   return { config, years, classes, students, marks, comments, assign, profiles, subs };
 }
