@@ -239,7 +239,7 @@ input.mk:focus{background:#fffbe6}
 /* Landscape two-up cards: keep each complete card compact and on one page. */
 @media print{
   .cards.two-land{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:6mm;row-gap:0;width:100%;max-width:none;align-items:start}
-  .cards.two-land .card{font-size:11.5px!important;padding:7mm 7mm!important;margin:0!important;width:100%;min-width:0;height:188mm;min-height:188mm;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;break-inside:avoid!important;page-break-inside:avoid!important}
+  .cards.two-land .card{font-size:11.5px!important;padding:7mm 7mm!important;margin:0!important;width:100%;min-width:0;height:198mm;min-height:198mm;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;break-inside:avoid!important;page-break-inside:avoid!important}
   .cards.two-land .card .top{font-size:11px!important;line-height:1.35;gap:6px}
   .cards.two-land .card .top .r{min-width:0}
   .cards.two-land .card .top img{height:38px}
@@ -841,7 +841,7 @@ const cT = (t, span) => ({ t: String(t == null ? '' : t), span: span || 1 });
 const cNum = (v, span) => (v === null || v === undefined || v === '' || Number.isNaN(+v)) ? cT('', span) : { t: String(r1(+v)), n: r1(+v), span: span || 1 };
 const cPct = (v, span) => (v === null || v === undefined) ? cT('', span) : { t: ff(v) + '%', n: r1(v), pct: true, span: span || 1 };
 const cMark = (v, mx) => +mx > 0 ? cNum(v) : cT('—');
-const cMarkStatus = (entry, part, mx) => { const v = num(entry && entry[part]); if (v !== null) return cMark(v, mx); const label = statusLabel(assessmentStatus(entry, part)); return label ? cT(label) : cT(''); };
+const cMarkStatus = (entry, part, mx) => { const v = num(entry && entry[part]); if (v !== null) return cMark(v, mx); return assessmentStatus(entry, part) ? cT('-') : cT(''); };
 
 function resultsModel() {
   const cls = curClass(), scope = ui.resScope, term = DB.current.term, sc = DB.school, subs = visSubjects(cls);
@@ -850,9 +850,10 @@ function resultsModel() {
   const period = scope === 'year' ? 'Whole year' : ordinal(term) + ' Term' + (scope === 'term' ? '' : ' – ' + PART_LABEL[scope]);
   const avgLabel = scope === 'year' ? 'Year' : scope === 'term' ? ordinal(term) : PART_LABEL[scope];
   const rows = sortLearners(cr.list, ui.resSort).map(x => ({
-    st: x.st, pos: x.pos, name: x.st.name.toUpperCase(),
-    cells: x.sum.rows.map(r => r.has ? { n: r1(r.score), partial: !r.complete } : null),
-    total: x.sum.avg === null ? null : r1(x.sum.total), avg: x.sum.avg === null ? null : r1(x.sum.avg), inc: x.sum.avg !== null && !x.sum.complete
+    st: x.st, pos: x.pos === null && x.sum.counted > 0 && x.sum.totalMax === 0 ? '-' : x.pos, name: x.st.name.toUpperCase(),
+    cells: x.sum.rows.map(r => r.has ? (r.max > 0 ? { n: r1(r.score), partial: !r.complete } : { n: '-' }) : null),
+    total: x.sum.avg === null ? (x.sum.counted && x.sum.totalMax === 0 ? '-' : null) : r1(x.sum.total),
+    avg: x.sum.avg === null ? (x.sum.counted && x.sum.totalMax === 0 ? '-' : null) : r1(x.sum.avg), inc: x.sum.avg !== null && !x.sum.complete
   }));
   const colTot = subs.map((s, i) => r1(cr.list.reduce((a, x) => a + (x.sum.rows[i].has ? x.sum.rows[i].score : 0), 0)));
   const grand = r1(cr.list.reduce((a, x) => a + (x.sum.avg === null ? 0 : x.sum.total), 0));
@@ -876,7 +877,7 @@ function viewResults() {
   const procVars = `--pfs:${pfs.toFixed(1)}px;--ppad:${ppad.toFixed(1)}px;--pdone:${Math.round(Math.max(20, Math.min(60, avail - prow * (m.rows.length + 4) + 28)))}px`;
   const rows = m.rows.map(x => `<tr data-name="${esc((x.st.name + ' ' + (x.st.idno || '')).toLowerCase())}"><td>${x.pos === null ? '' : x.pos}</td><td class="nm">${esc(x.name)}</td>` +
     x.cells.map(c => `<td>${c ? c.n + (c.partial ? '<span class="noprint">*</span>' : '') : ''}</td>`).join('') +
-    `<td>${x.total === null ? '' : x.total}</td><td>${x.avg === null ? '' : x.avg.toFixed(1) + '%' + (x.inc ? ' *' : '')}</td></tr>`).join('');
+    `<td>${x.total === null ? '' : x.total}</td><td>${x.avg === null ? '' : (typeof x.avg === 'number' ? x.avg.toFixed(1) + '%' : x.avg) + (x.inc ? ' *' : '')}</td></tr>`).join('');
   const foot = `<tr><td colspan="2" class="nm">Total</td>${m.foot.total.map(v => `<td>${v}</td>`).join('')}<td>${m.foot.grand}</td><td></td></tr>
    <tr><td colspan="2" class="nm">Success rate</td>${m.foot.success.map(v => `<td>${ff(v)}</td>`).join('')}<td>${ff(m.foot.successAll)}</td><td></td></tr>
    <tr><td colspan="2" class="nm">Average</td>${m.foot.avg.map(v => `<td>${ff(v)}</td>`).join('')}<td>${ff(m.foot.avgAll)}</td><td></td></tr>`;
@@ -909,8 +910,8 @@ function rankCtx(studs, cls, scope, term) {
   cr.list.forEach(x => { if (x.pos !== null) m[x.st.id] = x.pos; });
   return { m, n: cr.stats.ranked, cr, open: cr.stats.rankingOpen };
 }
-const rk = (c, id) => c.m[id] === undefined ? (c.open === false ? '–' : '') : c.m[id];
-const cRank = (c, id, span) => c.m[id] !== undefined ? cNum(c.m[id], span) : cT(c.open === false ? '–' : '', span);
+const rk = (c, id) => c.m[id] === undefined ? (c.open === false || c.cr.list.some(x => x.st.id === id && x.sum.counted > 0 && x.sum.totalMax === 0) ? '-' : '') : c.m[id];
+const cRank = (c, id, span) => c.m[id] !== undefined ? cNum(c.m[id], span) : cT(c.open === false || c.cr.list.some(x => x.st.id === id && x.sum.counted > 0 && x.sum.totalMax === 0) ? '-' : '', span);
 const cStar = (c, inc) => (inc && c.pct) ? { t: c.t + ' *', span: c.span } : c;
 function cardNote(m) {
   const p = [];
@@ -925,21 +926,22 @@ function cardModel(x, cls, scope, term, ctx) {
   const nm = r => r.subj.name.toUpperCase();
   let cols, rows, sums, bold, ysums = null;
   if (scope === 'term') {
-    let mid = 0, cat = 0, ex = 0, midE = 0, catE = 0, exE = false, mxMid = 0, mxCat = 0, mxEx = 0;
+    let mid = 0, cat = 0, ex = 0, midE = 0, catE = 0, exE = false, midS = false, catS = false, exS = false, mxMid = 0, mxCat = 0, mxEx = 0;
     rows = s.rows.map(r => {
       const m = (marks[r.subj.id] || {})[term] || {}, mx = smax(r.subj, term);
       const vm = num(m.mid), vc = num(m.cat), ve = num(m.exam);
+      midS = midS || !!assessmentStatus(m, 'mid'); catS = catS || !!assessmentStatus(m, 'cat'); exS = exS || !!assessmentStatus(m, 'exam');
       if (vm !== null && +mx.mid > 0) { mid += vm; midE += +mx.mid; }
       if (vc !== null && +mx.cat > 0) { cat += vc; catE += +mx.cat; }
       if (ve !== null && +mx.exam > 0) { ex += ve; exE = true; }
       mxMid += +mx.mid || 0; mxCat += +mx.cat || 0; mxEx += +mx.exam || 0;
-      return [cT(nm(r)), +mx.mid === +mx.cat ? cNum(mx.mid) : cT(r1(mx.mid) + ' / ' + r1(mx.cat)), cMarkStatus(m, 'mid', mx.mid), cMarkStatus(m, 'cat', mx.cat), cNum(mx.exam), cMarkStatus(m, 'exam', mx.exam), r.has ? cNum(r.max) : cT(''), r.has ? cNum(r.score) : cT('')];
+      return [cT(nm(r)), +mx.mid === +mx.cat ? cNum(mx.mid) : cT(r1(mx.mid) + ' / ' + r1(mx.cat)), cMarkStatus(m, 'mid', mx.mid), cMarkStatus(m, 'cat', mx.cat), cNum(mx.exam), cMarkStatus(m, 'exam', mx.exam), r.has ? (r.max > 0 ? cNum(r.max) : cT('-')) : cT(''), r.has ? (r.max > 0 ? cNum(r.score) : cT('-')) : cT('')];
     });
     cols = [['SUBJECTS', 30, 'l'], ['MAX', 10], ['MID', 10], ['CAT', 10], ['MAX EXAM', 13], ['EXAM', 10], ['FULL MARKS', 15], ['MARKS GAINED', 17]];
     bold = 7;
     sums = [
-      [cT('Total'), mxMid === mxCat ? cNum(mxMid) : cT(r1(mxMid) + ' / ' + r1(mxCat)), midE ? cNum(mid) : cT(''), catE ? cNum(cat) : cT(''), cNum(mxEx), exE ? cNum(ex) : cT(''), s.counted ? cNum(s.totalMax) : cT(''), s.counted ? cNum(s.total) : cT('')],
-      [cT('Average', 2), midE ? cStar(cPct(mid / midE * 100), midE < mxMid - 1e-9) : cT(''), catE ? cStar(cPct(cat / catE * 100), catE < mxCat - 1e-9) : cT(''), s.avg === null ? cT('', 4) : cStar(cPct(s.avg, 4), !s.complete)],
+      [cT('Total'), mxMid === mxCat ? cNum(mxMid) : cT(r1(mxMid) + ' / ' + r1(mxCat)), midE ? cNum(mid) : (midS ? cT('-') : cT('')), catE ? cNum(cat) : (catS ? cT('-') : cT('')), cNum(mxEx), exE ? cNum(ex) : (exS ? cT('-') : cT('')), s.counted ? (s.totalMax > 0 ? cNum(s.totalMax) : cT('-')) : cT(''), s.counted ? (s.totalMax > 0 ? cNum(s.total) : cT('-')) : cT('')],
+      [cT('Average', 2), midE ? cStar(cPct(mid / midE * 100), midE < mxMid - 1e-9) : (midS ? cT('-') : cT('')), catE ? cStar(cPct(cat / catE * 100), catE < mxCat - 1e-9) : (catS ? cT('-') : cT('')), s.avg === null ? (s.counted && s.totalMax === 0 ? cT('-', 4) : cT('', 4)) : cStar(cPct(s.avg, 4), !s.complete)],
       [cT('Rank of: ' + ctx.main.n, 2), cRank(ctx.mid, st.id), cRank(ctx.cat, st.id), cRank(ctx.main, st.id, 4)]
     ];
   } else if (scope === 'year') {
@@ -958,20 +960,20 @@ function cardModel(x, cls, scope, term, ctx) {
         if (ve !== null && +mx.exam > 0) { p.ex += ve; p.exE = true; }
         p.mxEx += +mx.exam || 0;
         if (T.has) { am += T.max; ag += T.score; }
-        cells.push(cMarkStatus(m, 'mid', mx.mid), cMarkStatus(m, 'cat', mx.cat), cNum(mx.exam), cMarkStatus(m, 'exam', mx.exam), T.has ? cNum(T.max) : cT(''), T.has ? cNum(T.score) : cT(''));
+        cells.push(cMarkStatus(m, 'mid', mx.mid), cMarkStatus(m, 'cat', mx.cat), cNum(mx.exam), cMarkStatus(m, 'exam', mx.exam), T.has ? (T.max > 0 ? cNum(T.max) : cT('-')) : cT(''), T.has ? (T.max > 0 ? cNum(T.score) : cT('-')) : cT(''));
       });
       aM += am; aG += ag;
-      cells.push(r.has ? cNum(am) : cT(''), r.has ? cNum(ag) : cT(''), r.has ? cStar(cPct(r.pct), !r.complete) : cT(''));
+      cells.push(r.has ? (am > 0 ? cNum(am) : cT('-')) : cT(''), r.has ? (am > 0 ? cNum(ag) : cT('-')) : cT(''), r.has ? (r.pct === null ? cT('-') : cStar(cPct(r.pct), !r.complete)) : cT(''));
       return cells;
     });
     const tot = [cT('TOTAL'), mx1m === mx1c ? cNum(mx1m) : cT(r1(mx1m) + ' / ' + r1(mx1c))];
-    P.forEach((p, i) => tot.push(p.midE ? cNum(p.mid) : cT(''), p.catE ? cNum(p.cat) : cT(''), cNum(p.mxEx), p.exE ? cNum(p.ex) : cT(''), ts[i].counted ? cNum(ts[i].totalMax) : cT(''), ts[i].counted ? cNum(ts[i].total) : cT('')));
+    P.forEach((p, i) => tot.push(p.midE ? cNum(p.mid) : cT(''), p.catE ? cNum(p.cat) : cT(''), cNum(p.mxEx), p.exE ? cNum(p.ex) : cT(''), ts[i].counted ? (ts[i].totalMax > 0 ? cNum(ts[i].totalMax) : cT('-')) : cT(''), ts[i].counted ? (ts[i].totalMax > 0 ? cNum(ts[i].total) : cT('-')) : cT('')));
     // Annual maximum must match the maximum marks represented by the annual marks gained, not Term 1's CAT + midterm maximum.
-    tot.push(s.counted ? cNum(aM) : cT(''), s.counted ? cNum(aG) : cT(''), cStar(cPct(s.avg), !s.complete));
+    tot.push(s.counted ? (aM > 0 ? cNum(aM) : cT('-')) : cT(''), s.counted ? (aM > 0 ? cNum(aG) : cT('-')) : cT(''), s.counted ? (s.avg === null ? (aM === 0 ? cT('-') : cT('')) : cStar(cPct(s.avg), !s.complete)) : cT(''));
     const pos = (c, span) => cT(String(rk(c, st.id)) + ' / ' + (c.n || ctx.N), span);
     ysums = [
       { k: 'tot', cells: tot },
-      { k: 'pct', cells: [cT('%'), cStar(cPct(ts[0].avg, 7), !ts[0].complete), cStar(cPct(ts[1].avg, 6), !ts[1].complete), cStar(cPct(ts[2].avg, 6), !ts[2].complete), cStar(cPct(s.avg, 3), !s.complete)] },
+      { k: 'pct', cells: [cT('%'), ...ts.map((v, i) => v.avg === null && v.counted && v.totalMax === 0 ? cT('-', i === 0 ? 7 : 6) : cStar(cPct(v.avg, i === 0 ? 7 : 6), !v.complete)), s.avg === null && s.counted && aM === 0 ? cT('-', 3) : cStar(cPct(s.avg, 3), !s.complete)] },
       { k: 'pos', cells: [cT('Position'), pos(ctx.t[0], 7), pos(ctx.t[1], 6), pos(ctx.t[2], 6), pos(ctx.main, 3)] },
       { k: 'obs', cells: [] },
       { k: 'sigT', cells: [cT("Teacher's signature"), cT('', 7), cT('', 6), cT('', 6), cT('', 3)] },
@@ -981,9 +983,9 @@ function cardModel(x, cls, scope, term, ctx) {
   } else {
     const mxAll = cls.subjects.reduce((a, sj) => a + (+smax(sj, term)[scope] || 0), 0);
     cols = [['SUBJECTS', 46, 'l'], ['MAX', 16], ['MARKS GAINED', 20], ['PERCENT', 18]]; bold = 2;
-    rows = s.rows.map(r => { const m = (marks[r.subj.id] || {})[term] || {}; return [cT(nm(r)), cNum(+smax(r.subj, term)[scope] || 0), cMarkStatus(m, scope, smax(r.subj, term)[scope]), r.has ? cPct(r.pct) : cT('')]; });
+    rows = s.rows.map(r => { const m = (marks[r.subj.id] || {})[term] || {}; return [cT(nm(r)), cNum(+smax(r.subj, term)[scope] || 0), cMarkStatus(m, scope, smax(r.subj, term)[scope]), r.has ? (r.pct === null ? cT('-') : cPct(r.pct)) : cT('')]; });
     sums = [
-      [cT('Total'), cNum(mxAll), s.counted ? cNum(s.total) : cT(''), cT('')],
+      [cT('Total'), cNum(mxAll), s.counted ? (s.totalMax > 0 ? cNum(s.total) : cT('-')) : cT(''), cT('')],
       [cT('Average', 2), cStar(cPct(s.avg, 2), !s.complete)],
       [cT('Rank of: ' + ctx.main.n, 2), cRank(ctx.main, st.id, 2)]
     ];
@@ -1097,7 +1099,7 @@ function viewCards() {
    ${findBox()}
    <label>Cards per page<select data-f="perPage">${optList(yr ? (ui.perPage === 'a5' ? 'a5' : '1') : ui.perPage, yr ? [['1', 'A4 landscape (1 card per page)'], ['a5', 'A5 landscape']] : [['1', '1 per page (A4 portrait)'], ['2', '2 per page (A4 portrait, smaller)'], ['2land', '2 per page (A4 landscape, side by side)'], ['a5', '1 per page (A5)']])}</select></label></div>
    <div class="row actions"><button data-act="print">🖨️ Print</button><button class="b-pdf" data-act="pdfCards">⬇ Download PDF – ${what}</button><button class="b-xls" data-act="xlsxCards">⬇ Download Excel – ${what}</button></div>
-   ${ctx.main.open === false ? `<div class="logoprompt">⚠ Positions are hidden until every learner’s marks are complete (${ctx.main.cr.stats.incomplete} learner${ctx.main.cr.stats.incomplete === 1 ? '' : 's'} still incomplete). A star (*) next to an average means marks are missing. To rank a learner who was absent, enter 0 for the missing marks.</div>` : ''}
+   ${ctx.main.open === false ? `<div class="logoprompt">⚠ Positions are hidden until every learner’s marks are complete (${ctx.main.cr.stats.incomplete} learner${ctx.main.cr.stats.incomplete === 1 ? '' : 's'} still incomplete). A dash (-) means the assessment was marked missed or transferred; it is excluded from the learner’s average. Unentered assessments remain incomplete.</div>` : ''}
    ${yr ? '<div class="muted"><b>Whole year:</b> the card is the school’s landscape “Progressive school report” (three terms side by side with annual points), so it prints on landscape pages.</div>' : ''}
    <div class="muted">Pick “Which report cards?” to download or print every card listed below, or just one learner. Sort, Show and Find choose exactly which cards are included. If Print does not open in your viewer, use Download PDF: the PDF always fits the paper you choose. Conduct and Observations can be typed directly on the cards and are saved automatically for this term.</div></div>
   ${chosen.length ? `<div class="cards ${yr ? 'yr' + (ui.perPage === 'a5' ? ' a5y' : '') : ui.perPage === '2' ? 'two' : ui.perPage === '2land' ? 'two-land' : ui.perPage === 'a5' ? 'a5' : ''}">${chosen.map(x => cardHTML(x, cls, scope, term, ctx)).join('')}</div>` : '<div class="panel noprint">No learners match this selection.</div>'}`;
@@ -1519,7 +1521,7 @@ function drawResultsPDF(doc, rm) {
     y += rowH;
     rm.rows.slice(P.from, P.to).forEach(r => {
       cell(r.pos === null ? '' : String(r.pos), M, rankW); cell(r.name, xs[1], nameW, { align: 'l' });
-      r.cells.forEach((c, j) => cell(c ? String(c.n) : '', sx(j), subjW)); cell(r.total === null ? '' : String(r.total), xTot, totW); cell(r.avg === null ? '' : r.avg.toFixed(1) + '%' + (r.inc ? ' *' : ''), xAvg, avgW, { font: 'HB' });
+      r.cells.forEach((c, j) => cell(c ? String(c.n) : '', sx(j), subjW)); cell(r.total === null ? '' : String(r.total), xTot, totW); cell(r.avg === null ? '' : (typeof r.avg === 'number' ? r.avg.toFixed(1) + '%' : r.avg) + (r.inc ? ' *' : ''), xAvg, avgW, { font: 'HB' });
       y += rowH;
     });
     if (P.last) {
@@ -1641,7 +1643,7 @@ function resultsWorkbook(rm) {
   rm.rows.forEach(x => {
     sh.put(r, 1, x.pos === null ? null : x.pos, st.rank); sh.put(r, 2, x.name, st.name);
     x.cells.forEach((c, j) => sh.put(r, 3 + j, c ? c.n : null, st.num));
-    sh.put(r, 3 + n, x.total, st.num); sh.put(r, 4 + n, x.inc ? x.avg.toFixed(1) + '% *' : x.avg, st.avg); r++;
+    sh.put(r, 3 + n, x.total, st.num); sh.put(r, 4 + n, x.inc ? (typeof x.avg === 'number' ? x.avg.toFixed(1) + '% *' : x.avg) : (typeof x.avg === 'number' ? x.avg : x.avg), st.avg); r++;
   });
   const foot = (label, vals, all, sty, sty2) => { sh.put(r, 1, label, st.fl, 2); vals.forEach((v, j) => sh.put(r, 3 + j, v === null || v === undefined ? null : r1(v), sty)); sh.put(r, 3 + n, all === null || all === undefined ? null : r1(all), sty); sh.put(r, 4 + n, null, st.fn); r++; };
   foot('Total', rm.foot.total, rm.foot.grand, st.fn); foot('Success rate', rm.foot.success, rm.foot.successAll, st.fd); foot('Average', rm.foot.avg, rm.foot.avgAll, st.fd);
@@ -1835,7 +1837,7 @@ function csvResults() {
   out.push(blank());
   out.push(['', 'Subjects', ...m.subjects, 'Total', 'Avg']);
   out.push(['Rank', 'Maxima', ...m.maxima, m.maxTotal, '%']);
-  m.rows.forEach(x => out.push([x.pos === null ? '' : x.pos, x.name, ...x.cells.map(c => c ? c.n : ''), x.total === null ? '' : x.total, x.avg === null ? '' : x.avg.toFixed(1) + '%' + (x.inc ? ' *' : '')]));
+  m.rows.forEach(x => out.push([x.pos === null ? '' : x.pos, x.name, ...x.cells.map(c => c ? c.n : ''), x.total === null ? '' : x.total, x.avg === null ? '' : (typeof x.avg === 'number' ? x.avg.toFixed(1) + '%' : x.avg) + (x.inc ? ' *' : '')]));
   out.push(['', 'Total', ...m.foot.total, m.foot.grand, '']);
   out.push(['', 'Success rate', ...m.foot.success.map(ff), ff(m.foot.successAll), '']);
   out.push(['', 'Average', ...m.foot.avg.map(ff), ff(m.foot.avgAll), '']);
