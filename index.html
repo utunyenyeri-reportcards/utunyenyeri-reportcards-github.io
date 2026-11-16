@@ -61,7 +61,7 @@ input.mk.bad{border-color:var(--bad);background:#fde7e5}
 .card{background:#fff;border:1px solid #000;padding:14px 18px;margin:0 auto 18px;font-family:"Times New Roman",Times,serif;color:#000;font-size:13px}
 .card .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;font-weight:700;line-height:1.35}
 .card .logo{text-align:center;margin-top:8px}
-.card .logo img{height:64px;display:inline-block}
+.card .logo img{height:84px;display:inline-block}
 .card .logo.ph{border:1px dashed #999;color:#888;font-size:11px;padding:10px;margin:8px auto 0;max-width:260px}
 .dlg-ov{position:fixed;inset:0;background:rgba(20,28,45,.5);display:flex;align-items:center;justify-content:center;z-index:4000;padding:16px}
 .dlg{background:#fff;border-radius:10px;max-width:480px;width:100%;padding:18px 20px;box-shadow:0 10px 40px rgba(0,0,0,.3)}
@@ -89,8 +89,8 @@ button.dgr{background:var(--bad);border-color:var(--bad)}
 .card .foot{display:grid;grid-template-columns:1fr 1fr;border:1px solid #000;margin-top:12px}
 .card .foot>div{padding:3px 8px;font-weight:700;min-height:42px}
 .card .foot .obs{grid-row:span 2;border-right:1px solid #000}
-.card .foot .tsig{border-bottom:1px solid #000;text-align:center}
-.card .foot .psig{text-align:center}
+.card .foot .tsig{border-bottom:1px solid #000;text-align:left}
+.card .foot .psig{text-align:left}
 .card .foot textarea{display:block;width:100%;border:none;resize:none;font:inherit;font-weight:400;padding:2px 0;background:transparent;border-radius:0}
 .two .card{font-size:11.5px;padding:8px 12px;margin-bottom:10px}
 .two .card .tb th,.two .card .tb td{padding:1px 4px;font-size:11px}
@@ -100,7 +100,7 @@ button.dgr{background:var(--bad);border-color:var(--bad)}
 .two-land .card .top{font-size:10px;gap:5px}
 .two-land .card .top .r{min-width:0}
 .two-land .card .top img{height:38px}
-.two-land .card .logo img{height:42px}
+.two-land .card .logo img{height:60px}
 .two-land .card h3{font-size:14px;margin:5px 0 4px}
 .two-land .card .info td{font-size:9.5px;padding:1px 3px}
 .two-land .card .tb th,.two-land .card .tb td{font-size:9px;padding:1px 2px}
@@ -236,23 +236,45 @@ input.mk:focus{background:#fffbe6}
  th{background:#eee!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 
-/* Landscape two-up cards: keep each complete card compact and on one page. */
+/* Landscape two-up cards (A4 landscape, two cards side by side): each card fills the sheet height, nothing is cut,
+   a dashed scissors line shows where to cut, and the signature boxes take the space that is left. */
 @media print{
   .cards.two-land{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:6mm;row-gap:0;width:100%;max-width:none;align-items:start}
-  .cards.two-land .card{font-size:11.5px!important;padding:7mm 7mm!important;margin:0!important;width:100%;min-width:0;height:198mm;min-height:198mm;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;break-inside:avoid!important;page-break-inside:avoid!important}
-  .cards.two-land .card .top{font-size:11px!important;line-height:1.35;gap:6px}
+  .cards.two-land .card{position:relative;font-size:11.5px!important;padding:4.5mm 5.5mm!important;margin:0!important;width:100%;min-width:0;height:194mm;min-height:194mm;box-sizing:border-box;display:flex;flex-direction:column;justify-content:flex-start;break-inside:avoid!important;page-break-inside:avoid!important;overflow:hidden}
+  .cards.two-land .card:nth-child(odd){overflow:visible}
+  .cards.two-land .card:nth-child(odd)::after{content:"";position:absolute;top:0;bottom:0;right:-3.4mm;border-left:0.35mm dashed #222;pointer-events:none}
+  .cards.two-land .card:nth-child(odd)::before{content:"\2702";position:absolute;top:10mm;right:-3.4mm;transform:translateX(50%) rotate(90deg);background:#fff;font:19px/1 "Segoe UI Symbol","DejaVu Sans","Noto Sans Symbols2",Arial,sans-serif;color:#222;padding:1mm 0;z-index:2}
+  .cards.two-land .card .top{font-size:10.5px!important;line-height:1.3;gap:6px}
   .cards.two-land .card .top .r{min-width:0}
-  .cards.two-land .card .top img{height:38px}
-  .cards.two-land .card .logo img{height:42px}
-  .cards.two-land .card h3{font-size:17px!important;margin:8px 0 7px}
-  .cards.two-land .card .info td{font-size:10.5px!important;padding:3px 4px}
-  .cards.two-land .card .tb{margin-top:5px}
-  .cards.two-land .card .tb th,.cards.two-land .card .tb td{font-size:10px!important;padding:3px 3px}
-  .cards.two-land .card .foot{margin-top:6px}
-  .cards.two-land .card .foot>div{min-height:34px;padding:4px 5px}
-  .cards.two-land .card .inc{font-size:9px}
+  .cards.two-land .card .logo{margin-top:0;flex:none;line-height:0}
+  .cards.two-land .card .logo img{height:clamp(17mm,calc((142mm - var(--rows,14) * 5.2mm) * .5),34mm);max-width:60%;object-fit:contain}
+  .cards.two-land .card h3{font-size:16px!important;margin:2.2mm 0 2mm;line-height:1.15}
+  .cards.two-land .card .info td{font-size:10.5px!important;padding:2px 4px}
+  .cards.two-land .card .tb{margin-top:1.5mm}
+  .cards.two-land .card .tb th,.cards.two-land .card .tb td{font-size:10px!important;padding:clamp(2.2px,calc((16 - var(--rows,14)) * .8px + 2.2px),5px) 3px;line-height:1.2}
+  .cards.two-land .card .inc{font-size:8.5px;margin:1mm 0 0}
+  .cards.two-land .card .foot{flex:1 1 auto;min-height:33mm;margin-top:2.5mm;grid-template-rows:1fr 1fr}
+  .cards.two-land .card .foot>div{min-height:0;padding:2px 5px;font-size:10.5px}
+  .cards.two-land .card .foot textarea{font-size:10px}
   .cards.two-land .card:nth-child(2n){break-after:page;page-break-after:always}
   .cards.two-land .card:last-child{break-after:auto;page-break-after:auto}
+}
+
+/* Two cards per A4 portrait page: both fit completely, the second never drops to a new page. */
+@media print{
+  .cards.two .card{position:relative;display:flex;flex-direction:column;height:133mm;min-height:133mm;box-sizing:border-box;padding:3.5mm 5mm!important;margin:0 0 5mm!important;overflow:hidden;font-size:11px;break-inside:avoid;page-break-inside:avoid}
+  .cards.two .card:nth-child(2n){margin-bottom:0}
+  .cards.two .card .top{font-size:10.5px;line-height:1.3}
+  .cards.two .card .logo{margin-top:0;flex:none;line-height:0}
+  .cards.two .card .logo img{height:clamp(10mm,calc((106mm - var(--rows,14) * 5mm) * .5),24mm);max-width:55%;object-fit:contain}
+  .cards.two .card h3{font-size:15px;margin:1.5mm 0}
+  .cards.two .card .info td{font-size:10px;padding:1.5px 4px}
+  .cards.two .card .tb{margin-top:1.2mm}
+  .cards.two .card .tb th,.cards.two .card .tb td{font-size:9.5px;padding:clamp(1.2px,calc((15 - var(--rows,14)) * .5px + 1.4px),3.5px) 3px;line-height:1.2}
+  .cards.two .card .inc{font-size:8px;margin:.8mm 0 0}
+  .cards.two .card .foot{flex:1 1 auto;min-height:16mm;margin-top:2mm;grid-template-rows:1fr 1fr}
+  .cards.two .card .foot>div{min-height:0;padding:2px 5px;font-size:10px}
+  .cards.two .card .foot textarea{font-size:9.5px}
 }
 
 /* whole-year landscape card */
@@ -260,7 +282,7 @@ input.mk:focus{background:#fffbe6}
 .yc{min-width:1040px;padding:14px 16px}
 .yc .ytop{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px}
 .yc .ybox{border:1.5px solid #000;padding:8px 14px;font-size:14px;line-height:1.55;justify-self:start;min-width:250px}
-.yc .ylogo{text-align:center}.yc .ylogo img{height:56px}
+.yc .ylogo{text-align:center}.yc .ylogo img{height:76px}
 .yc .ylogo.ph{border:1px dashed #999;color:#888;font-size:11px;padding:8px;max-width:200px}
 .yc h3{text-decoration:none;font-size:19px;margin:10px 0 8px;letter-spacing:.8px}
 .yc .yinfo{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:2px 16px;font-size:12.5px;margin-bottom:6px}
@@ -284,13 +306,14 @@ input.mk:focus{background:#fffbe6}
 .cards.yr .yc{min-width:0;width:100%;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;page-break-after:always;break-inside:avoid;font-size:10px}
 .cards.yr .yc:last-child{page-break-after:auto}
 .cards.yr .yc .ybox{font-size:12px;padding:5px 12px}
+.cards.yr .yc .ylogo img{height:clamp(12mm,calc(31mm - var(--yr,9) * 1mm),22mm);max-width:60mm;object-fit:contain}
 .cards.yr .yc h3{font-size:18px;margin:12px 0 10px}
 .cards.yr .yc .yinfo{font-size:12px;margin-bottom:8px;gap:4px 16px}
 .cards.yr .yc .ytb th{background:#e4f0ff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.cards.yr .yc .ytb td{font-size:11.5px;padding:3.5px 1px}
+.cards.yr .yc .ytb td{font-size:11.5px;padding:clamp(1px,calc((13 - var(--yr,9)) * .9px + 1.2px),3.5px) 1px}
 .cards.yr .yc .ytb td.gn{background:#e6e6e6!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.cards.yr .yc .ytb tr.sigT td,.cards.yr .yc .ytb tr.sigP td,.cards.yr .yc .ytb tr.obs td{height:44px}
-.cards.yr .yc .verdict{min-height:96px;padding:8px 14px}
+.cards.yr .yc .ytb tr.sigT td,.cards.yr .yc .ytb tr.sigP td,.cards.yr .yc .ytb tr.obs td{height:clamp(24px,calc(44px - (var(--yr,9) - 9) * 5px),44px)}
+.cards.yr .yc .verdict{min-height:clamp(58px,calc(96px - (var(--yr,9) - 9) * 9px),96px);padding:6px 14px}
 .cards.a5y .yc{zoom:.68}
 }
 /* proclamation list: fit the page width and fill the page height when printing */
@@ -725,7 +748,7 @@ function renderBanner() {
 }
 
 /* ---------- views ---------- */
-function applyPaper() { try { let el = document.getElementById('pageStyle'); if (!el) { el = document.createElement('style'); el.id = 'pageStyle'; document.head.appendChild(el); } const yr = ui.tab === 'cards' && ui.rcScope === 'year', a5 = ui.perPage === 'a5', wide2 = ui.tab === 'cards' && ui.rcScope !== 'year' && ui.perPage === '2land'; const pm = a5 ? '8mm' : '10mm'; el.textContent = '@page{size:' + (a5 ? 'A5' : 'A4') + ((yr || wide2) ? ' landscape' : '') + ';margin:0 ' + pm + '}:root{--pv:' + pm + '}'; } catch (_) {} }
+function applyPaper() { try { let el = document.getElementById('pageStyle'); if (!el) { el = document.createElement('style'); el.id = 'pageStyle'; document.head.appendChild(el); } const yr = ui.tab === 'cards' && ui.rcScope === 'year', a5 = ui.perPage === 'a5', wide2 = ui.tab === 'cards' && ui.rcScope !== 'year' && ui.perPage === '2land'; const pm = a5 ? '8mm' : wide2 ? '7mm' : '10mm'; el.textContent = '@page{size:' + (a5 ? 'A5' : 'A4') + ((yr || wide2) ? ' landscape' : '') + ';margin:0 ' + pm + '}:root{--pv:' + pm + '}'; } catch (_) {} }
 function render() { if (CLOUD.on && !CLOUD.ready) return; if (!isAdmin() && ['classes', 'settings', 'users'].includes(ui.tab)) ui.tab = 'marks'; fixClass(); renderHeader(); applyPaper(); $('view').dataset.screen = ui.tab; const v = { marks: viewMarks, results: viewResults, cards: viewCards, classes: viewClasses, settings: viewSettings, users: viewUsers }[ui.tab]; $('view').innerHTML = v(); addScrollers(); applyLiveFilter(); }
 const needClass = () => `<div class="panel">Please add a class first (for example <b>P1 A</b>) in <a href="#" data-tab="classes">Classes &amp; learners</a>.</div>`;
 const fmt = (x, d = 1) => x === null || x === undefined ? '—' : r1(x).toFixed(1);
@@ -756,7 +779,7 @@ function viewMarks() {
       return `<td><div class="mark-cell"><input class="mk" inputmode="decimal" data-r="${r}" data-c="${c}" data-st="${st.id}" data-sj="${s.id}" ${disabled} value="${v === undefined || v === null ? '' : esc(v)}"><button type="button" class="mk-more" data-act="markStatus" data-st="${st.id}" data-sj="${s.id}" data-part="${part}" title="Set assessment status" aria-label="Set assessment status" ${disabled}>⋯</button></div>${status ? `<small class="mk-status">${statusLabel(status)}</small>` : ''}</td>`;
     }).join('') + `<td id="tot-${st.id}"></td><td id="pct-${st.id}"></td></tr>`;
   });
-  setTimeout(() => studs.forEach(st => updateRow(st.id)), 0);
+  setTimeout(() => { studs.forEach(st => updateRow(st.id)); updScrollers(); }, 0);
   const mine = CLOUD.on && !isAdmin() ? `<p class="muted"><b>Your subjects in ${esc(cls.name)}:</b> ${vs.map(s => esc(s.name)).join(', ')}. Other subjects of this class are not shown to you.</p>` : '';
   return submitPanel(cls, vs, term, studs, part) + arrangePanel(cls) + `<div class="panel"><h2>Enter marks – ${esc(cls.name)}, Term ${term}, ${esc(DB.current.year)}</h2>${mine}
   <div class="row"><label>Assessment you are entering&nbsp;<select id="selPart" data-f="part">${opt('mid')}${opt('cat')}${opt('exam')}</select></label>
@@ -995,7 +1018,7 @@ function cardModel(x, cls, scope, term, ctx) {
     kind: scope === 'year' ? 'year' : 'std', ysums,
     year: DB.current.year, period: scope === 'year' ? 'Whole year' : ordinal(term) + ' Term', logo: sch.logo || '',
     title: scope === 'year' ? 'PROGRESSIVE SCHOOL REPORT' : 'REPORT CARD' + ({ mid: ' – MIDTERM', cat: ' – CAT', exam: ' – END-OF-TERM EXAM', term: '' }[scope]),
-    clsName: cls.name, N: ctx.N, born: fmtDate(st.dob), pob: st.pob || '', idno: st.idno || '', conduct: cm.conduct || '', obs: cm.teacher || '',
+    clsName: cls.name, N: ctx.N, born: fmtDate(st.dob), pob: st.pob || '', idno: st.idno || '', conduct: cm.conduct || '', obs: cm.teacher || '', obsT: ['1', '2', '3'].map(k => (((Y().comments[st.id] || {})[k]) || {}).teacher || ''),
     cols, rows, sums, bold, incomplete: !s.complete, rankClosed: ctx.main.open === false
   };
 }
@@ -1014,15 +1037,15 @@ function yearHTML(m) {
   const head = `<tr><th class="l" rowspan="2">Subjects</th>${Y_GROUPS.map(g => `<th colspan="${g[2]}" class="gs">${g[0]}</th>`).join('')}</tr><tr>${Y_HEAD.slice(1).map((h, i) => `<th class="${Y_START.has(i + 1) ? 'gs' : ''}">${h}</th>`).join('')}</tr>`;
   const body = m.rows.map(r => `<tr>${r.map((c, i) => `<td class="${cc(i, i >= 20 ? 'b' : '')}">${esc(c.t)}</td>`).join('')}</tr>`).join('');
   const sumRows = m.ysums.map(r => {
-    if (r.k === 'obs') return `<tr class="obs"><td class="l"><b>Observations</b></td><td colspan="14" class="l"><textarea rows="2" data-f="cmt" data-st="${m.st.id}" data-who="teacher">${esc(m.obs)}</textarea></td><td colspan="3" class="l"><b>Conduct</b></td><td colspan="5" class="l"><input class="cond" data-f="cmt" data-st="${m.st.id}" data-who="conduct" value="${esc(m.conduct)}"></td></tr>`;
+    if (r.k === 'obs') { const ta = (key, v) => `<textarea rows="2" data-f="cmt" data-key="${key}" data-st="${m.st.id}" data-who="teacher" aria-label="Observations">${esc(v)}</textarea>`; return `<tr class="obs"><td class="l"><b>Observations</b></td><td colspan="7" class="l gs">${ta('1', m.obsT[0])}</td><td colspan="6" class="l gs">${ta('2', m.obsT[1])}</td><td colspan="6" class="l gs">${ta('3', m.obsT[2])}</td><td colspan="3" class="l gs">${ta('y', m.obs)}</td></tr>`; }
     let c0 = 0;
     return `<tr class="${r.k}">${r.cells.map((c, j) => { const h = `<td colspan="${c.span}" class="${(j === 0 ? 'l ' : '') + (Y_START.has(c0) && j ? 'gs ' : '') + (r.k === 'tot' && Y_GAIN.has(c0) ? 'gn ' : '') + (r.k === 'tot' && c0 >= 20 ? 'b' : '')}">${esc(c.t)}</td>`; c0 += c.span; return h; }).join('')}</tr>`;
   }).join('');
-  return `<div class="card yc" data-name="${esc((m.st.name + ' ' + m.idno).toLowerCase())}">
+  return `<div class="card yc" style="--yr:${m.rows.length}" data-name="${esc((m.st.name + ' ' + m.idno).toLowerCase())}">
   <div class="ytop"><div class="ybox">${esc(sch.country)}<br>${esc(sch.name)}<br>${esc(sch.phone)}</div>${m.logo ? `<div class="ylogo"><img alt="" src="${m.logo}"></div>` : '<div class="ylogo ph noprint">School logo appears here (add it above)</div>'}<div></div></div>
   <h3>${esc(m.title)}</h3>
   <div class="yinfo"><div><b>NAMES:</b> ${esc(m.st.name.toUpperCase())}</div><div><b>Number of Students:</b> ${m.N}</div><div><b>Class:</b> ${esc(m.clsName)}</div>
-   <div><b>Student's No.:</b> ${esc(m.idno)}</div><div><b>Option:</b></div><div><b>School Year:</b> ${esc(m.year)}</div></div>
+   <div><b>Option:</b></div><div><b>School Year:</b> ${esc(m.year)}</div></div>
   <table class="ytb">${colgroup}<thead>${head}</thead><tbody>${body}${sumRows}</tbody></table>
   ${cardNote(m) ? `<p class="inc">${esc(cardNote(m))}${m.incomplete ? ' Annual points count only assessment components with marks entered.' : ''}</p>` : ''}
   <div class="verdict"><div><b>VERDICT OF THE JURY</b><div class="vopts"><div><i class="bx"></i>Promoted</div><div><i class="bx"></i>Advised to repeat</div><div><i class="bx"></i>Proposed to resit</div></div></div>
@@ -1035,12 +1058,11 @@ function cardFromModel(m) {
   const head = `<tr>${m.cols.map(c => `<th${c[2] === 'l' ? ' class="l"' : ''}>${esc(c[0])}</th>`).join('')}</tr>`;
   const body = m.rows.map(r => `<tr>${r.map((c, i) => i === 0 ? td(c, ' class="l"') : i === m.bold ? `<td><b>${esc(c.t)}</b></td>` : td(c)).join('')}</tr>`).join('');
   const sums = m.sums.map(r => `<tr class="sum">${r.map((c, i) => i === 0 ? td(c, ' class="l"') : td(c)).join('')}</tr>`).join('');
-  return `<div class="card" data-name="${esc((m.st.name + ' ' + m.idno).toLowerCase())}"><div class="top"><div>${esc(sch.country)}<br>${esc(sch.name)}<br>${esc(sch.address)}<br>${esc(sch.phone)}</div><div class="r">${esc(sch.ministry)}<br>${esc(m.year)}<br>${esc(m.period)}</div></div>
+  return `<div class="card" style="--rows:${m.rows.length + m.sums.length + 1}" data-name="${esc((m.st.name + ' ' + m.idno).toLowerCase())}"><div class="top"><div>${esc(sch.country)}<br>${esc(sch.name)}<br>${esc(sch.address)}<br>${esc(sch.phone)}</div><div class="r">${esc(sch.ministry)}<br>${esc(m.year)}<br>${esc(m.period)}</div></div>
   ${m.logo ? `<div class="logo"><img alt="" src="${m.logo}"></div>` : '<div class="logo ph noprint">School logo appears here (add it above)</div>'}
   <h3>${esc(m.title)}</h3>
-  <table class="info"><tr><td colspan="3"><b>Student Name:</b> ${esc(m.st.name.toUpperCase())}</td></tr>
-   <tr><td colspan="2"><b>Born:</b> ${esc(m.born) || dots(14)} &nbsp;at&nbsp; ${esc(m.pob) || dots(14)}</td><td><b>Class:</b> ${esc(m.clsName)}</td></tr>
-   <tr><td><b>ID No.:</b> ${esc(m.idno)}</td><td><b>N. Students:</b> ${m.N}</td><td><b>Conduct:</b> <input class="cond" data-f="cmt" data-st="${m.st.id}" data-who="conduct" value="${esc(m.conduct)}"></td></tr></table>
+  <table class="info"><tr><td colspan="2"><b>Student Name:</b> ${esc(m.st.name.toUpperCase())}</td></tr>
+   <tr><td><b>Class:</b> ${esc(m.clsName)}</td><td><b>N. Students:</b> ${m.N}</td></tr></table>
   <table class="tb"><thead>${head}</thead><tbody>${body}${sums}</tbody></table>
   ${cardNote(m) ? `<p class="inc">${esc(cardNote(m))}</p>` : ''}
   <div class="foot"><div class="obs">Observations<textarea rows="3" data-f="cmt" data-st="${m.st.id}" data-who="teacher">${esc(m.obs)}</textarea></div><div class="tsig">Teacher Signature</div><div class="psig">Parent Signature</div></div></div>`;
@@ -1101,7 +1123,7 @@ function viewCards() {
    <div class="row actions"><button data-act="print">🖨️ Print</button><button class="b-pdf" data-act="pdfCards">⬇ Download PDF – ${what}</button><button class="b-xls" data-act="xlsxCards">⬇ Download Excel – ${what}</button></div>
    ${ctx.main.open === false ? `<div class="logoprompt">⚠ Positions are hidden until every learner’s marks are complete (${ctx.main.cr.stats.incomplete} learner${ctx.main.cr.stats.incomplete === 1 ? '' : 's'} still incomplete). A dash (-) means the assessment was marked missed or transferred; it is excluded from the learner’s average. Unentered assessments remain incomplete.</div>` : ''}
    ${yr ? '<div class="muted"><b>Whole year:</b> the card is the school’s landscape “Progressive school report” (three terms side by side with annual points), so it prints on landscape pages.</div>' : ''}
-   <div class="muted">Pick “Which report cards?” to download or print every card listed below, or just one learner. Sort, Show and Find choose exactly which cards are included. If Print does not open in your viewer, use Download PDF: the PDF always fits the paper you choose. Conduct and Observations can be typed directly on the cards and are saved automatically for this term.</div></div>
+   <div class="muted">Pick “Which report cards?” to download or print every card listed below, or just one learner. Sort, Show and Find choose exactly which cards are included. If Print does not open in your viewer, use Download PDF: the PDF always fits the paper you choose. Observations can be typed directly on the cards and are saved automatically for this term.</div></div>
   ${chosen.length ? `<div class="cards ${yr ? 'yr' + (ui.perPage === 'a5' ? ' a5y' : '') : ui.perPage === '2' ? 'two' : ui.perPage === '2land' ? 'two-land' : ui.perPage === 'a5' ? 'a5' : ''}">${chosen.map(x => cardHTML(x, cls, scope, term, ctx)).join('')}</div>` : '<div class="panel noprint">No learners match this selection.</div>'}`;
 }
 
@@ -1292,7 +1314,9 @@ function wrapText(str, font, size, maxW) {
 class PdfPage {
   constructor(w, h) { this.w = w; this.h = h; this.ops = []; }
   y(v) { return (this.h - v).toFixed(2); }
-  line(x1, y1, x2, y2, lw) { this.ops.push(`${lw || 0.6} w ${x1.toFixed(2)} ${this.y(y1)} m ${x2.toFixed(2)} ${this.y(y2)} l S`); }
+  line(x1, y1, x2, y2, lw, dash) { this.ops.push(`${dash ? 'q [' + dash + '] 0 d ' : ''}${lw || 0.6} w ${x1.toFixed(2)} ${this.y(y1)} m ${x2.toFixed(2)} ${this.y(y2)} l S${dash ? ' Q' : ''}`); }
+  circle(cx, cy, r, lw) { const c = 0.5523 * r, X = v => v.toFixed(2), Yv = v => this.y(v); this.ops.push(`${lw || 0.6} w ${X(cx + r)} ${Yv(cy)} m ${X(cx + r)} ${Yv(cy - c)} ${X(cx + c)} ${Yv(cy - r)} ${X(cx)} ${Yv(cy - r)} c ${X(cx - c)} ${Yv(cy - r)} ${X(cx - r)} ${Yv(cy - c)} ${X(cx - r)} ${Yv(cy)} c ${X(cx - r)} ${Yv(cy + c)} ${X(cx - c)} ${Yv(cy + r)} ${X(cx)} ${Yv(cy + r)} c ${X(cx + c)} ${Yv(cy + r)} ${X(cx + r)} ${Yv(cy + c)} ${X(cx + r)} ${Yv(cy)} c S`); }
+  scissors(cx, top) { this.rect(cx - 7, top - 2, 14, 24, { fill: '1 1 1', lw: 0 }); this.circle(cx - 3.2, top + 2.6, 2.4, 0.9); this.circle(cx + 3.2, top + 2.6, 2.4, 0.9); this.line(cx - 2.2, top + 4.6, cx + 2.4, top + 19, 1); this.line(cx + 2.2, top + 4.6, cx - 2.4, top + 19, 1); }
   rect(x, y, w, h, o) { o = o || {}; const p = `${x.toFixed(2)} ${this.y(y + h)} ${w.toFixed(2)} ${h.toFixed(2)} re`; if (o.fill) this.ops.push(`q ${o.fill} rg ${p} f Q`); if (o.lw !== 0) this.ops.push(`${o.lw || 0.6} w ${p} S`); }
   text(str, x, y, o) {
     o = o || {}; str = String(str == null ? '' : str); if (!str) return;
@@ -1352,7 +1376,7 @@ function drawCardPDF(pg, m, x, y, W, k, v, logo) {
   [sch.ministry, m.year, m.period].forEach((t, i) => pg.text(t, x + W, cy + lh * (i + 0.8), { font: 'TB', size: F(10.5), align: 'r' }));
   cy += lh * 4 + vh(1.5);
   if (m.logo && logo) {
-    let hh = vh(17), ww = hh * logo.w / logo.h; if (ww > W * 0.3) { ww = W * 0.3; hh = ww * logo.h / logo.w; }
+    let hh = vh(26), ww = hh * logo.w / logo.h; if (ww > W * 0.42) { ww = W * 0.42; hh = ww * logo.h / logo.w; }
     pg.image(x + W / 2 - ww / 2, cy, ww, hh); cy += hh + vh(2);
   } else cy += vh(2);
   const tsz = F(15), tw = textW(m.title, 'TB', tsz);
@@ -1365,9 +1389,8 @@ function drawCardPDF(pg, m, x, y, W, k, v, logo) {
     pg.text(label, bx + 4, base, { font: 'TB', size: sz }); pg.text(fitStr(value, 'T', sz, bw - lw - 10), bx + 4 + lw, base, { font: 'T', size: sz });
   };
   lv('Student Name:', m.st.name.toUpperCase(), x, cy, W);
-  lv('Born:', (m.born || '..............') + '  at  ' + (m.pob || '..............'), x, cy + rh, W * 0.62); lv('Class:', m.clsName, x + W * 0.62, cy + rh, W * 0.38);
-  lv('ID No.:', m.idno, x, cy + 2 * rh, W * 0.28); lv('N. Students:', String(m.N), x + W * 0.28, cy + 2 * rh, W * 0.30); lv('Conduct:', m.conduct, x + W * 0.58, cy + 2 * rh, W * 0.42);
-  cy += 3 * rh + vh(3);
+  lv('Class:', m.clsName, x, cy + rh, W * 0.55); lv('N. Students:', String(m.N), x + W * 0.55, cy + rh, W * 0.45);
+  cy += 2 * rh + vh(3);
   const tot = m.cols.reduce((a, c) => a + c[1], 0), cw = m.cols.map(c => W * c[1] / tot), hh2 = vh(9);
   let cx = x;
   m.cols.forEach((c, i) => { pg.rect(cx, cy, cw[i], hh2, { fill: '0.88 0.93 0.99' }); cellText(pg, c[0], cx, cy, cw[i], hh2, { font: 'TB', size: F(8.4), align: c[2] === 'l' ? 'l' : 'c' }); cx += cw[i]; });
@@ -1376,12 +1399,12 @@ function drawCardPDF(pg, m, x, y, W, k, v, logo) {
   m.sums.forEach(r => { cx = x; let ci = 0; r.forEach((c, j) => { const w = cw.slice(ci, ci + c.span).reduce((a, b) => a + b, 0); pg.rect(cx, cy, w, rh, { fill: '0.95 0.97 1' }); cellText(pg, c.t, cx, cy, w, rh, { font: 'TB', size: sz, align: j === 0 ? 'l' : 'c' }); cx += w; ci += c.span; }); cy += rh; });
   const nt = cardNote(m); if (nt) { const ls = wrapText(nt, 'TI', F(8), W); ls.forEach((ln, i) => pg.text(ln, x, cy + vh(4) + i * F(9.5), { font: 'TI', size: F(8) })); cy += vh(2) + ls.length * F(9.5); }
   cy += vh(4);
-  const fh = vh(27);
+  const fh = vh(36);
   pg.rect(x, cy, W / 2, fh); pg.rect(x + W / 2, cy, W / 2, fh / 2); pg.rect(x + W / 2, cy + fh / 2, W / 2, fh / 2);
   pg.text('Observations', x + 5, cy + F(12), { font: 'TB', size: sz });
   if (m.obs) wrapText(m.obs, 'T', F(9.5), W / 2 - 12).slice(0, 4).forEach((ln, i) => pg.text(ln, x + 5, cy + F(12) + (i + 1) * F(11.5), { font: 'T', size: F(9.5) }));
-  pg.text('Teacher Signature', x + W * 0.75, cy + F(12), { font: 'TB', size: sz, align: 'c' });
-  pg.text('Parent Signature', x + W * 0.75, cy + fh / 2 + F(12), { font: 'TB', size: sz, align: 'c' });
+  pg.text('Teacher Signature', x + W / 2 + 5, cy + F(12), { font: 'TB', size: sz });
+  pg.text('Parent Signature', x + W / 2 + 5, cy + fh / 2 + F(12), { font: 'TB', size: sz });
   cy += fh;
   return cy - y;
 }
@@ -1407,6 +1430,7 @@ async function makeCardsPDF(models, paper) {
     else { v = boxH / H; if (v < 0.62) { v = 0.62; const H2 = H * 0.62; if (H2 > boxH) { k = k0 * boxH / H2; W = k * 186 * MM; } } }
     drawCardPDF(page, m, bx + (boxW - W) / 2, by, W, k, v, logo);
     if (!landscape2 && slot === 1) page.line(M, by - gap / 2, PW - M, by - gap / 2, 0.3);
+    if (landscape2 && slot === 1) { const cxl = M + boxW + gap / 2; page.line(cxl, by, cxl, by + boxH, 0.8, '4 3'); page.scissors(cxl, by + boxH * 0.24); }
   });
   if (!models.length) doc.addPage(PW, PH);
   return doc.build('Report cards');
@@ -1432,7 +1456,7 @@ function drawYearPDF(pg, m, x, y, W, k, v, logo) {
   pg.text(m.title, x + W / 2, cy + F(12), { font: 'TB', size: F(15), align: 'c' });
   cy += vh(28);
   const iz = F(9.2);
-  [[['NAMES:', m.st.name.toUpperCase()], ['Number of Students:', String(m.N)], ['Class:', m.clsName]], [["Student's No.:", m.idno], ['Option:', ''], ['School Year:', String(m.year)]]].forEach((row, ri) => {
+  [[['NAMES:', m.st.name.toUpperCase()], ['Number of Students:', String(m.N)], ['Class:', m.clsName]], [['Option:', ''], ['School Year:', String(m.year)]]].forEach((row, ri) => {
     row.forEach(([l, val], ci) => { const ix = x + [0, 0.42, 0.74][ci] * W, by = cy + vh(9) + ri * vh(13); pg.text(l, ix, by, { font: 'TB', size: iz }); pg.text(fitStr(val, 'T', iz, W * [0.4, 0.3, 0.26][ci] - textW(l + ' ', 'TB', iz)), ix + textW(l + ' ', 'TB', iz), by, { font: 'T', size: iz }); });
   });
   cy += vh(33);
@@ -1446,11 +1470,9 @@ function drawYearPDF(pg, m, x, y, W, k, v, logo) {
   m.rows.forEach(r => { r.forEach((c, i) => { pg.rect(cx[i], cy, cw[i], rh, Y_GAIN.has(i) ? { fill: GR } : {}); cellText(pg, c.t, cx[i], cy, cw[i], rh, { font: i >= 20 ? 'TB' : 'T', size: sz, align: i === 0 ? 'l' : 'c' }); }); cy += rh; });
   m.ysums.forEach(r => {
     if (r.k === 'obs') {
-      const oh = vh(30), w1 = cx[15] - cx[1], w2 = cx[18] - cx[15], w3 = cx[23] - cx[18];
+      const oh = vh(30);
       pg.rect(cx[0], cy, cw[0], oh); pg.text('Observations', cx[0] + 3, cy + F(11), { font: 'TB', size: sz });
-      pg.rect(cx[1], cy, w1, oh); wrapText(m.obs || '', 'T', F(8), w1 - 8).slice(0, 2).forEach((ln, i) => pg.text(ln, cx[1] + 4, cy + F(10.5) + i * F(10), { font: 'T', size: F(8) }));
-      pg.rect(cx[15], cy, w2, oh); pg.text('Conduct', cx[15] + 3, cy + F(11), { font: 'TB', size: sz });
-      pg.rect(cx[18], cy, w3, oh); pg.text(fitStr(m.conduct || '', 'T', sz, w3 - 8), cx[18] + 4, cy + F(11), { font: 'T', size: sz });
+      [[1, 8, m.obsT[0]], [8, 14, m.obsT[1]], [14, 20, m.obsT[2]], [20, 23, m.obs]].forEach(([c1, c2, t]) => { const w = cx[c2] - cx[c1]; pg.rect(cx[c1], cy, w, oh); wrapText(t || '', 'T', F(8), w - 8).slice(0, 3).forEach((ln, i) => pg.text(ln, cx[c1] + 4, cy + F(10.5) + i * F(10), { font: 'T', size: F(8) })); });
       cy += oh; return;
     }
     const sig = r.k === 'sigT' || r.k === 'sigP', hh = sig ? vh(30) : rh; let c0 = 0;
@@ -1691,13 +1713,13 @@ async function yearWorkbook(models) {
     sh.rh[r++] = 8;
     sh.put(r, 1, m.title, st.title, G); sh.rh[r] = 24; r++;
     sh.put(r, 1, 'NAMES: ' + m.st.name.toUpperCase(), st.inf, 10); sh.put(r, 11, 'Number of Students: ' + m.N, st.inf, 7); sh.put(r, 18, 'Class: ' + m.clsName, st.inf, 6); sh.rh[r++] = 16;
-    sh.put(r, 1, "Student's No.: " + m.idno, st.inf, 10); sh.put(r, 11, 'Option:', st.inf, 7); sh.put(r, 18, 'School Year: ' + m.year, st.inf, 6); sh.rh[r++] = 16;
+    sh.put(r, 1, 'Option:', st.inf, 10); sh.put(r, 11, 'School Year: ' + m.year, st.inf, 13); sh.rh[r++] = 16;
     sh.rh[r++] = 6;
     sh.put(r, 1, 'Subjects', st.thl, 1, 2); Y_GROUPS.forEach(g => sh.put(r, g[1] + 1, g[0], st.th, g[2])); sh.rh[r++] = 15;
     for (let c = 1; c < 23; c++) sh.put(r, c + 1, Y_HEAD[c], st.th); sh.rh[r++] = 26;
     m.rows.forEach(row => { row.forEach((cell, i) => sh.put(r, i + 1, val(cell), i === 0 ? f({ h: 'left' }) : cs(cell, { fill: Y_GAIN.has(i) ? 'E6E6E6' : undefined, b: i >= 20 ? 1 : undefined }))); sh.rh[r++] = 17; });
     m.ysums.forEach(row => {
-      if (row.k === 'obs') { sh.put(r, 1, 'Observations', st.lab); sh.put(r, 2, m.obs || '', st.ob, 14); sh.put(r, 16, 'Conduct', st.lab, 3); sh.put(r, 19, m.conduct || '', st.val, 5); sh.rh[r++] = 34; return; }
+      if (row.k === 'obs') { sh.put(r, 1, 'Observations', st.lab); sh.put(r, 2, m.obsT[0] || '', st.ob, 7); sh.put(r, 9, m.obsT[1] || '', st.ob, 6); sh.put(r, 15, m.obsT[2] || '', st.ob, 6); sh.put(r, 21, m.obs || '', st.ob, 3); sh.rh[r++] = 40; return; }
       const sig = row.k === 'sigT' || row.k === 'sigP'; let c0 = 1;
       row.cells.forEach((cell, j) => { sh.put(r, c0, val(cell), j === 0 ? f({ h: 'left', b: sig ? undefined : 1, v: sig ? 'top' : 'center' }) : cs(cell, { b: 1, fill: row.k === 'tot' ? (Y_GAIN.has(c0 - 1) ? 'E6E6E6' : 'F2F6FC') : undefined }), cell.span); c0 += cell.span; });
       sh.rh[r++] = sig ? 34 : 17;
@@ -1724,7 +1746,7 @@ async function cardsWorkbook(models) {
     c: S.get({ sz: 10, font: TNR, h: 'center', border: 1 }), cl: S.get({ sz: 10, font: TNR, h: 'left', border: 1 }), cb: S.get({ b: 1, sz: 10, font: TNR, h: 'center', border: 1 }),
     cp: S.get({ sz: 10, font: TNR, h: 'center', border: 1, fmt: '0.0"%"' }), cbp: S.get({ b: 1, sz: 10, font: TNR, h: 'center', border: 1, fmt: '0.0"%"' }),
     s: S.get({ b: 1, sz: 10, font: TNR, h: 'center', border: 1, fill: 'F2F6FC' }), sl: S.get({ b: 1, sz: 10, font: TNR, h: 'left', border: 1, fill: 'F2F6FC' }), sp: S.get({ b: 1, sz: 10, font: TNR, h: 'center', border: 1, fill: 'F2F6FC', fmt: '0.0"%"' }),
-    note: S.get({ i: 1, sz: 9, font: TNR, h: 'left', v: 'top', wrap: 1 }), obs: S.get({ b: 1, sz: 10, font: TNR, h: 'left', v: 'top', border: 1, wrap: 1 }), sig: S.get({ b: 1, sz: 10, font: TNR, h: 'center', v: 'top', border: 1 })
+    note: S.get({ i: 1, sz: 9, font: TNR, h: 'left', v: 'top', wrap: 1 }), obs: S.get({ b: 1, sz: 10, font: TNR, h: 'left', v: 'top', border: 1, wrap: 1 }), sig: S.get({ b: 1, sz: 10, font: TNR, h: 'left', v: 'top', border: 1 })
   };
   const val = c => c.n !== undefined ? c.n : c.t;
   let r = 1;
@@ -1738,8 +1760,7 @@ async function cardsWorkbook(models) {
     r++;
     sh.put(r, 1, m.title, st.title, G); sh.rh[r] = 26; r++;
     sh.put(r, 1, 'Student Name:', st.lab, 3); sh.put(r, 4, m.st.name.toUpperCase(), st.val, 13); sh.rh[r] = 20; r++;
-    sh.put(r, 1, 'Born:', st.lab, 2); sh.put(r, 3, (m.born || '') + (m.pob ? '  at  ' + m.pob : ''), st.val, 8); sh.put(r, 11, 'Class:', st.lab, 3); sh.put(r, 14, m.clsName, st.val, 3); sh.rh[r] = 20; r++;
-    sh.put(r, 1, 'ID No.:', st.lab, 2); sh.put(r, 3, m.idno, st.val, 3); sh.put(r, 6, 'N. Students:', st.lab, 3); sh.put(r, 9, m.N, st.val, 2); sh.put(r, 11, 'Conduct:', st.lab, 3); sh.put(r, 14, m.conduct, st.val, 3); sh.rh[r] = 20; r++;
+    sh.put(r, 1, 'Class:', st.lab, 3); sh.put(r, 4, m.clsName, st.val, 5); sh.put(r, 9, 'N. Students:', st.lab, 4); sh.put(r, 13, m.N, st.val, 4); sh.rh[r] = 20; r++;
     sh.rh[r++] = 6;
     const sp = allocSpans(m.cols.map(c => c[1]), G); let c0 = 1;
     m.cols.forEach((c, i) => { sh.put(r, c0, c[0], c[2] === 'l' ? st.thl : st.th, sp[i]); c0 += sp[i]; }); sh.rh[r++] = 26;
@@ -1747,7 +1768,7 @@ async function cardsWorkbook(models) {
     m.sums.forEach(row => { c0 = 1; let ci = 0; row.forEach((cell, j) => { const span = sp.slice(ci, ci + cell.span).reduce((a, b) => a + b, 0); sh.put(r, c0, val(cell), j === 0 ? st.sl : (cell.pct ? st.sp : st.s), span); c0 += span; ci += cell.span; }); sh.rh[r++] = 20; });
     if (cardNote(m)) { sh.put(r, 1, cardNote(m), st.note, G); sh.rh[r] = 24; r++; }
     sh.rh[r++] = 8;
-    sh.put(r, 1, 'Observations' + (m.obs ? '\n' + m.obs : ''), st.obs, 8, 2); sh.put(r, 9, 'Teacher Signature', st.sig, 8); sh.put(r + 1, 9, 'Parent Signature', st.sig, 8); sh.rh[r] = 34; sh.rh[r + 1] = 34; r += 2;
+    sh.put(r, 1, 'Observations' + (m.obs ? '\n' + m.obs : ''), st.obs, 8, 2); sh.put(r, 9, 'Teacher Signature', st.sig, 8); sh.put(r + 1, 9, 'Parent Signature', st.sig, 8); sh.rh[r] = 46; sh.rh[r + 1] = 46; r += 2;
     sh.breaks.push(r - 1); r += 2;
   });
   sh.o = { scale: 92 };
@@ -2060,7 +2081,7 @@ document.addEventListener('change', async e => {
     case 'resScope': ui.resScope = el.value; render(); break;
     case 'rcScope': ui.rcScope = el.value; render(); break;
     case 'rcStudent': ui.rcStudent = el.value; render(); break;
-    case 'cmt': { const k = commentKey(ui.rcScope); const c = y.comments[el.dataset.st] = y.comments[el.dataset.st] || {}; (c[k] = c[k] || {})[el.dataset.who] = el.value; save(); break; }
+    case 'cmt': { const k = el.dataset.key || commentKey(ui.rcScope); const c = y.comments[el.dataset.st] = y.comments[el.dataset.st] || {}; (c[k] = c[k] || {})[el.dataset.who] = el.value; save(); break; }
     case 'subj': {
       const cl = curClass(), s = cl.subjects.find(s => s.id === el.dataset.id), k = el.dataset.k, term = DB.current.term;
       if (k === 'name') { const v = el.value.trim(); if (!v) { el.value = s.name; return; } if (cl.subjects.some(x => x.id !== s.id && x.name.trim().toLowerCase() === v.toLowerCase())) { el.value = s.name; await say('This subject already exists in the class.'); return; } s.name = v; save(); render(); break; }
