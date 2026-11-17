@@ -1070,7 +1070,7 @@ function yearHTML(m) {
   <div class="ytop"><div class="ybox">${esc(sch.country)}<br>${esc(sch.name)}<br>${esc(sch.phone)}</div>${m.logo ? `<div class="ylogo"><img alt="" src="${m.logo}"></div>` : '<div class="ylogo ph noprint">School logo appears here (add it above)</div>'}<div></div></div>
   <h3>${esc(m.title)}</h3>
   <div class="yinfo"><div><b>NAMES:</b> ${esc(m.st.name.toUpperCase())}</div><div><b>Number of Students:</b> ${m.N}</div><div><b>Class:</b> ${esc(m.clsName)}</div>
-   <div><b>Option:</b></div><div><b>School Year:</b> ${esc(m.year)}</div></div>
+   <div></div><div><b>School Year:</b> ${esc(m.year)}</div></div>
   <table class="ytb">${colgroup}<thead>${head}</thead><tbody>${body}${sumRows}</tbody></table>
   ${cardNote(m) ? `<p class="inc">${esc(cardNote(m))}${m.incomplete ? ' Annual points count only assessment components with marks entered.' : ''}</p>` : ''}
   <div class="verdict"><div><b>VERDICT OF THE JURY</b><div class="vopts"><div><i class="bx"></i>Promoted</div><div><i class="bx"></i>Advised to repeat</div><div><i class="bx"></i>Proposed to resit</div></div></div>
@@ -1481,7 +1481,7 @@ function drawYearPDF(pg, m, x, y, W, k, v, logo) {
   pg.text(m.title, x + W / 2, cy + F(12), { font: 'TB', size: F(15), align: 'c' });
   cy += vh(28);
   const iz = F(9.2);
-  [[['NAMES:', m.st.name.toUpperCase()], ['Number of Students:', String(m.N)], ['Class:', m.clsName]], [['Option:', ''], ['School Year:', String(m.year)]]].forEach((row, ri) => {
+  [[['NAMES:', m.st.name.toUpperCase()], ['Number of Students:', String(m.N)], ['Class:', m.clsName]], [['', ''], ['School Year:', String(m.year)]]].forEach((row, ri) => {
     row.forEach(([l, val], ci) => { const ix = x + [0, 0.42, 0.74][ci] * W, by = cy + vh(9) + ri * vh(13); pg.text(l, ix, by, { font: 'TB', size: iz }); pg.text(fitStr(val, 'T', iz, W * [0.4, 0.3, 0.26][ci] - textW(l + ' ', 'TB', iz)), ix + textW(l + ' ', 'TB', iz), by, { font: 'T', size: iz }); });
   });
   cy += vh(33);
@@ -1738,7 +1738,7 @@ async function yearWorkbook(models) {
     sh.rh[r++] = 8;
     sh.put(r, 1, m.title, st.title, G); sh.rh[r] = 24; r++;
     sh.put(r, 1, 'NAMES: ' + m.st.name.toUpperCase(), st.inf, 10); sh.put(r, 11, 'Number of Students: ' + m.N, st.inf, 7); sh.put(r, 18, 'Class: ' + m.clsName, st.inf, 6); sh.rh[r++] = 16;
-    sh.put(r, 1, 'Option:', st.inf, 10); sh.put(r, 11, 'School Year: ' + m.year, st.inf, 13); sh.rh[r++] = 16;
+    sh.put(r, 11, 'School Year: ' + m.year, st.inf, 13); sh.rh[r++] = 16;
     sh.rh[r++] = 6;
     sh.put(r, 1, 'Subjects', st.thl, 1, 2); Y_GROUPS.forEach(g => sh.put(r, g[1] + 1, g[0], st.th, g[2])); sh.rh[r++] = 15;
     for (let c = 1; c < 23; c++) sh.put(r, c + 1, Y_HEAD[c], st.th); sh.rh[r++] = 26;
