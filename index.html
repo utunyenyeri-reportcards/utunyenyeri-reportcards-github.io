@@ -243,7 +243,7 @@ input.mk:focus{background:#fffbe6}
   .cards.two-land .card{position:relative;font-size:11.5px!important;padding:4.5mm 5.5mm!important;margin:0!important;width:100%;min-width:0;height:194mm;min-height:194mm;box-sizing:border-box;display:flex;flex-direction:column;justify-content:flex-start;break-inside:avoid!important;page-break-inside:avoid!important;overflow:hidden}
   .cards.two-land .card:nth-child(odd){overflow:visible}
   .cards.two-land .card:nth-child(odd)::after{content:"";position:absolute;top:0;bottom:0;right:-3.4mm;border-left:0.35mm dashed #222;pointer-events:none}
-  .cards.two-land .card:nth-child(odd)::before{content:"\2702";position:absolute;top:10mm;right:-3.4mm;transform:translateX(50%) rotate(90deg);background:#fff;font:19px/1 "Segoe UI Symbol","DejaVu Sans","Noto Sans Symbols2",Arial,sans-serif;color:#222;padding:1mm 0;z-index:2}
+  .cards.two-land .card:nth-child(odd)::before{content:"\2702";position:absolute;top:12mm;right:-3.4mm;transform:translateX(50%) rotate(90deg);font:12px/1 "Segoe UI Symbol","DejaVu Sans","Noto Sans Symbols2",Arial,sans-serif;color:#222;z-index:2}
   .cards.two-land .card .top{font-size:10.5px!important;line-height:1.3;gap:6px}
   .cards.two-land .card .top .r{min-width:0}
   .cards.two-land .card .logo{margin-top:0;flex:none;line-height:0}
@@ -382,6 +382,9 @@ nav#tabs button[data-tab="users"]{--c:#00a1de}
 @media print{
 #view{padding:var(--pv,10mm) 0;box-decoration-break:clone;-webkit-box-decoration-break:clone}
 #printStamp{display:block;position:fixed;left:0;right:0;bottom:3.2mm;text-align:center;font:9px/1.2 Arial,Helvetica,sans-serif;color:#444}
+#printStamp2{display:none}
+body.stamp-split #printStamp{left:7mm;right:auto;text-align:left}
+body.stamp-split #printStamp2{display:block;position:fixed;right:7mm;left:auto;bottom:3.2mm;text-align:right;font:9px/1.2 Arial,Helvetica,sans-serif;color:#444}
 .hscroll{display:none!important}
 }
 /* always-visible scrollbars, scroll buttons and fixed headings for mouse-only desktops */
@@ -435,6 +438,11 @@ button.small{min-height:34px}
 .row>button{flex:1 1 auto}
 select{max-width:100%}
 input[style*="width"],textarea[style*="min-width"],select[style*="width"]{width:100%!important;min-width:0!important;max-width:100%}
+.tablewrap td input:not([type=checkbox]):not([type=radio]){min-width:96px!important}
+.tablewrap td input[data-f="subj"][data-k="name"]:not([type=checkbox]):not([type=radio]){min-width:230px!important}
+.tablewrap td input[data-f="stname"]:not([type=checkbox]):not([type=radio]){min-width:310px!important}
+.tablewrap td input[type=number]:not([type=checkbox]):not([type=radio]){min-width:64px!important}
+.tablewrap td input.mk{min-width:62px!important}
 .mk{width:62px}
 .dlg{max-width:calc(100vw - 20px);padding:16px 14px}
 .dlg-btns button{flex:1 1 auto}
@@ -457,9 +465,11 @@ input[style*="width"],textarea[style*="min-width"],select[style*="width"]{width:
 body.hbar-on main{padding-bottom:64px}
 @media print{#hbar{display:none!important}}
 
+/* learner and subject names are never cut short in their fields */
+.tablewrap td input[data-f="stname"]{min-width:290px}
 /* Assessment status control */
-.mark-cell{display:flex;align-items:center;justify-content:center;gap:2px;min-width:76px}
-.mark-cell input.mk{width:48px;min-width:42px;text-align:center}
+.mark-cell{display:flex;align-items:center;justify-content:center;gap:2px;min-width:100px}
+.mark-cell input.mk{width:68px;min-width:62px;padding:4px 2px;text-align:center;font-variant-numeric:tabular-nums}
 .mark-cell .mk-more{padding:2px 5px;min-width:22px;line-height:1.2;font-size:16px;border:0;background:transparent;color:#64748b;box-shadow:none}
 .mark-cell .mk-more:hover{background:#e8eef7;color:#1d4ed8}
 .mark-cell .mk-status{display:block;font-size:9px;line-height:1.1;font-weight:700;color:#9a3412;white-space:nowrap}
@@ -468,7 +478,7 @@ body.hbar-on main{padding-bottom:64px}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" async onerror="window.__sbFail=1"></script>
 </head>
 <body>
-<div id="printStamp" aria-hidden="true"></div>
+<div id="printStamp" aria-hidden="true"></div><div id="printStamp2" aria-hidden="true"></div>
 <div id="hbar" class="noprint" hidden><button type="button" data-hb="-1" aria-label="Scroll left">◀</button><input type="range" id="hrange" min="0" max="1000" value="0" aria-label="Slide the table left or right"><button type="button" data-hb="1" aria-label="Scroll right">▶</button></div>
 <header class="top noprint">
  <div class="ribbon"></div>
@@ -748,7 +758,7 @@ function renderBanner() {
 }
 
 /* ---------- views ---------- */
-function applyPaper() { try { let el = document.getElementById('pageStyle'); if (!el) { el = document.createElement('style'); el.id = 'pageStyle'; document.head.appendChild(el); } const yr = ui.tab === 'cards' && ui.rcScope === 'year', a5 = ui.perPage === 'a5', wide2 = ui.tab === 'cards' && ui.rcScope !== 'year' && ui.perPage === '2land'; const pm = a5 ? '8mm' : wide2 ? '7mm' : '10mm'; el.textContent = '@page{size:' + (a5 ? 'A5' : 'A4') + ((yr || wide2) ? ' landscape' : '') + ';margin:0 ' + pm + '}:root{--pv:' + pm + '}'; } catch (_) {} }
+function applyPaper() { try { let el = document.getElementById('pageStyle'); if (!el) { el = document.createElement('style'); el.id = 'pageStyle'; document.head.appendChild(el); } const yr = ui.tab === 'cards' && ui.rcScope === 'year', a5 = ui.perPage === 'a5', wide2 = ui.tab === 'cards' && ui.rcScope !== 'year' && ui.perPage === '2land'; const pm = a5 ? '8mm' : wide2 ? '7mm' : '10mm'; document.body.classList.toggle('stamp-split', !!wide2); el.textContent = '@page{size:' + (a5 ? 'A5' : 'A4') + ((yr || wide2) ? ' landscape' : '') + ';margin:0 ' + pm + '}:root{--pv:' + pm + '}'; } catch (_) {} }
 function render() { if (CLOUD.on && !CLOUD.ready) return; if (!isAdmin() && ['classes', 'settings', 'users'].includes(ui.tab)) ui.tab = 'marks'; fixClass(); renderHeader(); applyPaper(); $('view').dataset.screen = ui.tab; const v = { marks: viewMarks, results: viewResults, cards: viewCards, classes: viewClasses, settings: viewSettings, users: viewUsers }[ui.tab]; $('view').innerHTML = v(); addScrollers(); applyLiveFilter(); }
 const needClass = () => `<div class="panel">Please add a class first (for example <b>P1 A</b>) in <a href="#" data-tab="classes">Classes &amp; learners</a>.</div>`;
 const fmt = (x, d = 1) => x === null || x === undefined ? '—' : r1(x).toFixed(1);
@@ -797,6 +807,12 @@ function missingMarks(subjects, studs, term, part) {
 }
 const usedIn = (s, term, part) => +smax(s, term)[part] > 0;
 function submitPanel(cls, vs, term, studs, part) {
+  if (CLOUD.on && isAdmin() && CLOUD.subsOk) {
+    // administrator: give the teacher permission back right here (same action as in Users & access)
+    const PL = PART_LABEL[part], items = vs.filter(s => subFind(cls.id, s.id, term, part)).map(s => { const x = subFind(cls.id, s.id, term, part), p = CLOUD.profiles.find(q => q.id === x.submitted_by);
+      return `<div class="row" style="margin:4px 0"><span>✔ <b>${esc(s.name)}</b> – submitted${p ? ' by ' + esc(p.full_name || p.email) : ''}</span><button class="small" data-act="unlockSub" data-c="${cls.id}" data-s="${s.id}" data-t="${term}" data-p="${part}">🔓 Unlock for the teacher</button></div>`; }).join('');
+    return items ? `<div class="panel subp"><h3 style="margin-top:0">Submitted ${esc(PL)} – ${esc(cls.name)}, Term ${term}</h3><p class="muted">Teachers cannot change these marks after submitting. Press “Unlock” to give the teacher permission to edit them again.</p>${items}</div>` : '';
+  }
   if (!CLOUD.on || isAdmin() || !CLOUD.subsOk) return '';
   const PL = PART_LABEL[part], sh = { cat: 'CAT', mid: 'Midterm', exam: 'Exam' };
   const when = x => x && x.submitted_at ? new Date(x.submitted_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '';
@@ -894,10 +910,19 @@ function resultsModel() {
 function viewResults() {
   const cls = curClass(); if (!cls) return needClass();
   const m = resultsModel(), st = m.st, n = m.subjects.length, pass = DB.settings.passPct;
-  // Printing: the list is fitted to the A4 page width, and the row height is chosen from the number of learners so the sheet fills the page (long classes continue on a second page with the header repeated).
-  const avail = 1047 - 76 - 112 - 72 - (m.note ? 46 : 0) - 90, prow = Math.max(17, Math.min(24, avail / (m.rows.length + 4)));
-  const pfs = Math.max(10.5, Math.min(12.5, prow * 0.62)), ppad = Math.max(1, (prow - pfs * 1.15) / 2 - 0.5);
-  const procVars = `--pfs:${pfs.toFixed(1)}px;--ppad:${ppad.toFixed(1)}px;--pdone:${Math.round(Math.max(20, Math.min(60, avail - prow * (m.rows.length + 4) + 28)))}px`;
+  // Printing: the whole list must fit on ONE A4 sheet. The text size and row padding are chosen from the number of learners
+  // and from how many lines each name needs (names that wrap take more height), shrinking only as much as necessary.
+  const avail = 1047 - 76 - 112 - 72 - (m.note ? 46 : 0) - 34, nameW = 0.29 * 714 - 10;
+  const cx = (viewResults._cv = viewResults._cv || document.createElement('canvas')).getContext('2d');
+  const linesOf = (txt, px) => { cx.font = '400 ' + px + 'px Arial,Helvetica,sans-serif'; let n = 1, w = 0; const sp = cx.measureText(' ').width; String(txt).split(/\s+/).forEach(wd => { const ww = cx.measureText(wd).width; if (ww > nameW) { n += Math.floor(ww / nameW); w = ww % nameW; return; } if (w && w + sp + ww > nameW) { n++; w = ww; } else w = w ? w + sp + ww : ww; }); return n; };
+  let pfs = 12.5, ppad = 2, need = 0;
+  for (pfs = 12.5; pfs >= 5; pfs -= 0.25) {
+    ppad = Math.max(0.5, Math.min(2.4, pfs * 0.19));
+    const lh = pfs * 1.15, nmPx = Math.min(pfs, 12);
+    need = m.rows.reduce((a, x) => a + linesOf(x.name, nmPx) * lh + 2 * ppad + 1, 0) + 4 * (lh + 2 * ppad + 1);
+    if (need <= avail - 24) break;
+  }
+  const procVars = `--pfs:${pfs.toFixed(2)}px;--ppad:${ppad.toFixed(2)}px;--pdone:${Math.round(Math.max(14, Math.min(60, avail - need + 28)))}px`;
   const rows = m.rows.map(x => `<tr data-name="${esc((x.st.name + ' ' + (x.st.idno || '')).toLowerCase())}"><td>${x.pos === null ? '' : x.pos}</td><td class="nm">${esc(x.name)}</td>` +
     x.cells.map(c => `<td>${c ? c.n + (c.partial ? '<span class="noprint">*</span>' : '') : ''}</td>`).join('') +
     `<td>${x.total === null ? '' : x.total}</td><td>${x.avg === null ? '' : (typeof x.avg === 'number' ? x.avg.toFixed(1) + '%' : x.avg) + (x.inc ? ' *' : '')}</td></tr>`).join('');
@@ -1316,7 +1341,7 @@ class PdfPage {
   y(v) { return (this.h - v).toFixed(2); }
   line(x1, y1, x2, y2, lw, dash) { this.ops.push(`${dash ? 'q [' + dash + '] 0 d ' : ''}${lw || 0.6} w ${x1.toFixed(2)} ${this.y(y1)} m ${x2.toFixed(2)} ${this.y(y2)} l S${dash ? ' Q' : ''}`); }
   circle(cx, cy, r, lw) { const c = 0.5523 * r, X = v => v.toFixed(2), Yv = v => this.y(v); this.ops.push(`${lw || 0.6} w ${X(cx + r)} ${Yv(cy)} m ${X(cx + r)} ${Yv(cy - c)} ${X(cx + c)} ${Yv(cy - r)} ${X(cx)} ${Yv(cy - r)} c ${X(cx - c)} ${Yv(cy - r)} ${X(cx - r)} ${Yv(cy - c)} ${X(cx - r)} ${Yv(cy)} c ${X(cx - r)} ${Yv(cy + c)} ${X(cx - c)} ${Yv(cy + r)} ${X(cx)} ${Yv(cy + r)} c ${X(cx + c)} ${Yv(cy + r)} ${X(cx + r)} ${Yv(cy + c)} ${X(cx + r)} ${Yv(cy)} c S`); }
-  scissors(cx, top) { this.rect(cx - 7, top - 2, 14, 24, { fill: '1 1 1', lw: 0 }); this.circle(cx - 3.2, top + 2.6, 2.4, 0.9); this.circle(cx + 3.2, top + 2.6, 2.4, 0.9); this.line(cx - 2.2, top + 4.6, cx + 2.4, top + 19, 1); this.line(cx + 2.2, top + 4.6, cx - 2.4, top + 19, 1); }
+  scissors(cx, top) { this.circle(cx - 2, top + 1.6, 1.5, 0.7); this.circle(cx + 2, top + 1.6, 1.5, 0.7); this.line(cx - 1.3, top + 2.9, cx + 1.5, top + 11.5, 0.7); this.line(cx + 1.3, top + 2.9, cx - 1.5, top + 11.5, 0.7); }
   rect(x, y, w, h, o) { o = o || {}; const p = `${x.toFixed(2)} ${this.y(y + h)} ${w.toFixed(2)} ${h.toFixed(2)} re`; if (o.fill) this.ops.push(`q ${o.fill} rg ${p} f Q`); if (o.lw !== 0) this.ops.push(`${o.lw || 0.6} w ${p} S`); }
   text(str, x, y, o) {
     o = o || {}; str = String(str == null ? '' : str); if (!str) return;
@@ -1517,7 +1542,7 @@ function drawResultsPDF(doc, rm) {
   const subjW = Math.max(16, Math.min(36, (W - rankW - totW - avgW - 120) / Math.max(1, n))), nameW = W - rankW - totW - avgW - subjW * n;
   const availAll = PH - 2 * M - hdrBlock - hdrH, total = rm.rows.length;
   let rowH = Math.min(15, (availAll - doneH) / (total + 1 + footN));
-  if (rowH < 11) rowH = 11;
+  if (rowH < 5.6) rowH = 5.6;
   const cap = Math.floor((availAll - rowH) / rowH + 1e-6), lastCap = Math.floor((availAll - rowH - doneH) / rowH + 1e-6) - footN;
   const pages = []; let i = 0;
   for (;;) {
@@ -1526,7 +1551,7 @@ function drawResultsPDF(doc, rm) {
     if (rest <= cap) { pages.push({ from: i, to: total, last: false }); pages.push({ from: total, to: total, last: true }); break; }
     pages.push({ from: i, to: i + cap, last: false }); i += cap;
   }
-  const fs = Math.max(6.5, Math.min(9, rowH * 0.66)), hf = '0.88 0.93 0.99';
+  const fs = Math.max(4.6, Math.min(9, rowH * 0.66)), hf = '0.88 0.93 0.99';
   const xs = [M, M + rankW, M + rankW + nameW]; const sx = j => xs[2] + subjW * j; const xTot = sx(n), xAvg = xTot + totW;
   pages.forEach((P, pi) => {
     const pg = doc.addPage(PW, PH);
@@ -1794,11 +1819,14 @@ const msSub = m => m.cls.name + ' · Term ' + m.term + ' · ' + m.partLabel;
 function drawMarksPDF(doc, m) {
   const PW = 595.28, PH = 841.89, M = 36, W = PW - 2 * M, n = Math.max(1, m.subjects.length), noW = 30;
   const subjW = Math.max(40, Math.min(90, (W - noW - 200) / n)), nameW = Math.max(110, Math.min(W - noW - subjW * n, 280)), tw = noW + nameW + subjW * m.subjects.length, x0 = M + Math.max(0, (W - tw) / 2);
-  const rowH = 17, hdrH = 30, top = M + 92, bottom = PH - M - 22, cap = Math.floor((bottom - top - hdrH - rowH) / rowH), sigH = 60;
+  const hdrH = 30, top = M + 92, bottom = PH - M - 22, sigH = 60;
+  // the whole sheet fits on ONE page: rows (and their text) shrink with the number of learners (a normal class stays at the roomy size)
+  let rowH = Math.max(6, Math.min(17, (bottom - top - hdrH - sigH) / (m.rows.length + 1)));
+  const fsz = Math.max(5, Math.min(9, rowH * 0.58)), cap = Math.floor((bottom - top - hdrH - rowH) / rowH);
   const pages = []; let i = 0;
   for (;;) { const rest = m.rows.length - i; if (rest <= cap) { pages.push({ from: i, to: m.rows.length }); break; } pages.push({ from: i, to: i + cap }); i += cap; }
   const lastRows = pages[pages.length - 1].to - pages[pages.length - 1].from;
-  if ((bottom - top - hdrH - rowH) - lastRows * rowH < sigH) pages.push({ from: m.rows.length, to: m.rows.length });
+  if ((bottom - top - hdrH - rowH) - lastRows * rowH < sigH - 0.5) pages.push({ from: m.rows.length, to: m.rows.length });
   pages.forEach((P, pi) => {
     const pg = doc.addPage(PW, PH);
     pg.text(m.title, PW / 2, M + 16, { font: 'HB', size: 16, align: 'c' });
@@ -1806,7 +1834,7 @@ function drawMarksPDF(doc, m) {
     pg.text(msSub(m), PW / 2, M + 50, { font: 'H', size: 10.5, align: 'c' });
     if (m.teacher) pg.text('Teacher: ' + m.teacher, PW / 2, M + 65, { font: 'H', size: 10, align: 'c' });
     let y = top;
-    const cell = (str, cx, cw, ch, o) => { pg.rect(cx, y, cw, ch, o.fill ? { fill: o.fill } : {}); cellText(pg, str, cx, y, cw, ch, { font: o.font || 'H', size: o.size || 9, align: o.align || 'c' }); };
+    const cell = (str, cx, cw, ch, o) => { pg.rect(cx, y, cw, ch, o.fill ? { fill: o.fill } : {}); cellText(pg, str, cx, y, cw, ch, { font: o.font || 'H', size: o.size || fsz, align: o.align || 'c' }); };
     cell('No.', x0, noW, hdrH, { font: 'HB', fill: '0.88 0.93 0.99' }); cell('Learner', x0 + noW, nameW, hdrH, { font: 'HB', fill: '0.88 0.93 0.99', align: 'l' });
     m.subjects.forEach((s, j) => cell(s, x0 + noW + nameW + subjW * j, subjW, hdrH, { font: 'HB', size: 8.5, fill: '0.88 0.93 0.99' }));
     y += hdrH;
@@ -1869,7 +1897,7 @@ function csvResults() {
 
 /* ---------- buttons ---------- */
 let _printed = false;
-function setStamp() { const d = new Date(), el = $('printStamp'); if (el) el.textContent = 'Printed on ' + d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); }
+function setStamp() { const d = new Date(), el = $('printStamp'), el2 = $('printStamp2'); if (el2) el2.textContent = 'Printed on ' + d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); if (el) el.textContent = 'Printed on ' + d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); }
 window.addEventListener('beforeprint', () => { _printed = true; setStamp(); });
 async function doPrint() {
   _printed = false; try { window.print(); } catch (_) {}
