@@ -1073,7 +1073,7 @@ function yearHTML(m) {
    <div></div><div><b>School Year:</b> ${esc(m.year)}</div></div>
   <table class="ytb">${colgroup}<thead>${head}</thead><tbody>${body}${sumRows}</tbody></table>
   ${cardNote(m) ? `<p class="inc">${esc(cardNote(m))}${m.incomplete ? ' Annual points count only assessment components with marks entered.' : ''}</p>` : ''}
-  <div class="verdict"><div><b>VERDICT OF THE JURY</b><div class="vopts"><div><i class="bx"></i>Promoted</div><div><i class="bx"></i>Advised to repeat</div><div><i class="bx"></i>Proposed to resit</div></div></div>
+  <div class="verdict"><div><b>VERDICT OF THE JURY</b><div class="vopts"><div><i class="bx"></i>Promoted</div><div><i class="bx"></i>Advised to repeat</div></div></div>
    <div class="vr"><div>${esc(yDone(m))}</div><div class="hs">Head of the School</div></div></div></div>`;
 }
 function cardFromModel(m) {
@@ -1515,7 +1515,7 @@ function drawYearPDF(pg, m, x, y, W, k, v, logo) {
   cy += vh(8);
   const vhgt = vh(74); pg.rect(x, cy, W, vhgt);
   pg.text('VERDICT OF THE JURY', x + W * 0.07, cy + F(14), { font: 'TB', size: F(9) });
-  ['Promoted', 'Advised to repeat', 'Proposed to resit'].forEach((t, i) => { const by = cy + F(28) + i * F(12.5), s = F(7); pg.rect(x + W * 0.17, by - s + 0.5, s, s, { lw: 0.6 }); pg.text(t, x + W * 0.17 + s + 5 * k, by, { font: 'T', size: F(8.6) }); });
+  ['Promoted', 'Advised to repeat'].forEach((t, i) => { const by = cy + F(28) + i * F(12.5), s = F(7); pg.rect(x + W * 0.17, by - s + 0.5, s, s, { lw: 0.6 }); pg.text(t, x + W * 0.17 + s + 5 * k, by, { font: 'T', size: F(8.6) }); });
   pg.text(yDone(m), x + W * 0.6, cy + F(34), { font: 'T', size: F(8.6) });
   pg.text('Head of the School', x + W * 0.6, cy + F(58), { font: 'T', size: F(8.6) });
   cy += vhgt;
@@ -1751,7 +1751,7 @@ async function yearWorkbook(models) {
     });
     if (cardNote(m)) { sh.put(r, 1, cardNote(m) + (m.incomplete ? ' Annual points count only assessment components with marks entered.' : ''), st.note, G); sh.rh[r] = 24; r++; }
     sh.rh[r++] = 8;
-    sh.put(r, 1, 'VERDICT OF THE JURY\n\n   ☐  Promoted\n   ☐  Advised to repeat\n   ☐  Proposed to resit', st.ver, 12, 4);
+    sh.put(r, 1, 'VERDICT OF THE JURY\n\n   ☐  Promoted\n   ☐  Advised to repeat', st.ver, 12, 4);
     sh.put(r, 13, yDone(m) + '\n\n\nHead of the School', st.ver, 11, 4);
     for (let i = 0; i < 4; i++) sh.rh[r + i] = 20;
     r += 4; sh.breaks.push(r - 1); r += 2;
