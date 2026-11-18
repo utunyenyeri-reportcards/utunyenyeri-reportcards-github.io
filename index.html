@@ -1196,7 +1196,7 @@ function rosterCSV(m) {
   return '\uFEFF' + rows.map(row => row.map(quote).join(',')).join('\r\n');
 }
 function rosterPDF(m) {
-  const doc = new PdfDoc(), W=842, H=595, left=42, right=42;
+  const doc = new PdfDoc(), W=595, H=842, left=38, right=38;
   const pg=doc.addPage(W,H), tableW=W-left-right, titleY=34, subY=56, metaY=77;
   const count=m.students.length;
   const top=104, bottom=42, headH=25;
