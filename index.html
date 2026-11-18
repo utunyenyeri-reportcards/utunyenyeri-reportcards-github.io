@@ -1159,7 +1159,7 @@ function viewClasses() {
   const classesInOrder = orderedClasses(DB.current.year);
   const chips = classesInOrder.map(c => `<div class="row drag-sort-item" draggable="true" data-sort-kind="classes" data-sort-id="${c.id}" style="margin:0 0 6px"><span class="drag-grip" title="Drag to reorder" aria-label="Drag to reorder">⠿</span><b style="min-width:120px">${esc(c.name)}</b><span class="muted">${y.students.filter(s => s.classId === c.id).length} learners</span><button class="small ghost" data-act="renameClass" data-id="${c.id}">Rename</button><button class="small danger" data-act="delClass" data-id="${c.id}">Delete</button></div>`).join('') || '<p class="muted">No classes yet. Add your first one below, for example P1 A, P1 B, P2 A.</p>';
   let out = `<div class="panel"><h2>Classes for ${esc(DB.current.year)}</h2>${chips}
-   <div class="row actions"><button class="b-pdf" data-act="pdfRoster">⬇ Download selected class PDF</button><button class="b-xls" data-act="csvRoster">⬇ Download selected class CSV</button></div>
+   <div class="row actions"><button class="b-pdf" data-act="pdfRoster">⬇ Download selected class PDF</button><button class="b-xls" data-act="xlsxRoster">⬇ Download selected class Excel (.xlsx)</button><button class="ghost" data-act="csvRoster">⬇ Download CSV</button></div>
    <div class="row"><input id="newClass" placeholder="New class name, e.g. P1 A"><select id="newLevel"><option value="auto">Subjects: choose by class number (P1–P3 lower, P4–P6 upper)</option><option value="lower">${esc(TEMPLATES.lower.label)}</option><option value="upper">${esc(TEMPLATES.upper.label)}</option><option value="blank">Empty (I will add the subjects myself)</option></select><button data-act="addClass">Add class</button></div>
    <div class="muted">Classes belong to the academic year, so you can change them every year without touching past years. A new class starts with the school's standard subjects and maximum marks, which you can change below.</div></div>`;
   if (!cls) return out;
@@ -1189,6 +1189,29 @@ function rosterModel() {
   const cls = curClass(); if (!cls) return null;
   return { cls, year: DB.current.year, term: DB.current.term,
     students: orderStudents(studentsOf(cls.id), 'custom', cls.id) };
+}
+function rosterWorkbook(m) {
+  const S = new XStyles(), sh = new XSheet('Class list');
+  const st = {
+    title: S.get({ b: 1, sz: 17, h: 'center', color: 'FFFFFF', fill: '24476B' }),
+    school: S.get({ b: 1, sz: 12, h: 'center', color: '24476B' }),
+    meta: S.get({ sz: 10, h: 'center', color: '526477' }),
+    head: S.get({ b: 1, sz: 11, h: 'center', border: 1, fill: 'DCE9F7', color: '183653' }),
+    no: S.get({ sz: 10, h: 'center', border: 1 }),
+    name: S.get({ sz: 10, h: 'left', border: 1 })
+  };
+  sh.put(1, 1, 'CLASS LIST', st.title, 2); sh.rh[1] = 30;
+  sh.put(2, 1, DB.school.name || 'SCHOOL', st.school, 2); sh.rh[2] = 23;
+  sh.put(3, 1, 'Class: ' + m.cls.name + '     Academic year: ' + m.year, st.meta, 2); sh.rh[3] = 20;
+  sh.put(4, 1, 'Total learners: ' + m.students.length, st.meta, 2); sh.rh[4] = 20;
+  sh.put(6, 1, 'No.', st.head); sh.put(6, 2, 'Learner name', st.head); sh.rh[6] = 23;
+  m.students.forEach((stn, i) => {
+    const r = 7 + i;
+    sh.put(r, 1, i + 1, st.no); sh.put(r, 2, stn.name || '', st.name); sh.rh[r] = 19;
+  });
+  sh.cw[1] = 9; sh.cw[2] = 48;
+  sh.o = { fitW: true, fitH: true };
+  return packXlsx(sh, S, 2, null);
 }
 function rosterCSV(m) {
   const quote = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
@@ -1232,6 +1255,7 @@ async function exportRoster(kind) {
   if(!m.students.length) { await say('The selected class has no learners to export.'); return; }
   const base='Class-List_'+safeName(m.cls.name)+'_'+safeName(m.year);
   if(kind==='pdf') download(base+'.pdf',rosterPDF(m),'application/pdf');
+  else if(kind==='xlsx') download(base+'.xlsx',rosterWorkbook(m),MIME_XLSX);
   else download(base+'.csv',rosterCSV(m),'text/csv;charset=utf-8');
 }
 
@@ -1701,7 +1725,7 @@ class XSheet {
       (o.fitW ? '<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>' : '') + `<dimension ref="A1:${xc(maxCol)}${last}"/><sheetViews><sheetView workbookViewId="0" showGridLines="0"/></sheetViews><sheetFormatPr defaultRowHeight="15"/>` +
       (cols ? `<cols>${cols}</cols>` : '') + `<sheetData>${sd}</sheetData>` + (this.merges.length ? `<mergeCells count="${this.merges.length}">${this.merges.map(m => `<mergeCell ref="${m}"/>`).join('')}</mergeCells>` : '') +
       `<printOptions horizontalCentered="1"/><pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/>` +
-      `<pageSetup paperSize="9" ${o.fitW ? 'fitToWidth="1" fitToHeight="0"' : `scale="${o.scale || 100}"`} orientation="${o.landscape ? 'landscape' : 'portrait'}"/>` +
+      `<pageSetup paperSize="9" ${o.fitW ? `fitToWidth="1" fitToHeight="${o.fitH ? 1 : 0}"` : `scale="${o.scale || 100}"`} orientation="${o.landscape ? 'landscape' : 'portrait'}"/>` +
       (this.breaks.length ? `<rowBreaks count="${this.breaks.length}" manualBreakCount="${this.breaks.length}">${this.breaks.map(b => `<brk id="${b}" max="16383" man="1"/>`).join('')}</rowBreaks>` : '') +
       (this.images.length ? '<drawing r:id="rId1"/>' : '') + '</worksheet>';
   }
@@ -2057,6 +2081,7 @@ document.addEventListener('click', async e => {
     case 'pdfMarks': await exportMarks('pdf'); break;
     case 'pdfRoster': await exportRoster('pdf'); break;
     case 'csvRoster': await exportRoster('csv'); break;
+    case 'xlsxRoster': await exportRoster('xlsx'); break;
     case 'xlsxMarks': await exportMarks('xlsx'); break;
     case 'pdfCards': await exportCards('pdf'); break;
     case 'xlsxCards': await exportCards('xlsx'); break;
