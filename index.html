@@ -2590,6 +2590,7 @@ async function cloudReload(force) {
   if (!CLOUD.ready || CLOUD.busy) return;
   try {
     const rows = await loadRows();
+    try { const st = $('saveStatus'); if (st) st.title = 'Checked for other people’s changes at ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }); } catch (e) {}
     const sig = JSON.stringify([rows.config, rows.years, rows.classes, rows.students, rows.marks, rows.comments, rows.assign, rows.profiles, rows.subs]);
     CLOUD.profiles = rows.profiles; CLOUD.subs = rows.subs; CLOUD.allAssign = rows.assign; CLOUD.assign = rows.assign.filter(a => a.teacher_id === CLOUD.user.id);
     if (sig === CLOUD.sig && !force) return;
@@ -2772,7 +2773,7 @@ async function cloudBoot() {
     const s = await CLOUD.sb.auth.getSession();
     if (s.data && s.data.session && !/type=recovery/.test(location.hash)) await afterLogin(s.data.session.user); else if (!/type=recovery/.test(location.hash)) authShow('login');
   } catch (e) { authShow('error', friendly(e)); }
-  setInterval(() => { if (CLOUD.ready && !CLOUD.dirty && !CLOUD.busy && !document.hidden && !(document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) && !$('auth')) cloudReload(false); }, 60000);
+  setInterval(() => { if (CLOUD.ready && !CLOUD.dirty && !CLOUD.busy && !document.hidden && !(document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) && !$('auth') && !document.querySelector('.dlg')) cloudReload(false); }, 20000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden && CLOUD.ready && !CLOUD.dirty && !CLOUD.busy && !$('auth')) cloudReload(false); });
 }
 
