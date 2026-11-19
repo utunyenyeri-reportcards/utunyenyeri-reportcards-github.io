@@ -2783,7 +2783,7 @@ function viewUsers() {
   const nm = p => esc(p.full_name || p.email), when = p => p.created_at ? new Date(p.created_at).toLocaleDateString() : '';
   const wait = ps.filter(p => !p.active), adm = ps.filter(p => p.active && p.role === 'admin'), tch = ps.filter(p => p.active && p.role === 'teacher');
   const row = (p, btns) => `<tr><td><b>${nm(p)}</b></td><td>${esc(p.email)}</td><td>${when(p)}</td><td>${btns}</td></tr>`;
-  const table = (rows, empty) => rows.length ? `<table><thead><tr><th>Name</th><th>Email</th><th>Created</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table>` : `<p class="muted">${empty}</p>`;
+  const table = (rows, empty) => rows.length ? `<div class="tablewrap"><table><thead><tr><th>Name</th><th>Email</th><th>Created</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table></div>` : `<p class="muted">${empty}</p>`;
   const summary = t => { const parts = y.classes.map(c => { const rows = CLOUD.allAssign.filter(a => a.teacher_id === t.id && a.class_id === c.id); if (!rows.length) return ''; const all = rows.some(a => a.subject_id === '*'); return '<b>' + esc(c.name) + '</b>: ' + (all ? 'all subjects' : c.subjects.filter(s => rows.some(a => a.subject_id === s.id)).map(s => esc(s.name)).join(', ')); }).filter(Boolean); return parts.length ? '<div class="asum">✔ Teaches in ' + esc(yr) + ' — ' + parts.join(' · ') + '</div>' : '<div class="asum warn">⚠ No class chosen for ' + esc(yr) + ' yet — this teacher cannot see any class. Tick the classes below.</div>'; };
   const grid = t => y.classes.length ? y.classes.map(c => {
     const rows = CLOUD.allAssign.filter(a => a.teacher_id === t.id && a.class_id === c.id), all = rows.some(a => a.subject_id === '*');
