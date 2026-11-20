@@ -356,6 +356,13 @@ body.locked{overflow:hidden}
 .auth-card label{display:block;font-weight:700;font-size:13px;margin:10px 0 0}
 .auth-card input{display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:10px 12px;font-size:15px;border:2px solid #d6e0f1;border-radius:10px}
 .auth-card input:focus{border-color:#1d8fe1;outline:none;box-shadow:0 0 0 4px rgba(29,143,225,.2)}
+/* Login password visibility control — scoped to the sign-in form only */
+#auth form.authform[data-mode="login"] .auth-password-wrap{position:relative}
+#auth form.authform[data-mode="login"] .auth-password-wrap input{padding-right:48px}
+#auth form.authform[data-mode="login"] .auth-password-toggle{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:34px;height:34px;margin:0;padding:6px;border:0;background:transparent;color:#52647d;display:grid;place-items:center;cursor:pointer;border-radius:7px}
+#auth form.authform[data-mode="login"] .auth-password-toggle:hover{background:#edf4fc;color:#1478cf}
+#auth form.authform[data-mode="login"] .auth-password-toggle:focus-visible{outline:2px solid #1d8fe1;outline-offset:1px}
+#auth form.authform[data-mode="login"] .auth-password-toggle svg{width:20px;height:20px;display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .auth-card form button,.auth-row button{margin-top:16px;width:100%;padding:11px 16px;font-size:15px}
 .auth-row{display:flex;gap:10px}.auth-row button{width:auto;flex:1}
 .auth-links{text-align:center;font-size:13px;margin:12px 0 0}.auth-links a{color:#1478cf;font-weight:700}
@@ -2706,7 +2713,7 @@ function authShow(mode, msg, bad) {
   const head = (t, s) => `<div class="auth-ribbon"></div><h1>${e(DB.school.name || 'Report Card Manager')}</h1><h2>${t}</h2>${s ? `<p class="muted">${s}</p>` : ''}`;
   const field = (id, label, type, extra) => `<label>${label}<input name="${id}" type="${type}" ${extra || ''} required></label>`;
   let body = '';
-  if (mode === 'login') body = head('Sign in') + note + `<form class="authform" data-mode="login">${field('email', 'Email', 'email', 'autocomplete="username"')}${field('password', 'Password', 'password', 'autocomplete="current-password"')}<button type="submit">Sign in</button></form>
+  if (mode === 'login') body = head('Sign in') + note + `<form class="authform" data-mode="login">${field('email', 'Email', 'email', 'autocomplete="username"')}<label>Password<div class="auth-password-wrap"><input name="password" type="password" autocomplete="current-password" required><button class="auth-password-toggle" type="button" data-login-password-toggle aria-label="Show password" title="Show password"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></label><button type="submit">Sign in</button></form>
     <p class="auth-links"><a href="#" data-auth="forgot">Forgot password?</a> · <a href="#" data-auth="signup">Create an account</a></p>${CLOUD.cfgFromStorage ? '<p class="auth-links"><a href="#" data-auth="disconnect">Disconnect from the online database</a></p>' : ''}`;
   else if (mode === 'signup') body = head('Create an account', 'Teachers: create your account, then wait for the administrator to approve it. The very first account created for this school becomes the administrator.') + note + `<form class="authform" data-mode="signup">${field('name', 'Full name', 'text', 'autocomplete="name"')}${field('email', 'Email', 'email', 'autocomplete="username"')}${field('password', 'Password (at least 8 characters)', 'password', 'minlength="8" autocomplete="new-password"')}${field('password2', 'Repeat the password', 'password', 'minlength="8" autocomplete="new-password"')}<button type="submit">Create account</button></form><p class="auth-links"><a href="#" data-auth="login">Back to sign in</a></p>`;
   else if (mode === 'forgot') body = head('Reset your password', 'We will email you a link to choose a new password.') + note + `<form class="authform" data-mode="forgot">${field('email', 'Email', 'email', 'autocomplete="username"')}<button type="submit">Send the link</button></form><p class="auth-links"><a href="#" data-auth="login">Back to sign in</a></p>`;
@@ -2718,6 +2725,20 @@ function authShow(mode, msg, bad) {
   const f = el.querySelector('input'); if (f) setTimeout(() => { const ac = document.activeElement; if (!ac || ac === document.body || !el.contains(ac)) f.focus(); }, 30);
 }
 function authHide() { const el = $('auth'); if (el) el.remove(); document.body.classList.remove('locked'); }
+document.addEventListener('click', e => {
+  const toggle = e.target.closest && e.target.closest('#auth form.authform[data-mode="login"] [data-login-password-toggle]');
+  if (!toggle) return;
+  const input = toggle.closest('.auth-password-wrap')?.querySelector('input[name="password"]');
+  if (!input) return;
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+  toggle.setAttribute('title', show ? 'Hide password' : 'Show password');
+  toggle.innerHTML = show
+    ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 10.6a2 2 0 002.8 2.8"/><path d="M9.9 5.2A10.8 10.8 0 0112 5c6.4 0 10 7 10 7a16 16 0 01-3.1 3.9M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7a10.8 10.8 0 004.1-.8"/></svg>'
+    : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
+  input.focus();
+});
 document.addEventListener('submit', async e => {
   const f = e.target.closest && e.target.closest('form.authform'); if (!f) return;
   e.preventDefault();
