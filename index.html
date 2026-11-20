@@ -810,10 +810,14 @@ function missingMarks(subjects, studs, term, part) {
 const usedIn = (s, term, part) => +smax(s, term)[part] > 0;
 function submitPanel(cls, vs, term, studs, part) {
   if (CLOUD.on && isAdmin() && CLOUD.subsOk) {
-    // administrator: give the teacher permission back right here (same action as in Users & access)
-    const PL = PART_LABEL[part], items = vs.filter(s => subFind(cls.id, s.id, term, part)).map(s => { const x = subFind(cls.id, s.id, term, part), p = CLOUD.profiles.find(q => q.id === x.submitted_by);
-      return `<div class="row" style="margin:4px 0"><span>✔ <b>${esc(s.name)}</b> – submitted${p ? ' by ' + esc(p.full_name || p.email) : ''}</span><button class="small" data-act="unlockSub" data-c="${cls.id}" data-s="${s.id}" data-t="${term}" data-p="${part}">🔓 Unlock for the teacher</button></div>`; }).join('');
-    return items ? `<div class="panel subp"><h3 style="margin-top:0">Submitted ${esc(PL)} – ${esc(cls.name)}, Term ${term}</h3><p class="muted">Teachers cannot change these marks after submitting. Press “Unlock” to give the teacher permission to edit them again.</p>${items}</div>` : '';
+    // administrator: lock any assessment for the teachers (or unlock it again) right here
+    const PL = PART_LABEL[part], act = vs.filter(s => usedIn(s, term, part)); if (!act.length) return '';
+    const open = act.filter(s => !subFind(cls.id, s.id, term, part));
+    const items = act.map(s => { const x = subFind(cls.id, s.id, term, part);
+      if (!x) return `<div class="row" style="margin:4px 0"><span>🔓 <b>${esc(s.name)}</b> – open: the teacher can enter and change marks</span><button class="small" data-act="lockSub" data-c="${cls.id}" data-s="${s.id}" data-t="${term}" data-p="${part}">🔒 Lock</button></div>`;
+      const p = CLOUD.profiles.find(q => q.id === x.submitted_by), by = x.submitted_by === CLOUD.user.id ? 'locked by you' : (p && p.role === 'admin' ? 'locked by the administrator ' + esc(p.full_name || p.email) : 'submitted' + (p ? ' by ' + esc(p.full_name || p.email) : ''));
+      return `<div class="row" style="margin:4px 0"><span>🔒 <b>${esc(s.name)}</b> – ${by}</span><button class="small" data-act="unlockSub" data-c="${cls.id}" data-s="${s.id}" data-t="${term}" data-p="${part}">🔓 Unlock for the teacher</button></div>`; }).join('');
+    return `<div class="panel subp"><h3 style="margin-top:0">Lock or unlock the ${esc(PL)} – ${esc(cls.name)}, Term ${term}</h3><p class="muted">A locked assessment cannot be changed by the teacher (you can always edit marks yourself). Lock it when the marks are final, and unlock it again if a teacher must correct something. Teachers can also lock their own marks by pressing “Submit”.</p>${open.length ? `<div class="row" style="margin-bottom:6px"><button data-act="lockAll">🔒 Lock the ${esc(PL)} for all ${open.length} open subject${open.length === 1 ? '' : 's'} of this class</button></div>` : ''}${items}</div>`;
   }
   if (!CLOUD.on || isAdmin() || !CLOUD.subsOk) return '';
   const PL = PART_LABEL[part], sh = { cat: 'CAT', mid: 'Midterm', exam: 'Exam' };
@@ -823,10 +827,11 @@ function submitPanel(cls, vs, term, studs, part) {
     const x = subFind(cls.id, s.id, term, part), others = PARTS.map(k => sh[k] + ' ' + (subFind(cls.id, s.id, term, k) ? '✔' : '–')).join(' · ');
     return `<span class="subchip${x ? ' ok' : ''}" title="${x ? esc(PL + ' submitted ' + when(x)) : ''}">${x ? '✔ ' : ''}${esc(s.name)}: ${esc(others)}</span>`; }).join('');
   const anyLocked = act.some(s => subFind(cls.id, s.id, term, part));
-  const lockNote = anyLocked ? `<p class="muted">🔒 Submitted marks are locked. To change them, ask the administrator for permission (the administrator can unlock them).</p>` : '';
+  const byAdmin = act.some(s => { const x = subFind(cls.id, s.id, term, part); return x && x.submitted_by !== CLOUD.user.id; });
+  const lockNote = anyLocked ? `<p class="muted">🔒 ${byAdmin ? 'Some of these marks were locked by the administrator. ' : ''}Locked marks cannot be changed. To change them, ask the administrator for permission (the administrator can unlock them).</p>` : '';
   const btn = !act.length ? `<p class="muted">${esc(PL)} is not used for your subjects in Term ${term}.</p>`
     : pend.length ? `<div class="row"><button data-act="submitMarks">✔ Submit the ${esc(PL)} for Term ${term}${pend.length < act.length ? ' (' + pend.length + ' remaining subject' + (pend.length === 1 ? '' : 's') + ')' : ''}</button><span class="muted">Choose the assessment below (CAT, Midterm or Exam) and press Submit when its marks are complete and correct. After you submit, you cannot enter or change them again unless the administrator gives you permission.</span></div>`
-    : `<p><b>✔ Your ${esc(PL)} marks for ${esc(cls.name)}, Term ${term} are submitted.</b> <span class="muted">Choose another assessment below to submit it.</span></p>`;
+    : `<p><b>${byAdmin ? '🔒 The ' + esc(PL) + ' marks for ' + esc(cls.name) + ', Term ' + term + ' are locked.' : '✔ Your ' + esc(PL) + ' marks for ' + esc(cls.name) + ', Term ' + term + ' are submitted.'}</b> <span class="muted">Choose another assessment below.</span></p>`;
   return `<div class="panel subp"><h3 style="margin-top:0">Submit your marks – ${esc(cls.name)}, Term ${term} · ${esc(PL)}</h3><div class="subl">${chips}</div>${btn}${lockNote}</div>`;
 }
 async function submitMarks() {
@@ -852,6 +857,22 @@ async function submitMarks() {
   if (fail) { await say('Your marks could not be submitted: ' + friendly(fail)); return; }
   const ok = pend.every(s => subFind(cls.id, s.id, term, part));
   await say(ok ? '✔ Submitted. Your ' + PL + ' marks for ' + cls.name + ', Term ' + term + ' (' + names + ') were received and are now locked. The administrator can see that you submitted them.' : 'The submission could not be confirmed. Please reload the page and check the status.');
+}
+async function lockSubs(cid, sids, term, part) {
+  const cls = Y().classes.find(c => c.id === cid); if (!cls || !CLOUD.on || !isAdmin()) return;
+  const subs = sids.map(id => cls.subjects.find(x => x.id === id)).filter(Boolean).filter(s => !subFind(cid, s.id, term, part)); if (!subs.length) return;
+  const names = subs.map(s => s.name).join(', ');
+  if (!await ask('Lock the ' + PART_LABEL[part] + ' of ' + cls.name + ', Term ' + term + ' for the teachers?\n\nSubjects: ' + names + '.\n\nTeachers will not be able to enter or change these marks until you unlock them. You can still edit them yourself.', { ok: 'Yes, lock', cancel: 'Cancel', danger: false })) return;
+  clearTimeout(CLOUD.timer);
+  for (let i = 0; i < 100 && CLOUD.busy; i++) await new Promise(r => setTimeout(r, 100));
+  await cloudPush();
+  let fail = null;
+  for (const s of subs) {
+    const r = await CLOUD.sb.from('submissions').insert({ class_id: cid, subject_id: s.id, term, part, submitted_by: CLOUD.user.id });
+    if (r.error && r.error.code !== '23505') { fail = r.error; break; }
+  }
+  await cloudReload(true); render();
+  if (fail) await say('Could not lock: ' + friendly(fail));
 }
 async function unlockSub(cid, sid, term, part) {
   const cls = Y().classes.find(c => c.id === cid), s = cls && cls.subjects.find(x => x.id === sid), x = subFind(cid, sid, term, part);
@@ -2809,7 +2830,7 @@ function subsAdminHtml(y) {
   const when = x => x.submitted_at ? new Date(x.submitted_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '';
   const rows = [];
   y.classes.forEach(c => c.subjects.forEach(s => [1, 2, 3].forEach(t => PARTS.forEach(k => { const x = subFind(c.id, s.id, t, k); if (!x) return; const p = CLOUD.profiles.find(q => q.id === x.submitted_by);
-    rows.push(`<tr><td>${esc(c.name)}</td><td>${esc(s.name)}</td><td>Term ${t}</td><td>${esc(PART_LABEL[k])}</td><td>${esc(p ? (p.full_name || p.email) : '—')}</td><td>${esc(when(x))}</td><td><button class="small" data-act="unlockSub" data-c="${c.id}" data-s="${s.id}" data-t="${t}" data-p="${k}">🔓 Unlock</button></td></tr>`); }))));
+    rows.push(`<tr><td>${esc(c.name)}</td><td>${esc(s.name)}</td><td>Term ${t}</td><td>${esc(PART_LABEL[k])}</td><td>${esc(p ? (p.full_name || p.email) : '—')}${p && p.role === 'admin' ? ' <span class="muted">(administrator lock)</span>' : ''}</td><td>${esc(when(x))}</td><td><button class="small" data-act="unlockSub" data-c="${c.id}" data-s="${s.id}" data-t="${t}" data-p="${k}">🔓 Unlock</button></td></tr>`); }))));
   return `<h3>Submitted marks</h3><p class="muted">When a teacher presses “Submit” for an assessment (CAT, Midterm or Exam), those marks are locked for the teacher; the other assessments stay open. Press “Unlock” to give the teacher permission to change them again. (Administrators can always edit marks.)</p>` +
     (rows.length ? `<div class="tablewrap"><table><thead><tr><th>Class</th><th>Subject</th><th>Term</th><th>Assessment</th><th>Submitted by</th><th>When</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table></div>` : '<p class="muted">No marks have been submitted yet in ' + esc(DB.current.year) + '.</p>');
 }
@@ -2840,6 +2861,8 @@ async function cloudAct(act, b) {
   switch (act) {
     case 'signOut': await cloudSignOut(); return true;
     case 'submitMarks': await submitMarks(); return true;
+    case 'lockSub': await lockSubs(b.dataset.c, [b.dataset.s], +b.dataset.t, b.dataset.p); return true;
+    case 'lockAll': { const cls = curClass(); if (cls) await lockSubs(cls.id, visSubjects(cls).filter(s => usedIn(s, DB.current.term, ui.part)).map(s => s.id), DB.current.term, ui.part); return true; }
     case 'unlockSub': await unlockSub(b.dataset.c, b.dataset.s, +b.dataset.t, b.dataset.p); return true;
     case 'changePw': authShow('change'); return true;
     case 'uApprove': await uSetProfile(b.dataset.id, { active: true, role: 'teacher' }); return true;
